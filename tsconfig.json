@@ -6,7 +6,12 @@
     "strict": true,                 // 엄격한 타입 검사
     "esModuleInterop": true,        // CommonJS와 호환
     "outDir": "./dist",             // 컴파일 결과 출력 폴더
-    "rootDir": "./src"              // 소스 폴더
+    "rootDir": "./src" ,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true             // 소스 폴더
+  },
+  "ts-node": {
+    "esm": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
