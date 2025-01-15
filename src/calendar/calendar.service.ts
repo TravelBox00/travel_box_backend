@@ -25,3 +25,15 @@ export const removeCalendar = async (travelId: number) => {
 
   return result;
 };
+
+// 일정 수정
+export const fixCalendar = async (calendar: {
+  travelId: number;
+  travelTitle: string;
+  travelContent?: string;
+  travelStartDate?: string;
+  travelEndDate?: string;
+}): Promise<{ affectedRows: number }> => {
+  const result = await calendarModel.updateCalendar(calendar);
+  return { affectedRows: (result as ResultSetHeader).affectedRows };
+};

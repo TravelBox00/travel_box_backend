@@ -39,3 +39,29 @@ export const removeCalendar = async (travelId: number) => {
   const [result] = await pool.query(query, [travelId]);
   return result;
 };
+
+// 일정 수정
+export const updateCalendar = async (calendar: {
+  travelId: number;
+  travelTitle: string;
+  travelContent?: string;
+  travelStartDate?: string;
+  travelEndDate?: string;
+}) => {
+  const query = `
+    UPDATE TravelCalendar
+    SET travelTitle = ?, travelContent = ?, travelStartDate = ?, travelEndDate = ?
+    WHERE travelId = ?
+  `;
+
+  const values = [
+    calendar.travelTitle,
+    calendar.travelContent || null,
+    calendar.travelStartDate || null,
+    calendar.travelEndDate || null,
+    calendar.travelId,
+  ];
+
+  const [result] = await pool.query(query, values);
+  return result;
+};
