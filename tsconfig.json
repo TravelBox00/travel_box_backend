@@ -8,7 +8,8 @@
     "outDir": "./dist",             // 컴파일 결과 출력 폴더
     "rootDir": "./src" ,
     "allowSyntheticDefaultImports": true,
-    "resolveJsonModule": true             // 소스 폴더
+    "resolveJsonModule": true,     
+    "strictPropertyInitialization":false        // 소스 폴더
   },
   "ts-node": {
     "esm": true
