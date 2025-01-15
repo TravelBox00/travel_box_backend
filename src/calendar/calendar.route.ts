@@ -2,7 +2,7 @@
 /* eslint-disable import/extensions */
 
 import { Router } from 'express';
-import { addCalendar } from './calendar.controller.ts';
+import { addCalendar, removeCalendar } from './calendar.controller.ts';
 
 const router = Router();
 
@@ -42,7 +42,36 @@ const router = Router();
  *         description: Successfully added
  */
 
+/**
+ * @swagger
+ * /calendar/remove:
+ *   delete:
+ *     summary: 일정 삭제
+ *     tags:
+ *       - Calendar
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               travelId:
+ *                 type: integer
+ *                 example: 2
+ *     responses:
+ *       200:
+ *         description: Successfully deleted
+ *       400:
+ *         description: travelId는 필수 입력값입니다.
+ *       404:
+ *         description: 해당 일정이 존재하지 않습니다.
+ */
+
 // 일정 추가
 router.post('/add', addCalendar);
+
+// 일정 삭제
+router.delete('/remove', removeCalendar);
 
 export default router;

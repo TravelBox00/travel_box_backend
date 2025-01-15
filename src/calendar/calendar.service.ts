@@ -1,13 +1,27 @@
 /* eslint-disable import/prefer-default-export */
 /* eslint-disable no-return-await */
 /* eslint-disable import/extensions */
+import { ResultSetHeader } from 'mysql2';
 import * as calendarModel from './calendar.model.ts';
+import { pool } from '../configs/database/mysqlConnect.ts';
 import { Calendar } from './calendar.model.ts';
 
+// 일정 추가
 export const addCalendar = async (
   calendar: Calendar
 ): Promise<{ travelId: number }> => {
-  // calendarModel.insertCalendar 호출 후 반환된 result에서 travelId를 사용
   const result = await calendarModel.insertCalendar(calendar);
-  return result; // travelId 반환
+  return result;
+};
+
+// 일정 삭제
+export const removeCalendar = async (travelId: number) => {
+  const query = `
+    DELETE FROM TravelCalendar
+    WHERE travelId = ?
+  `;
+
+  const [result] = await pool.query<ResultSetHeader>(query, [travelId]);
+
+  return result;
 };

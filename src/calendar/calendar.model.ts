@@ -10,6 +10,7 @@ export interface Calendar {
   travelEndDate?: string;
 }
 
+// 일정 추가
 export const insertCalendar = async (calendar: Calendar) => {
   const query = `
     INSERT INTO TravelCalendar (userId, travelTitle, travelContent, travelStartDate, travelEndDate)
@@ -25,6 +26,16 @@ export const insertCalendar = async (calendar: Calendar) => {
   ];
 
   const [result] = await pool.query<ResultSetHeader>(query, values);
-  // result.insertId는 삽입된 레코드의 자동 생성된 ID (travelId)입니다.
   return { travelId: result.insertId };
+};
+
+// 일정 삭제
+export const removeCalendar = async (travelId: number) => {
+  const query = `
+    DELETE FROM TravelCalendar
+    WHERE travelId = ?
+  `;
+
+  const [result] = await pool.query(query, [travelId]);
+  return result;
 };
