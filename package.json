@@ -1,7 +1,7 @@
 {
   "name": "travel_box",
   "version": "1.0.0",
-  "main": "src/index.ts",
+  "main": "./dist/index.js",
   "type": "module",
   "scripts": {
     "test": "jest",
@@ -13,7 +13,7 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "aws-sdk": "^2.1692.0",
+    "@aws-sdk/client-s3": "^3.729.0",
     "bcrypt": "^5.1.1",
     "compression": "^1.7.5",
     "cors": "^2.8.5",
@@ -29,7 +29,6 @@
     "@babel/core": "^7.26.0",
     "@babel/preset-env": "^7.26.0",
     "@babel/preset-typescript": "^7.26.0",
-    "@types/aws-sdk": "^2.7.4",
     "@types/bcrypt": "^5.0.2",
     "@types/compression": "^1.7.5",
     "@types/cors": "^2.8.17",

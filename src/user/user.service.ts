@@ -1,14 +1,15 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import s3 from '../configs/database/s3Connect';
+import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 
-import { CustomError, errors } from '../middlewares/error.middleware';
-import { generateTokens, storeRefreshTokenInS3 } from '../middlewares/auth.middleware';
+import s3 from '../configs/database/s3Connect.ts';
+import { CustomError, errors } from '../middlewares/error.middleware.ts';
+import { generateTokens, storeRefreshTokenInS3 } from '../middlewares/auth.middleware.ts';
 
-import { findUserByUserTag } from './user.model';
-import { loginReqDto, loginResDto } from "./dto/login.dto"
-import { refreshTokenDto } from './dto/refreshToken.dto';
-import { logoutReqDto, logoutResDto } from "./dto/logout.dto"
+import { findUserByUserTag } from './user.model.ts';
+import { loginReqDto, loginResDto } from "./dto/login.dto.ts"
+import { refreshTokenDto } from './dto/refreshToken.dto.ts';
+import { logoutReqDto, logoutResDto } from "./dto/logout.dto.ts"
 
 export const loginService = async (userLoginInfo: loginReqDto) => {
     const userTag = userLoginInfo.userTag;
@@ -42,14 +43,21 @@ export const refreshTokenService = async (userRefreshToken: refreshTokenDto) => 
 
 
 // 로그아웃 (S3에서 토큰 삭제)
-export const logoutService = async (userTag: string) => {
-    
-    const params = {
-        Bucket: process.env.AWS_S3_BUCKET_NAME!,
-        Key: `tokens/${userTag}.json`
-    };
+// ✅ 리프레시 토큰 삭제 (로그아웃)
+export const logoutService = async (userTag: string): Promise<boolean> => {
+    try {
+        const params = {
+            Bucket: process.env.AWS_S3_BUCKET_NAME!,
+            Key: `tokens/${userTag}.json`
+        };
 
-    await s3.deleteObject(params).promise();
-    
-    return true;
+        const command = new DeleteObjectCommand(params);
+        await s3.send(command); // ✅ S3에서 삭제
+        
+        return true; // ✅ 성공 시 true 반환
+    } catch (error) {
+        console.error("Error deleting refresh token from S3:", error);
+        throw new Error("Failed to delete refresh token from S3");
+    }
 };
+

@@ -1,6 +1,6 @@
-import { loginReqDto, loginResDto } from "./dto/login.dto"
-import { logoutReqDto, logoutResDto } from "./dto/logout.dto"
-import { pool } from "../configs/database/mysqlConnect"
+import { loginReqDto, loginResDto } from "./dto/login.dto.ts"
+import { logoutReqDto, logoutResDto } from "./dto/logout.dto.ts"
+import { pool } from "../configs/database/mysqlConnect.ts"
 
     
 export const findUserByUserTag = async (userTag: string) => {

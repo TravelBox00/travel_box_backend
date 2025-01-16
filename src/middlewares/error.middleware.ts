@@ -1,4 +1,4 @@
-import { ErrorDTO } from "./dto/error.dto";
+import { ErrorDTO } from "./dto/error.dto.ts";
 
 export class CustomError extends Error {
   statusCode: number; // statusCode를 CustomError의 속성으로 추가

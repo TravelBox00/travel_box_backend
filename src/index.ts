@@ -5,7 +5,7 @@ import compression from "compression";
 import dotenv from "dotenv";
 
 import { Router } from 'express';
-import userRoutes from "./user/user.route";
+import userRoutes from "./user/user.route.ts";
 // dotenv 설정
 dotenv.config();
 

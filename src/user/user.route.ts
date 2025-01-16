@@ -1,5 +1,5 @@
 import express from "express";
-import {loginController, refreshTokenController, logoutController} from "./user.controller"
+import {loginController, refreshTokenController, logoutController} from "./user.controller.ts"
 const router = express.Router()
 
 router.get("/", (req, res) => {
@@ -7,7 +7,7 @@ router.get("/", (req, res) => {
   });
 
 router.use("/login", loginController);
-router.use("login/refresh", refreshTokenController);
-router.use("logout", logoutController);
+router.use("/login/refresh", refreshTokenController);
+router.use("/logout", logoutController);
 
 export default router;

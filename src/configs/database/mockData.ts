@@ -1,4 +1,4 @@
-import { pool } from "./mysqlConnect";
+import { pool } from "./mysqlConnect.ts";
 
 export const insertMockData = async () => {
   const connection = await pool.getConnection();
