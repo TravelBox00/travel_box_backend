@@ -29,21 +29,21 @@ export const toggleLike = async (
 export const toggleScrap = async (
   threadId: number,
   userId: number
-): Promise<{ message: string; isScraped: boolean }> => {
+): Promise<{ message: string; isScrapped: boolean }> => {
   try {
-    const isScraped = await threadModel.checkScrapStatus(threadId, userId);
+    const isScrapped = await threadModel.checkScrapStatus(threadId, userId);
 
-    if (isScraped) {
+    if (isScrapped) {
       // 스크랩 취소
       await threadModel.removeScrap(threadId, userId);
-      return { message: '스크랩 취소', isScraped: false };
+      return { message: '스크랩 취소', isScrapped: false };
     }
 
     // 스크랩 추가
     await threadModel.addScrap(threadId, userId);
-    return { message: '스크랩 성공', isScraped: true };
+    return { message: '스크랩 성공', isScrapped: true };
   } catch (error) {
     console.error(`Error in toggleScrap: ${error}`);
-    return { message: '에러 발생', isScraped: false };
+    return { message: '에러 발생', isScrapped: false };
   }
 };

@@ -13,8 +13,10 @@ export const toggleLike = async (
 
     if (!threadId || !userId) {
       res.status(400).json({
+        isSuccess: false,
+        code: '4000',
         message: 'threadId와 userId를 모두 제공해야 합니다.',
-        isLiked: false,
+        result: null,
       });
       return;
     }
@@ -22,14 +24,20 @@ export const toggleLike = async (
     const result = await threadService.toggleLike(threadId, userId);
 
     res.status(200).json({
-      message: result.message,
-      isLiked: result.isLiked,
+      isSuccess: true,
+      code: '2000',
+      message: result.isLiked ? '좋아요 성공' : '좋아요 취소',
+      result: {
+        isLiked: result.isLiked,
+      },
     });
   } catch (error) {
-    console.error('좋아요 API 에러:', error);
+    console.error('좋아요 토글 API 에러:', error);
     res.status(500).json({
+      isSuccess: false,
+      code: '5000',
       message: '서버 오류',
-      isLiked: false,
+      result: null,
     });
   }
 };
@@ -44,8 +52,10 @@ export const toggleScrap = async (
 
     if (!threadId || !userId) {
       res.status(400).json({
+        isSuccess: false,
+        code: '4000',
         message: 'threadId와 userId를 모두 제공해야 합니다.',
-        isScraped: false,
+        result: null,
       });
       return;
     }
@@ -53,14 +63,20 @@ export const toggleScrap = async (
     const result = await threadService.toggleScrap(threadId, userId);
 
     res.status(200).json({
-      message: result.message,
-      isScraped: result.isScraped,
+      isSuccess: true,
+      code: '2000',
+      message: result.isScrapped ? '스크랩 성공' : '스크랩 취소',
+      result: {
+        isScrapped: result.isScrapped,
+      },
     });
   } catch (error) {
-    console.error('스크랩 API 에러:', error);
+    console.error('스크랩 토글 API 에러:', error);
     res.status(500).json({
+      isSuccess: false,
+      code: '5000',
       message: '서버 오류',
-      isScraped: false,
+      result: null,
     });
   }
 };
