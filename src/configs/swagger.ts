@@ -10,7 +10,7 @@ const options: swaggerJsdoc.Options = {
       description: 'API documentation for travel box application',
     },
   },
-  apis: ['./src/routes/*.ts'], // 라우트 파일의 주석에서 Swagger 스키마를 가져옵니다.
+  apis: ['./src/**/*.ts'], // 라우트 파일의 주석에서 Swagger 스키마를 가져옵니다.
 };
 
 export const swaggerSpec = swaggerJsdoc(options);
