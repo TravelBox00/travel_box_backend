@@ -26,10 +26,41 @@ export const toggleLike = async (
       isLiked: result.isLiked,
     });
   } catch (error) {
-    console.error('좋아요 토글 API 에러:', error);
+    console.error('좋아요 API 에러:', error);
     res.status(500).json({
       message: '서버 오류',
       isLiked: false,
+    });
+  }
+};
+
+// 게시물 스크랩
+export const toggleScrap = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { threadId, userId } = req.body;
+
+    if (!threadId || !userId) {
+      res.status(400).json({
+        message: 'threadId와 userId를 모두 제공해야 합니다.',
+        isScraped: false,
+      });
+      return;
+    }
+
+    const result = await threadService.toggleScrap(threadId, userId);
+
+    res.status(200).json({
+      message: result.message,
+      isScraped: result.isScraped,
+    });
+  } catch (error) {
+    console.error('스크랩 API 에러:', error);
+    res.status(500).json({
+      message: '서버 오류',
+      isScraped: false,
     });
   }
 };
