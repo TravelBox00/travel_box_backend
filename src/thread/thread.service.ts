@@ -47,3 +47,29 @@ export const toggleScrap = async (
     return { message: '에러 발생', isScrapped: false };
   }
 };
+
+// 스크랩한 게시물 목록
+export const getScrappedThreads = async (
+  userId: number
+): Promise<{
+  message: string;
+  scrappedThreads: Array<{
+    threadId: number;
+    postTitle: string;
+    postContent: string;
+    userNickname: string;
+    isScrapped: boolean;
+    photoUrl: string;
+  }>;
+}> => {
+  try {
+    const scrappedThreads = await threadModel.getScrappedThreads(userId);
+    return {
+      message: '스크랩 목록 조회 성공',
+      scrappedThreads,
+    };
+  } catch (error) {
+    console.error(`Error in getScrappedThreads: ${error}`);
+    throw new Error('스크랩 목록 조회 실패');
+  }
+};
