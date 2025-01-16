@@ -3,8 +3,9 @@ import cors from "cors";
 import morgan from "morgan";
 import compression from "compression";
 import dotenv from "dotenv";
-import { Router } from 'express';
 
+import { Router } from 'express';
+import userRoutes from "./user/user.route";
 // dotenv 설정
 dotenv.config();
 
@@ -25,6 +26,8 @@ app.use(compression()); // 응답 압축
 app.use(morgan("dev")); // HTTP 로깅
 
 app.use('/', router);
+app.use("/users", userRoutes);
+
 
 // 서버 실행
 app.listen(port, () => {
