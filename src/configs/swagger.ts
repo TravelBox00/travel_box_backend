@@ -1,7 +1,7 @@
-import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
+import swaggerJsDoc from 'swagger-jsdoc';
 
-const options: swaggerJsdoc.Options = {
+const options: swaggerJsDoc.Options = {
   definition: {
     openapi: '3.0.0',
     info: {
@@ -10,8 +10,8 @@ const options: swaggerJsdoc.Options = {
       description: 'API documentation for travel box application',
     },
   },
-  apis: ['./src/routes/*.ts'], // 라우트 파일의 주석에서 Swagger 스키마를 가져옵니다.
+  apis: ['./src/**/*.ts'], // 라우트 파일의 주석에서 Swagger 스키마를 가져옵니다.
 };
 
-export const swaggerSpec = swaggerJsdoc(options);
+export const swaggerSpec = swaggerJsDoc(options);
 export { swaggerUi };

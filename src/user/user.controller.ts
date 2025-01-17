@@ -31,8 +31,9 @@ export const refreshTokenController = async (req: Request, res: Response) => {
 
 export const logoutController = async (req:Request, res:Response) => {
     try{
-        /*
+        
         const logoutReq: logoutReqDto = new logoutReqDto(req.body.userTag);
+        /*
         const logoutRes: logoutResDto = await logoutService(logoutReq);
 
         if(logoutRes.success){
