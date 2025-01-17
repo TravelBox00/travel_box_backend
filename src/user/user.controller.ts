@@ -9,7 +9,7 @@ export const loginController = async (req:Request, res:Response) => {
     try{
         const loginReq: loginReqDto = new loginReqDto(req.body.userTag, req.body.userPassword);
         const loginRes: loginResDto = await loginService(loginReq);
-
+        
         res.status(200).json(loginRes);
     }catch(error){
         console.error(error)
