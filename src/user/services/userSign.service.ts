@@ -5,22 +5,32 @@ import { signupReqDto } from '../dto/signup.dto.ts';
 import { successResDto } from '../dto/succsee.dto.ts';
 import { findUserTagByUserTag, userInfoDeleteByUserTag, userInfoRegisterByUserTag } from '../models/userSign.model.ts';
 
-export const signupService = async (userInfo: signupReqDto): Promise<successResDto> => {
+export const signupService = async (userInfo: signupReqDto): Promise<boolean> => {
     const success = await userInfoRegisterByUserTag(userInfo)// 그냥 insert만 하고 중복확인 하는 로직을 따로 생성 -> 어처피 프론트에서 중복이면 x
-    const successInfo: successResDto = {userTag: userInfo.userTag, success: success}
-    return successInfo
+    if(success == 1){
+        return true
+    }else{
+        throw new Error("not register userInfo");
+    }
 };
 
 export const duplicateService = async (userTag: string) => {
-    findUserTagByUserTag(userTag)
-    const successInfo: successResDto = {userTag: userTag, success: true}
-    return successInfo
+    let success = false
+    const dupulicate: number = await findUserTagByUserTag(userTag)
+
+    if(dupulicate == 1){
+        success = true
+    }
+    return success
 };
 
 export const signoutService = async (userTag: string) => {
-    userInfoDeleteByUserTag(userTag)
-    const successInfo: successResDto = {userTag: userTag, success: true}
-    return successInfo
+    let success = false
+    const deleteUser: number = await userInfoDeleteByUserTag(userTag)
+    if(deleteUser == 1){
+        success = true
+    }
+    return success
 };
 
 /*

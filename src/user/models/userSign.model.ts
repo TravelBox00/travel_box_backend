@@ -3,49 +3,44 @@ import { modifyResDto } from "../dto/modigy.dto.ts";
 import { signupReqDto } from "../dto/signup.dto.ts";
 
 export const userInfoRegisterByUserTag = async (userInfo:signupReqDto) => {
-    let success = false
     const {userTag, userPassword, userNickname} = userInfo
     const connection = await pool.getConnection();
     const query = `
-        INSERT INTO User (userPassword, userNickname, userTag)
+        INSERT INTO User (userTag, userPassword, userNickname)
         VALUES (?, ?, ?)
         `
-
-    const [[rows]]: any = await connection.execute(query, [userTag, userPassword, userNickname]);
+    const [rows]: any = await connection.execute(query, [userTag, userPassword, userNickname]);
     connection.release();
-    
-    console.log("affectedRows", rows.affectedRows);
-    if (rows.affectedRows == 1){
-        success = true;
-    }
-    
-    return success
+    return rows.affectedRows
 };
 
-export const findUserTagByUserTag = async (userTag:string) => {
+export const findUserTagByUserTag = async (userTag:string):Promise<number> => {
     const connection = await pool.getConnection();
+    console.log(userTag)
     const [[rows]]: any = await connection.execute(
-        `
-        INSERT INTO User (userPassword, userNickname, userTag)
-        VALUES (?, ?, ?)
-        `
+       `
+        SELECT COUNT(*) as count
+        FROM User 
+        WHERE userTag = ?
+        `, [userTag]
     );
     connection.release();
-
-    return rows
+    console.log(rows.count)
+    return rows.count
 };
 
-export const userInfoDeleteByUserTag = async (userTag:string) => {
+export const userInfoDeleteByUserTag = async (userTag:string):Promise<number> => {
+    
     const connection = await pool.getConnection();
-    const [[rows]]: any = await connection.execute(
+    const [rows]: any = await connection.execute(
         `
-        INSERT INTO User (userPassword, userNickname, userTag)
-        VALUES (?, ?, ?)
-        `
+        DELETE FROM User
+        WHERE userTag = ?
+        `, [userTag]
     );
     connection.release();
-
-    return rows
+    console.log(rows.affectedRows)
+    return rows.affectedRows
 };
 
 export const userInfoChangeByUserTag = async (userInfo: modifyResDto) => {
