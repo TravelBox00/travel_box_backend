@@ -9,6 +9,20 @@ const options: swaggerJsDoc.Options = {
       version: '1.0.0',
       description: 'API documentation for travel box application',
     },
+    components: {
+      securitySchemes: {
+        BearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+        },
+      },
+    },
+    security: [
+      {
+        BearerAuth: [],
+      },
+    ],
   },
   apis: ['./src/**/*.ts'], // 라우트 파일의 주석에서 Swagger 스키마를 가져옵니다.
 };
