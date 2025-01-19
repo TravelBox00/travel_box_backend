@@ -1,11 +1,10 @@
 import bcrypt from 'bcrypt';
-import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 
 import s3 from '../../configs/database/s3Connect.ts';
 import { CustomError, errors } from '../../middlewares/error.middleware.ts';
 import { generateTokens } from '../../middlewares/auth.middleware.ts';
 
-import { findUserByUserTag, getRefreshTokenFromS3, storeRefreshTokenInS3 } from '../models/userLogin.model.ts';
+import { findUserByUserTag, getRefreshTokenFromS3, storeRefreshTokenInS3, deleteRefreshTokenInS3 } from '../models/userLogin.model.ts';
 import { loginReqDto, loginResDto } from "../dto/login.dto.ts"
 import { refreshTokenDto } from '../dto/refreshToken.dto.ts';
 import { logoutReqDto, logoutResDto } from "../dto/logout.dto.ts"
@@ -49,29 +48,21 @@ const handleTokenOperations = async (userTag: string) => {
     const userRefreshToken = { userTag, refreshToken };
 
     // S3에 refreshToken 저장
-    const storedToken = await storeRefreshTokenInS3(userRefreshToken);
-    if (!storedToken || storedToken !== refreshToken) {
+    const success = await storeRefreshTokenInS3(userRefreshToken);
+    if(success == true){
+        return { accessToken, refreshToken };
+    }else{
         throw new Error("Token storage failed or token mismatch");
-    }
-    
-    return { accessToken, refreshToken };
+    }        
 };
 
 // 로그아웃 (S3에서 토큰 삭제)
-export const logoutService = async (userTag: string): Promise<boolean> => {
-    try {
-        const params = {
-            Bucket: process.env.AWS_S3_BUCKET_NAME!,
-            Key: `tokens/${userTag}.json`
-        };
-
-        const command = new DeleteObjectCommand(params);
-        await s3.send(command); // ✅ S3에서 삭제
-        
-        return true; // ✅ 성공 시 true 반환
-    } catch (error) {
-        console.error("Error deleting refresh token from S3:", error);
-        throw new Error("Failed to delete refresh token from S3");
-    }
+export const logoutService = async (userTag: string): Promise<null> => {
+    const success = await deleteRefreshTokenInS3(userTag)
+    if(success == true){
+        return null;
+    }else{
+        throw new Error("Token delete failed");
+    }  
 };
 

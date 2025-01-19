@@ -1,6 +1,6 @@
 import express from "express";
 import {loginController, refreshTokenController, logoutController} from "./controllers/userLogin.controller.ts"
-import {signupController, duplicateController, signoutController, modifyController} from "./controllers/userSign.controller.ts"
+import {signupController, duplicateController, signoutController} from "./controllers/userSign.controller.ts"
 import {authenticateToken} from "../middlewares/auth.middleware.ts"
 const router = express.Router()
 
@@ -8,13 +8,13 @@ router.get("/", (req, res) => {
     res.send("User main route");
   });
 
-router.use("/login", loginController);
-router.use("/login/refresh", refreshTokenController);
-router.use("/logout", logoutController);
+router.post("/login", loginController);
+router.post("/login/refresh", refreshTokenController);
+router.post("/logout", logoutController);
 router.post("/signup", signupController)
 router.post("/signup/duplicate", duplicateController)
 router.delete("/signout" , signoutController)
-router.patch("/modify", modifyController)
+//router.patch("/modify", modifyController)
 /**
  * @swagger
  * tags:

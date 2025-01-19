@@ -41,11 +41,12 @@ export const signoutController = async (req: Request, res: Response) => {
 export const modifyController = async (req: Request, res: Response) => {
     try {
         const modifyReq: modifyReqDto = new signupReqDto(req.body.userTag, req.body.userPassword, req.body.user. userNickname);
-        const modifyRes: modifyResDto = signupService(modifyReq)
+        const modifyRes: successResDto = signupService(modifyReq)
   
       res.status(200).send();
     } catch (error) {
   
     }
   };
-  */
+  
+*/

@@ -29,21 +29,19 @@ export const refreshTokenController = async (req: Request, res: Response) => {
     }
 };
 
-export const logoutController = async (req:Request, res:Response) => {
-    try{
-        
-        const logoutReq: logoutReqDto = new logoutReqDto(req.body.userTag);
-        /*
-        const logoutRes: logoutResDto = await logoutService(logoutReq);
+export const logoutController = async (req: Request, res: Response) => {
+    try {
 
-        if(logoutRes.success){
-            res.status(200).json(logoutRes)
-        }
-            */
-    }catch(error){
-        console.error(error)
+        const logoutReq = new logoutReqDto(req.body.userTag);
+        const userTag = logoutReq.userTag;  // userTag 속성을 추출
+
+        const logoutRes = await logoutService(userTag);  // 문자열 userTag를 인자로 전달
+
+        res.status(200).json(logoutRes);
+    } catch (error) {
+        console.error(error);
         res.status(500).json(error);
-   }
+    }
+};
         
-}
     

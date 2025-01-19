@@ -6,7 +6,7 @@ import { successResDto } from '../dto/succsee.dto.ts';
 import { findUserTagByUserTag, userInfoDeleteByUserTag, userInfoRegisterByUserTag } from '../models/userSign.model.ts';
 
 export const signupService = async (userInfo: signupReqDto): Promise<successResDto> => {
-    const success = userInfoRegisterByUserTag(userInfo)// 그냥 insert만 하고 중복확인 하는 로직을 따로 생성 -> 어처피 프론트에서 중복이면 x
+    const success = await userInfoRegisterByUserTag(userInfo)// 그냥 insert만 하고 중복확인 하는 로직을 따로 생성 -> 어처피 프론트에서 중복이면 x
     const successInfo: successResDto = {userTag: userInfo.userTag, success: success}
     return successInfo
 };
