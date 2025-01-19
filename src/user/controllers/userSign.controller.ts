@@ -6,6 +6,7 @@ import { duplicateResDto } from '../dto/duplicate.dto.ts';
 import { signoutResDto } from '../dto/signout.dto.ts';
 import { successResDto } from '../dto/succsee.dto.ts';
 
+
 export const signupController = async (req:Request, res:Response) => {
     try{
         const signupReq: signupReqDto = new signupReqDto(req.body.userTag, req.body.userPassword, req.body.userNickname);
@@ -41,13 +42,12 @@ export const signoutController = async (req: Request, res: Response) => {
 /*
 export const modifyController = async (req: Request, res: Response) => {
     try {
-        const modifyReq: modifyReqDto = new signupReqDto(req.body.userTag, req.body.userPassword, req.body.user. userNickname);
-        const modifyRes: successResDto = signupService(modifyReq)
+        const modifyReq: modifyReqDto = new signupReqDto(req.body.userTag, req.body.userPassword, req.body.userNickname);
+        const modifyRes: boolean = await modifyService(modifyReq)
   
-      res.status(200).send();
+      res.status(200).send(modifyRes);
     } catch (error) {
   
     }
   };
-  
 */

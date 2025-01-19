@@ -1,5 +1,4 @@
 import { pool } from "../../configs/database/mysqlConnect.ts"
-import { modifyResDto } from "../dto/modigy.dto.ts";
 import { signupReqDto } from "../dto/signup.dto.ts";
 
 export const userInfoRegisterByUserTag = async (userInfo:signupReqDto) => {
@@ -42,8 +41,8 @@ export const userInfoDeleteByUserTag = async (userTag:string):Promise<number> =>
     console.log(rows.affectedRows)
     return rows.affectedRows
 };
-
-export const userInfoChangeByUserTag = async (userInfo: modifyResDto) => {
+/*
+export const userInfoChangeByUserTag = async () => {
     const connection = await pool.getConnection();
     const [[rows]]: any = await connection.execute(
         `
@@ -55,3 +54,4 @@ export const userInfoChangeByUserTag = async (userInfo: modifyResDto) => {
 
     return rows
 };
+*/

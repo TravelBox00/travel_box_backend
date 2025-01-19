@@ -36,6 +36,6 @@ export const signoutService = async (userTag: string) => {
 /*
 export const modifyService = async () => {
     userInfoChangeByUserTag()
-    return
+    return true
 };
 */
