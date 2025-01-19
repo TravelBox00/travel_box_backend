@@ -1,14 +1,14 @@
 import bcrypt from 'bcrypt';
 import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 
-import s3 from '../configs/database/s3Connect.ts';
-import { CustomError, errors } from '../middlewares/error.middleware.ts';
-import { generateTokens } from '../middlewares/auth.middleware.ts';
+import s3 from '../../configs/database/s3Connect.ts';
+import { CustomError, errors } from '../../middlewares/error.middleware.ts';
+import { generateTokens } from '../../middlewares/auth.middleware.ts';
 
-import { findUserByUserTag, storeRefreshTokenInS3 } from './user.model.ts';
-import { loginReqDto, loginResDto } from "./dto/login.dto.ts"
-import { refreshTokenDto } from './dto/refreshToken.dto.ts';
-import { logoutReqDto, logoutResDto } from "./dto/logout.dto.ts"
+import { findUserByUserTag, getRefreshTokenFromS3, storeRefreshTokenInS3 } from '../models/userLogin.model.ts';
+import { loginReqDto, loginResDto } from "../dto/login.dto.ts"
+import { refreshTokenDto } from '../dto/refreshToken.dto.ts';
+import { logoutReqDto, logoutResDto } from "../dto/logout.dto.ts"
 
 export const loginService = async (userLoginInfo: loginReqDto) => {
     const userTag = userLoginInfo.userTag;
@@ -27,14 +27,21 @@ export const loginService = async (userLoginInfo: loginReqDto) => {
     return userTokenInfo;
 };
 
-export const refreshTokenService = async (userRefreshToken: refreshTokenDto) => {
+export const refreshTokenService = async (userRefreshToken: refreshTokenDto): Promise<loginResDto> => {
     const { refreshToken, userTag } = userRefreshToken;
-
-    const storedToken = await storeRefreshTokenInS3({ userTag, refreshToken });
+    const storedToken = await getRefreshTokenFromS3(userTag);
+    
     if (!storedToken || storedToken !== refreshToken) {
         throw new Error("Invalid refresh token");
     }
-    return await handleTokenOperations(userTag);
+    const tokens = await handleTokenOperations(userTag);
+    const userTokenInfo: loginResDto = {
+        userTag, 
+        accessToken: tokens.accessToken, 
+        refreshToken: tokens.refreshToken
+    };
+
+    return userTokenInfo;
 };
 
 const handleTokenOperations = async (userTag: string) => {
@@ -46,7 +53,7 @@ const handleTokenOperations = async (userTag: string) => {
     if (!storedToken || storedToken !== refreshToken) {
         throw new Error("Token storage failed or token mismatch");
     }
-
+    
     return { accessToken, refreshToken };
 };
 

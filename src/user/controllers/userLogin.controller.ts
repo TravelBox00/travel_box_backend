@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
-import { CustomError, errors } from '../middlewares/error.middleware.ts';
-import { loginReqDto, loginResDto } from "./dto/login.dto.ts"
-import { logoutReqDto, logoutResDto } from "./dto/logout.dto.ts"
-import {loginService, logoutService, refreshTokenService} from "./user.service.ts"
-import { refreshTokenDto } from './dto/refreshToken.dto.ts';
+import { CustomError, errors } from '../../middlewares/error.middleware.ts';
+import { loginReqDto, loginResDto } from "../dto/login.dto.ts"
+import { logoutReqDto, logoutResDto } from "../dto/logout.dto.ts"
+import {loginService, logoutService, refreshTokenService} from "../services/userLogin.service.ts"
+import { refreshTokenDto } from '../dto/refreshToken.dto.ts';
 
 export const loginController = async (req:Request, res:Response) => {
     try{

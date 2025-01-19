@@ -1,11 +1,10 @@
-import { loginReqDto, loginResDto } from "./dto/login.dto.ts"
-import { logoutReqDto, logoutResDto } from "./dto/logout.dto.ts"
-import { pool } from "../configs/database/mysqlConnect.ts"
-import { refreshTokenDto } from '../user/dto/refreshToken.dto.ts';
-import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
-import s3 from '../configs/database/s3Connect.ts';
+import { loginReqDto, loginResDto } from "../dto/login.dto.ts"
+import { logoutReqDto, logoutResDto } from "../dto/logout.dto.ts"
+import { pool } from "../../configs/database/mysqlConnect.ts"
+import { refreshTokenDto } from '../dto/refreshToken.dto.ts';
+import { PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import s3 from '../../configs/database/s3Connect.ts';
 
-const S3_BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME!;
 export const findUserByUserTag = async (userTag: string) => {
     const connection = await pool.getConnection();
     const [[rows]]: any = await connection.execute(
@@ -32,12 +31,12 @@ export const logoutModel = async (logoutUserInfo:logoutReqDto): Promise<logoutRe
 
 // S3에 리프레시 토큰 저장
 export const storeRefreshTokenInS3 = async (userRefreshToken: refreshTokenDto): Promise<string> => {
-    try {// 여기에 일정 시간이후에 삭제되게 하면 됨
+    try {
         const userTag = userRefreshToken.userTag;
         const refreshToken = userRefreshToken.refreshToken;
 
         const params = {
-            Bucket: S3_BUCKET_NAME,
+            Bucket: process.env.AWS_BUCKET,
             Key: `tokens/${userTag}.json`,
             Body: JSON.stringify({ refreshToken }),
             ContentType: 'application/json'
@@ -57,27 +56,19 @@ export const storeRefreshTokenInS3 = async (userRefreshToken: refreshTokenDto): 
 export const getRefreshTokenFromS3 = async (userTag: string): Promise<string | null> => {
     try {
 
-        const s3 = new S3Client({
-            region: process.env.AWS_REGION!,
-            credentials: {
-                accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-                secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-            },
-        });
         const params = {
-            Bucket: S3_BUCKET_NAME,
+            Bucket: process.env.AWS_BUCKET,
             Key: `tokens/${userTag}.json`
         };
         
         const command = new GetObjectCommand(params);
         const response = await s3.send(command);
-
+        
         if (!response.Body) {
-            return null;
+            throw new Error("Not Found refresh token in S3");
         }
         const body = await response.Body.transformToString();
         const parsedData = JSON.parse(body);
-
         return parsedData.refreshToken;
     } catch (error) {
         console.error("Error retrieving refresh token from S3:", error);
