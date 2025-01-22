@@ -1,30 +1,28 @@
 import bcrypt from 'bcrypt';
-import s3 from '../../configs/database/s3Connect.ts';
-import { CustomError, errors } from '../../middlewares/error.middleware.ts';
 import { signupReqDto } from '../dto/signup.dto.ts';
-import { successResDto } from '../dto/succsee.dto.ts';
-import { findUserTagByUserTag, userInfoDeleteByUserTag, userInfoRegisterByUserTag, userInfoChangeByUserTag } from '../models/userSign.model.ts';
+import { findUserTagByUserTag, userInfoDeleteByUserTag, userInfoRegisterByUserTag } from '../models/userSign.model.ts';
+import { CustomError, errors } from '../../middlewares/error.middleware.ts';
 
-export const signupService = async (userInfo: signupReqDto): Promise<successResDto> => {
-    const success = await userInfoRegisterByUserTag(userInfo)// 그냥 insert만 하고 중복확인 하는 로직을 따로 생성 -> 어처피 프론트에서 중복이면 x
-    const successInfo: successResDto = {userTag: userInfo.userTag, success: success}
-    return successInfo
-};
+export const signupService = async (userInfo: signupReqDto) => {
+    const {userTag, userPassword, userNickname} = userInfo
+    // validation 로직 있으면 추가하기
+    const hashedPassword: string = await bcrypt.hash(userPassword, 10);
+    await userInfoRegisterByUserTag({userTag, hashedPassword, userNickname })
+};  
 
 export const duplicateService = async (userTag: string) => {
-    findUserTagByUserTag(userTag)
-    const successInfo: successResDto = {userTag: userTag, success: true}
-    return successInfo
+    let duplicate = false
+    const CheckUserTag: number = await findUserTagByUserTag(userTag)
+
+    if(CheckUserTag == 1){
+        duplicate = true
+    }
+    return duplicate
 };
 
 export const signoutService = async (userTag: string) => {
-    userInfoDeleteByUserTag(userTag)
-    const successInfo: successResDto = {userTag: userTag, success: true}
-    return successInfo
-};
-
-
-export const modifyService = async () => {
-    //userInfoChangeByUserTag()
-    return
+    const deleteCount:number = await userInfoDeleteByUserTag(userTag)
+    if(deleteCount != 1){
+        throw new CustomError(errors.NOT_FOUND_USER_TAG);
+    }
 };

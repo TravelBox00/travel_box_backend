@@ -10,6 +10,18 @@ export class signupReqDto {
     }
 }
 
+export class hashedSignupDto {
+    userTag:string;
+    hashedPassword:string;
+    userNickname:string;
+
+    constructor(userTag:string, hashedPassword:string, userNickname:string) {
+        this.userTag = userTag
+        this.hashedPassword = hashedPassword
+        this.userNickname = userNickname
+    }
+}
+
 export class signupResDto {
     userTag:string;
     success:boolean;

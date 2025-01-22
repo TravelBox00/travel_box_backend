@@ -1,28 +1,61 @@
 import { pool } from "../../configs/database/mysqlConnect.ts"
-import { modifyResDto } from "../dto/modify.dto.ts";
-import { signupReqDto } from "../dto/signup.dto.ts";
+import { hashedSignupDto } from "../dto/signup.dto.ts";
 
-export const userInfoRegisterByUserTag = async (userInfo:signupReqDto) => {
-    let success = false
-    const {userTag, userPassword, userNickname} = userInfo
-    const connection = await pool.getConnection();
-    const query = `
-        INSERT INTO User (userPassword, userNickname, userTag)
-        VALUES (?, ?, ?)
-        `
 
-    const [[rows]]: any = await connection.execute(query, [userTag, userPassword, userNickname]);
-    connection.release();
-    
-    console.log("affectedRows", rows.affectedRows);
-    if (rows.affectedRows == 1){
-        success = true;
+export const userInfoRegisterByUserTag = async (userInfo: hashedSignupDto) => {
+    try{
+        const {userTag, hashedPassword, userNickname} = userInfo
+        const connection = await pool.getConnection();
+        const query = `
+            INSERT INTO User (userTag, userPassword, userNickname)
+            VALUES (?, ?, ?)
+            `
+        await connection.execute(query, [userTag, hashedPassword, userNickname]);
+        connection.release();
+    }catch(error){
+        console.error(error)
+        throw new Error();
     }
-    
-    return success
 };
 
-export const findUserTagByUserTag = async (userTag:string) => {
+export const findUserTagByUserTag = async (userTag:string): Promise<number> => {
+    try{
+        const connection = await pool.getConnection();
+        const [[rows]]: any = await connection.execute(
+           `
+            SELECT COUNT(*) as count
+            FROM User 
+            WHERE userTag = ?
+            `, [userTag]
+        );
+        connection.release();
+        console.log(rows.count)
+        return rows.count
+    }catch(error){
+        console.error(error)
+        throw new Error();
+    }
+};
+
+export const userInfoDeleteByUserTag = async (userTag:string): Promise<number> => {
+    try{
+        const connection = await pool.getConnection();
+        const [rows]: any = await connection.execute(
+            `
+            DELETE FROM User
+            WHERE userTag = ?
+            `, [userTag]
+        );
+        connection.release();
+        console.log(rows.affectedRows)
+        return rows.affectedRows
+    }catch(error){
+        console.error(error)
+        throw new Error
+    }
+};
+/*
+export const userInfoChangeByUserTag = async () => {
     const connection = await pool.getConnection();
     const [[rows]]: any = await connection.execute(
         `
@@ -34,29 +67,4 @@ export const findUserTagByUserTag = async (userTag:string) => {
 
     return rows
 };
-
-export const userInfoDeleteByUserTag = async (userTag:string) => {
-    const connection = await pool.getConnection();
-    const [[rows]]: any = await connection.execute(
-        `
-        INSERT INTO User (userPassword, userNickname, userTag)
-        VALUES (?, ?, ?)
-        `
-    );
-    connection.release();
-
-    return rows
-};
-
-export const userInfoChangeByUserTag = async (userInfo: modifyResDto) => {
-    const connection = await pool.getConnection();
-    const [[rows]]: any = await connection.execute(
-        `
-        INSERT INTO User (userPassword, userNickname, userTag)
-        VALUES (?, ?, ?)
-        `
-    );
-    connection.release();
-
-    return rows
-};
+*/

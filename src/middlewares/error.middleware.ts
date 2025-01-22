@@ -46,20 +46,20 @@ console.error(error);// 콘솔에 에러 출력
 return res.status(error.statusCode).json(error);// error 객체 그대로 사용하여 응답
 */
 export const errors = {
-    NOT_FOUND_USER_TAG: {
-      statusCode: 404,
-      code: 1,
-      description: "User ID does not exist.",
-    },
-    INVALID_PASSWORD: {
-      statusCode: 401,
-      code: 1,
-      description: "The password provided is incorrect.",
-    },
-    INVALID_TOKEN: {
-      statusCode: 401,
-      code: 2,
-      description: "The token provided is invalid or expired.",
-    },
-  };
+  NOT_FOUND_USER_TAG: {
+    statusCode: 404,
+    code: 1,
+    description: "User ID does not exist.",
+  },
+  INVALID_PASSWORD: {
+    statusCode: 401,
+    code: 1,
+    description: "The password provided is incorrect.",
+  },
+  INVALID_TOKEN: {
+    statusCode: 401,
+    code: 2,
+    description: "The token provided is invalid or expired.",
+  },
+};
   

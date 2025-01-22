@@ -12,9 +12,10 @@ router.post("/login", loginController);
 router.post("/login/refresh", refreshTokenController);
 router.delete("/logout/:userTag", logoutController);
 router.post("/signup", signupController)
-router.post("/signup/duplicate", duplicateController)
-router.delete("/signout" , signoutController)
-router.patch("/modify", modifyController)
+router.get("/signup/duplicate/:userTag", duplicateController)
+router.delete("/signout/:userTag" , signoutController)
+// router.patch("/modify", modifyController)
+
 /**
  * @swagger
  * tags:
@@ -177,18 +178,25 @@ router.patch("/modify", modifyController)
  *                 type: string
  *                 example: "John Doe"
  *     responses:
- *       201:
- *         description: 사용자 생성 성공
- *       400:
- *         description: 요청 오류 (필수 필드 누락 등)
+ *       200:
+ *         description: 회원가입 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 userTag:
+ *                   type: null
+ *                   description: null
+ *                   example: ""
  *       500:
- *         description: 서버 오류
+ *         description: Internal Server Error.
  */
 
 /**
  * @swagger
  * /users/signup/duplicate:
- *   post:
+ *   get:
  *     summary: 아이디 중복 확인
  *     description: 새로운 사용자의 아이디(userTag)가 중복되는지 확인합니다.
  *     tags:
@@ -205,7 +213,7 @@ router.patch("/modify", modifyController)
  *                 example: johndoe123
  *     responses:
  *       200:
- *         description: 아이디 사용 가능 여부 반환
+ *         description: 아이디 중복
  *         content:
  *           application/json:
  *             schema:
@@ -214,10 +222,18 @@ router.patch("/modify", modifyController)
  *                 isAvailable:
  *                   type: boolean
  *                   example: true
- *       400:
- *         description: 요청 오류 (필수 필드 누락 등)
+ *       200:
+ *         description: 아이디 중복 x
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 isAvailable:
+ *                   type: boolean
+ *                   example: false
  *       500:
- *         description: 서버 오류
+ *         description: Internal Server Error.
  */
 
 /**
@@ -242,11 +258,20 @@ router.patch("/modify", modifyController)
  *                 example: johndoe123
  *     responses:
  *       200:
- *         description: 로그아웃 성공
- *       400:
- *         description: 요청 오류 (잘못된 사용자)
+ *         description: 회원가입 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 userTag:
+ *                   type: null
+ *                   description: null
+ *                   example: ""
+ *       404:
+ *         description: User ID does not exist.
  *       500:
- *         description: 서버 오류
+ *         description: Internal Server Error.
  */
 
 /**
@@ -286,3 +311,4 @@ router.patch("/modify", modifyController)
  */
 
 export default router;
+
