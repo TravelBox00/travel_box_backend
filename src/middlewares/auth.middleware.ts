@@ -17,15 +17,30 @@ export const generateTokens = (userTag: string) => {
     }
 };
 
-export const authenticateToken = (req: Request, res:Response, next: NextFunction) => {
-    const token = req.header('Authorization')?.split(' ')[1];// 토큰을 header에서 확인
-    if (!token) return res.status(401).json({ message: "Unauthorized" });
+export const authenticateToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const token = req.header('Authorization')?.split(' ')[1];
+    if (!token) {
+        res.status(401).json({ message: "Unauthorized" });
+        return;  // Promise<void> 반환
+    }
 
-    jwt.verify(token, JWT_SECRET, (err, decoded) => {// 유효성 검사
-        if (err) return res.status(403).json({ message: "Invalid token" });
-        req.body.userTag = (decoded as any).userTag;// any는 토큰 저장된거 확인하면서 바꿀 수 있으면 바꾸기
+    // jwt.verify를 프로미스로 감싸 처리
+    try {
+        const decoded = await new Promise((resolve, reject) => {
+            jwt.verify(token, process.env.JWT_SECRET as string, (err, decoded) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(decoded);
+                }
+            });
+        });
+        
+        req.body.userTag = (decoded as any).userTag; // decoded 정보를 사용하여 필요한 작업 수행
         next();
-    });
+    } catch (err) {
+        res.status(403).json({ message: "Invalid token" });
+    }
 };
 /*
 사용 방법
