@@ -1,9 +1,26 @@
-import { pool } from "./mysqlConnect";
+import { pool } from "./mysqlConnect.ts";
+import bcrypt from "bcrypt"
 
 export const insertMockData = async () => {
   const connection = await pool.getConnection();
 
-  try {
+  try {      
+    const password = 'password3188';
+    const nickname = 'ljm';
+    const tag = 'ljm#123';
+
+    // 비밀번호 해싱
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // 데이터베이스에 저장
+    const query = `
+        INSERT INTO User (userPassword, userNickname, userTag)
+        VALUES (?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+        userPassword=VALUES(userPassword), userNickname=VALUES(userNickname);
+    `;
+    await connection.execute(query, [hashedPassword, nickname, tag]);
+    
     // Insert into User Table
     await connection.query(`
       INSERT INTO User (userPassword, userNickname, userTag) VALUES 
@@ -99,6 +116,7 @@ export const insertMockData = async () => {
   } finally {
     await connection.release();
   }
+    
 };
 
 // Add this at the end of your file

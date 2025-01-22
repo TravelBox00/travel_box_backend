@@ -1,12 +1,12 @@
-import { ErrorDTO } from "./dto/error.dto";
+import { ErrorDTO } from "./dto/error.dto.ts";
 
 export class CustomError extends Error {
   statusCode: number; // statusCode를 CustomError의 속성으로 추가
   code: number;
   description: string;
-  path: string;
+  path?: string;
 
-  constructor(error: ErrorDTO) {
+  constructor(error: Omit<ErrorDTO, 'path'>) {
     super(error.description);
 
     this.statusCode = error.statusCode;
@@ -46,15 +46,20 @@ console.error(error);// 콘솔에 에러 출력
 return res.status(error.statusCode).json(error);// error 객체 그대로 사용하여 응답
 */
 export const errors = {
-    NOT_FOUND: {
+    NOT_FOUND_USER_TAG: {
       statusCode: 404,
       code: 1,
-      description: "User with the given ID does not exist.",
+      description: "User ID does not exist.",
     },
-    INVALID_INPUT: {
-      statusCode: 400,
+    INVALID_PASSWORD: {
+      statusCode: 401,
+      code: 1,
+      description: "The password provided is incorrect.",
+    },
+    INVALID_TOKEN: {
+      statusCode: 401,
       code: 2,
-      description: "The input provided is not valid.",
+      description: "The token provided is invalid or expired.",
     },
   };
   
