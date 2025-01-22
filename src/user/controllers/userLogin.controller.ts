@@ -47,7 +47,6 @@ export const refreshTokenController = async (req: Request, res: Response): Promi
 export const logoutController = async (req: Request, res: Response): Promise<void> => {
     try {
         const userTag:string = req.params.userTag
-        console.log(req.params)
         const logoutRes: null = await logoutService(userTag); 
 
         res.status(200).json(logoutRes);

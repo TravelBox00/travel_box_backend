@@ -1,6 +1,6 @@
 import express from "express";
 import {loginController, refreshTokenController, logoutController} from "./controllers/userLogin.controller.ts"
-import {signupController, duplicateController, signoutController, modifyController} from "./controllers/userSign.controller.ts"
+import {signupController, duplicateController, signoutController} from "./controllers/userSign.controller.ts"
 import {authenticateToken} from "../middlewares/auth.middleware.ts"
 const router = express.Router()
 
@@ -10,10 +10,10 @@ router.get("/", (req, res) => {
 
 router.post("/login", loginController);
 router.post("/login/refresh", refreshTokenController);
-router.delete("/logout/:userTag", logoutController);
+router.delete("/logout/:userTag", authenticateToken, logoutController);
 router.post("/signup", signupController)
 router.get("/signup/duplicate/:userTag", duplicateController)
-router.delete("/signout/:userTag" , signoutController)
+router.delete("/signout/:userTag" , authenticateToken, signoutController)
 // router.patch("/modify", modifyController)
 
 /**
@@ -213,7 +213,7 @@ router.delete("/signout/:userTag" , signoutController)
  *                 example: johndoe123
  *     responses:
  *       200:
- *         description: 아이디 중복
+ *         description: "true면 중복, false면 중복x"
  *         content:
  *           application/json:
  *             schema:
@@ -222,16 +222,6 @@ router.delete("/signout/:userTag" , signoutController)
  *                 isAvailable:
  *                   type: boolean
  *                   example: true
- *       200:
- *         description: 아이디 중복 x
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 isAvailable:
- *                   type: boolean
- *                   example: false
  *       500:
  *         description: Internal Server Error.
  */
