@@ -1,4 +1,5 @@
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 
 import { CustomError, errors } from '../../middlewares/error.middleware.ts';
 import { generateTokens } from '../../middlewares/auth.middleware.ts';
@@ -14,7 +15,8 @@ export const loginService = async (userLoginInfo: loginReqDto): Promise<tokensDt
     const userInfo = await findUserByUserTag(userTag);
     if (!userInfo) throw new CustomError(errors.NOT_FOUND_USER_TAG); // custom error 적용시키기
 
-    const isPasswordValid = await bcrypt.compare(userPassword, userInfo.userPassword);
+    const firstHash = crypto.createHash('sha256').update(userPassword).digest('hex');
+    const isPasswordValid = await bcrypt.compare(firstHash, userInfo.userPassword);
     if (!isPasswordValid) throw new CustomError(errors.INVALID_PASSWORD); // custom error 적용시키기
 
     const { accessToken, refreshToken } = await handleTokenOperations(userInfo.userTag);
