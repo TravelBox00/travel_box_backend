@@ -6,7 +6,7 @@ import { refreshTokenDto, tokensDto } from '../dto/token.dto.ts';
 
 export const loginController = async (req:Request, res:Response): Promise<void> => {
     try{
-        const loginReq: loginReqDto = new loginReqDto(req.body.userTag, req.body.userPassword);
+        const loginReq: loginReqDto = req.body;
         const loginRes: tokensDto = await loginService(loginReq);
         
         res.status(200).json({ result: loginRes, isSuccess: true });
@@ -26,7 +26,7 @@ export const loginController = async (req:Request, res:Response): Promise<void> 
 
 export const refreshTokenController = async (req: Request, res: Response): Promise<void> => {
     try {
-        const refreshTokenReq: refreshTokenDto = new refreshTokenDto(req.body.userTag, req.body.refreshToken);
+        const refreshTokenReq: refreshTokenDto = req.body;
         const newAccessToken: tokensDto = await refreshTokenService(refreshTokenReq);
 
         res.status(200).json({ result: newAccessToken, isSuccess: true });

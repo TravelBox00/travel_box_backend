@@ -62,6 +62,11 @@ export const errors = {
     code: 2,
     description: "The token provided is invalid or expired.",
   },
+  NOT_INPUT_VALUE: {
+    statusCode: 400,
+    code: 1,
+    description: "Not provided value.",
+  },
 };
   
 
