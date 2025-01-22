@@ -1,15 +1,20 @@
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
+
 import { signupReqDto } from '../dto/signup.dto.ts';
 import { findUserTagByUserTag, userInfoChangeByUserTag, userInfoDeleteByUserTag, userInfoRegisterByUserTag } from '../models/userSign.model.ts';
 import { CustomError, errors } from '../../middlewares/error.middleware.ts';
 import { modifyReqDto } from '../dto/modify.dto.ts';
-import { findUserByUserTag } from '../models/userLogin.model.ts';
+import { checkNickname, checkPassword, checkRequired } from '../utils/loginValidate.ts';
 
 export const signupService = async (userInfo: signupReqDto) => {
     const {userTag, userPassword, userNickname} = userInfo
-    // validation 로직 있으면 추가하기
-    const hashedPassword: string = await bcrypt.hash(userPassword, 10);
+    await checkRequired(userInfo)
+    await checkNickname(userNickname)
+    await checkPassword(userPassword)
+    const firstHash = crypto.createHash('sha256').update(userPassword).digest('hex');
+    const hashedPassword: string = await bcrypt.hash(firstHash, 10);
     await userInfoRegisterByUserTag({userTag, hashedPassword, userNickname })
 };  
 

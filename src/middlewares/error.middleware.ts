@@ -28,7 +28,21 @@ export class CustomError extends Error {
     return match ? match[1] : "Unknown location";
   }
 }
-
+export function errorHandler(err: Error, req: Request, res: Response, next: NextFunction) {
+  if (err instanceof CustomError) {
+    res.status(err.statusCode).json({
+      code: err.code,
+      description: err.description,
+      path: err.path
+    });
+  } else {
+    res.status(500).json({
+      code: 500,
+      description: 'Internal Server Error',
+      path: req.path
+    });
+  }
+}
 
 // 아래와 같이 정의하고 사용 가능
 /*
@@ -67,21 +81,24 @@ export const errors = {
     code: 1,
     description: "Not provided value.",
   },
+  INCORRECT_TYPE: {
+    statusCode: 400,
+    code: 2,
+    description: "Invalid value provided.",
+  },
+  INCORRECT_DATE: {
+    statusCode: 422,
+    code: 1,
+    description: "Invalid date format. Expected YYYY-MM-DD.",
+  },
+  INCORRECT_EMAIL: {
+    statusCode: 422,
+    code: 2,
+    description: "Invalid email format. Expected something like user@example.com.",
+  },
+  INCORRECT_NICKNAME: {
+    statusCode: 422,
+    code: 3,
+    description: "Invalid nickname. Must be between 3 and 50 characters.",
+  },
 };
-  
-
-export function errorHandler(err: Error, req: Request, res: Response, next: NextFunction) {
-  if (err instanceof CustomError) {
-    res.status(err.statusCode).json({
-      code: err.code,
-      description: err.description,
-      path: err.path
-    });
-  } else {
-    res.status(500).json({
-      code: 500,
-      description: 'Internal Server Error',
-      path: req.path
-    });
-  }
-}
