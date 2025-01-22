@@ -49,12 +49,17 @@ export const errors = {
   NOT_FOUND_USER_TAG: {
     statusCode: 404,
     code: 1,
-    description: "User with the given ID does not exist.",
+    description: "User ID does not exist.",
   },
-  INVALID_INPUT: {
-    statusCode: 400,
+  INVALID_PASSWORD: {
+    statusCode: 401,
+    code: 1,
+    description: "The password provided is incorrect.",
+  },
+  INVALID_TOKEN: {
+    statusCode: 401,
     code: 2,
-    description: "The input provided is not valid.",
+    description: "The token provided is invalid or expired.",
   },
 };
   

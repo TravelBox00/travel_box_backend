@@ -1,6 +1,6 @@
 import express from "express";
 import {loginController, refreshTokenController, logoutController} from "./controllers/userLogin.controller.ts"
-import {signupController, duplicateController, signoutController} from "./controllers/userSign.controller.ts"
+import {signupController, duplicateController, signoutController, modifyController} from "./controllers/userSign.controller.ts"
 import {authenticateToken} from "../middlewares/auth.middleware.ts"
 const router = express.Router()
 
@@ -10,11 +10,12 @@ router.get("/", (req, res) => {
 
 router.post("/login", loginController);
 router.post("/login/refresh", refreshTokenController);
-router.post("/logout", logoutController);
+router.delete("/logout/:userTag", logoutController);
 router.post("/signup", signupController)
 router.get("/signup/duplicate/:userTag", duplicateController)
 router.delete("/signout/:userTag" , signoutController)
 // router.patch("/modify", modifyController)
+
 /**
  * @swagger
  * tags:
@@ -47,10 +48,27 @@ router.delete("/signout/:userTag" , signoutController)
  *     responses:
  *       200:
  *         description: 로그인 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 userTag:
+ *                   type: string
+ *                   description: 사용자의 태그.
+ *                   example: "ljm#123"
+ *                 accessToken:
+ *                   type: string
+ *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyVGFnIjoibGptIzEyMyIsImlhdCI6MTczNzUyNTE3NiwiZXhwIjoxNzM3Nzg0Mzc2fQ.rwZBrS4-yK4xIZTffH1QmxHKLUGkf8Vl2tobEADwqYE"
+ *                 refreshToken:
+ *                   type: string
+ *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyVGFnIjoibGptIzEyMyIsImlhdCI6MTczNzUyNTE3NiwiZXhwIjoxNzM4MTI5OTc2fQ.CO4Ys_jEn31J-7n-SB8h11aQ-0hNG8juP5xBpPfO9qw"
  *       401:
- *         description: 로그인 실패 (잘못된 자격 증명)
+ *         description: Invalid password.
+ *       404:
+ *         description: User ID does not exist.
  *       500:
- *         description: 서버 오류
+ *         description: Internal Server Error.
  */
 
 /**
@@ -76,17 +94,32 @@ router.delete("/signout/:userTag" , signoutController)
  *                 example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
  *     responses:
  *       200:
- *         description: 새 Access Token 발급 완료
+ *         description: 토큰 재발급 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 userTag:
+ *                   type: string
+ *                   description: 사용자의 태그.
+ *                   example: "ljm#123"
+ *                 accessToken:
+ *                   type: string
+ *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyVGFnIjoibGptIzEyMyIsImlhdCI6MTczNzUyNTE3NiwiZXhwIjoxNzM3Nzg0Mzc2fQ.rwZBrS4-yK4xIZTffH1QmxHKLUGkf8Vl2tobEADwqYE"
+ *                 refreshToken:
+ *                   type: string
+ *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyVGFnIjoibGptIzEyMyIsImlhdCI6MTczNzUyNTE3NiwiZXhwIjoxNzM4MTI5OTc2fQ.CO4Ys_jEn31J-7n-SB8h11aQ-0hNG8juP5xBpPfO9qw"
  *       401:
- *         description: 잘못된 Refresh Token
+ *         description: The token provided is invalid or expired.
  *       500:
- *         description: 서버 오류
+ *         description: Internal Server Error.
  */
 
 /**
  * @swagger
  * /users/logout:
- *   post:
+ *   delete:
  *     summary: 로그아웃
  *     description: 사용자를 로그아웃하고 Refresh Token을 무효화합니다.
  *     tags:
@@ -101,15 +134,23 @@ router.delete("/signout/:userTag" , signoutController)
  *               userTag:
  *                 type: string
  *                 example: johndoe123
- *     responses:
+*     responses:
  *       200:
  *         description: 로그아웃 성공
- *       401:
- *         description: 인증되지 않은 사용자
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 userTag:
+ *                   type: null
+ *                   description: null
+ *                   example: ""
+ *       404:
+ *         description: User ID does not exist.
  *       500:
- *         description: 서버 오류
+ *         description: Internal Server Error.
  */
-
 
 /**
  * @swagger

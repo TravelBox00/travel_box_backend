@@ -9,4 +9,3 @@ export class modifyReqDto {
         this.userNickname = userNickname;
     }
 }
-

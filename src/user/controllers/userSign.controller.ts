@@ -3,10 +3,8 @@ import { Request, Response, NextFunction } from 'express';
 import { CustomError, errors } from '../../middlewares/error.middleware.ts';
 import { signupReqDto, signupResDto } from '../dto/signup.dto.ts';
 import { duplicateService, signoutService, signupService } from '../services/userSign.service.ts';
-
 import { signoutResDto } from '../dto/signout.dto.ts';
 import { successResDto } from '../dto/succsee.dto.ts';
-
 
 export const signupController = async (req:Request, res:Response): Promise<void> => {
     try{
@@ -64,15 +62,3 @@ export const signoutController = async (req: Request, res: Response): Promise<vo
         }
     }
 };
-/*
-export const modifyController = async (req: Request, res: Response) => {
-    try {
-        const modifyReq: modifyReqDto = new signupReqDto(req.body.userTag, req.body.userPassword, req.body.userNickname);
-        const modifyRes: boolean = await modifyService(modifyReq)
-  
-      res.status(200).send(modifyRes);
-    } catch (error) {
-  
-    }
-  };
-*/

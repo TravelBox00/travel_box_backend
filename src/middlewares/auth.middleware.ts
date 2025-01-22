@@ -7,9 +7,14 @@ const JWT_SECRET = process.env.JWT_SECRET!;
 
 // 액세스 & 리프레시 토큰 생성
 export const generateTokens = (userTag: string) => {
-    const accessToken = jwt.sign({ userTag }, JWT_SECRET, { expiresIn: '3d' });
-    const refreshToken = jwt.sign({ userTag }, JWT_SECRET, { expiresIn: '7d' });
-    return { accessToken, refreshToken };
+    try{
+        const accessToken = jwt.sign({ userTag }, JWT_SECRET, { expiresIn: '3d' });
+        const refreshToken = jwt.sign({ userTag }, JWT_SECRET, { expiresIn: '7d' });
+
+        return { accessToken, refreshToken };
+    }catch(error){
+        console.error(error)
+    }
 };
 
 export const authenticateToken = (req: Request, res:Response, next: NextFunction) => {

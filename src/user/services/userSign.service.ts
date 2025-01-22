@@ -26,10 +26,3 @@ export const signoutService = async (userTag: string) => {
         throw new CustomError(errors.NOT_FOUND_USER_TAG);
     }
 };
-
-/*
-export const modifyService = async () => {
-    userInfoChangeByUserTag()
-    return true
-};
-*/
