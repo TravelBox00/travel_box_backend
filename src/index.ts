@@ -5,8 +5,9 @@ import compression from "compression";
 import dotenv from "dotenv";
 import { swaggerUi, swaggerSpec } from "./configs/swagger.ts";
 import {authenticateToken} from "./middlewares/auth.middleware.ts"
-
 import userRoutes from "./user/user.route.ts";
+import { errorHandler } from "./middlewares/error.middleware.ts";
+
 // dotenv 설정
 dotenv.config();
 
@@ -29,11 +30,15 @@ app.use(express.urlencoded({ extended: true })); // URL-encoded 요청 본문 �
 app.use(compression()); // 응답 압축
 app.use(morgan("dev")); // HTTP 로깅
 
+// api 문서
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// 라우터
 app.use('/', router);
 app.use("/users", userRoutes);
 
-
+// 에러 처리 미들웨어 적용
+app.use(errorHandler);
 // 서버 실행
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
