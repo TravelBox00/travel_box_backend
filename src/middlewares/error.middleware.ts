@@ -61,5 +61,29 @@ export const errors = {
     code: 2,
     description: "The token provided is invalid or expired.",
   },
+  NOT_INPUT_VALUE: {
+    statusCode: 400,
+    code: 1,
+    description: "Not provided value.",
+  },
+  INCORRECT_TYPE: {
+    statusCode: 400,
+    code: 2,
+    description: "Invalid value provided.",
+  },
+  INCORRECT_DATE: {
+    statusCode: 422,
+    code: 1,
+    description: "Invalid date format. Expected YYYY-MM-DD.",
+  },
+  INCORRECT_EMAIL: {
+    statusCode: 422,
+    code: 2,
+    description: "Invalid email format. Expected something like user@example.com.",
+  },
+  INCORRECT_NICKNAME: {
+    statusCode: 422,
+    code: 3,
+    description: "Invalid nickname. Must be between 3 and 50 characters.",
+  },
 };
-  
