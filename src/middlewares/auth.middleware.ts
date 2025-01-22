@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import jwt from 'jsonwebtoken';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
 dotenv.config();
 
@@ -46,3 +46,14 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
 사용 방법
 app.get('/users', authenticateToken, (req, res) => {});
 */
+
+export const decodeTokenUserTag = (token: string) => {
+    try {
+        const decoded = jwt.decode(token);
+        const userTag: string | undefined = (decoded as JwtPayload).userTag;
+        return userTag;
+    } catch (error) {
+        console.error("Failed to decode token:", error);
+        return null;
+    }
+};
