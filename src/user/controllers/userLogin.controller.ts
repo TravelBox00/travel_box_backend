@@ -9,7 +9,7 @@ export const loginController = async (req:Request, res:Response): Promise<void> 
         const loginReq: loginReqDto = new loginReqDto(req.body.userTag, req.body.userPassword);
         const loginRes: tokensDto = await loginService(loginReq);
         
-        res.status(200).json(loginRes);
+        res.status(200).json({ result: loginRes, isSuccess: true });
     }catch (error) {
         if (error instanceof CustomError) {
           res.status(error.statusCode).json({
@@ -29,7 +29,7 @@ export const refreshTokenController = async (req: Request, res: Response): Promi
         const refreshTokenReq: refreshTokenDto = new refreshTokenDto(req.body.userTag, req.body.refreshToken);
         const newAccessToken: tokensDto = await refreshTokenService(refreshTokenReq);
 
-        res.status(200).json({ accessToken: newAccessToken });
+        res.status(200).json({ result: newAccessToken, isSuccess: true });
     }catch (error) {
         if (error instanceof CustomError) {
           res.status(error.statusCode).json({
@@ -47,9 +47,9 @@ export const refreshTokenController = async (req: Request, res: Response): Promi
 export const logoutController = async (req: Request, res: Response): Promise<void> => {
     try {
         const userTag:string = req.params.userTag
-        const logoutRes: null = await logoutService(userTag); 
+        await logoutService(userTag); 
 
-        res.status(200).json(logoutRes);
+        res.status(200).json({isSuccess: true});
     }catch (error) {
         if (error instanceof CustomError) {
           res.status(error.statusCode).json({
