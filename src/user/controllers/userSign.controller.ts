@@ -1,10 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 import { CustomError, errors } from '../../middlewares/error.middleware.ts';
 import { signupReqDto, signupResDto } from '../dto/signup.dto.ts';
-import { duplicateService, signoutService, signupService } from '../services/userSign.service.ts';
+import { duplicateService, modifyService, signoutService, signupService } from '../services/userSign.service.ts';
 import { duplicateResDto } from '../dto/duplicate.dto.ts';
 import { signoutResDto } from '../dto/signout.dto.ts';
 import { successResDto } from '../dto/succsee.dto.ts';
+import { modifyReqDto } from '../dto/modify.dto.ts';
 
 export const signupController = async (req:Request, res:Response) => {
     try{
@@ -37,11 +38,11 @@ export const signoutController = async (req: Request, res: Response) => {
 
     }
 };
-/*
+
 export const modifyController = async (req: Request, res: Response) => {
     try {
         const modifyReq: modifyReqDto = new signupReqDto(req.body.userTag, req.body.userPassword, req.body.user. userNickname);
-        const modifyRes: successResDto = signupService(modifyReq)
+        //const modifyRes = modifyService()
   
       res.status(200).send();
     } catch (error) {
@@ -49,4 +50,3 @@ export const modifyController = async (req: Request, res: Response) => {
     }
   };
   
-*/

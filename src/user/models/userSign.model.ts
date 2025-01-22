@@ -1,5 +1,5 @@
 import { pool } from "../../configs/database/mysqlConnect.ts"
-import { modifyResDto } from "../dto/modigy.dto.ts";
+import { modifyResDto } from "../dto/modify.dto.ts";
 import { signupReqDto } from "../dto/signup.dto.ts";
 
 export const userInfoRegisterByUserTag = async (userInfo:signupReqDto) => {
