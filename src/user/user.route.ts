@@ -1,6 +1,6 @@
 import express from "express";
 import {loginController, refreshTokenController, logoutController} from "./controllers/userLogin.controller.ts"
-import {signupController, duplicateController, signoutController} from "./controllers/userSign.controller.ts"
+import {signupController, duplicateController, signoutController, modifyController} from "./controllers/userSign.controller.ts"
 import {authenticateToken} from "../middlewares/auth.middleware.ts"
 const router = express.Router()
 
@@ -14,7 +14,7 @@ router.delete("/logout/:userTag", authenticateToken, logoutController);
 router.post("/signup", signupController)
 router.get("/signup/duplicate/:userTag", duplicateController)
 router.delete("/signout/:userTag" , authenticateToken, signoutController)
-// router.patch("/modify", modifyController)
+router.patch("/modify", authenticateToken, modifyController)
 
 /**
  * @swagger

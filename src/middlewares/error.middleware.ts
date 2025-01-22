@@ -1,3 +1,4 @@
+import { NextFunction, Request, Response } from "express";
 import { ErrorDTO } from "./dto/error.dto.ts";
 
 export class CustomError extends Error {
@@ -63,3 +64,19 @@ export const errors = {
   },
 };
   
+
+export function errorHandler(err: Error, req: Request, res: Response, next: NextFunction) {
+  if (err instanceof CustomError) {
+    res.status(err.statusCode).json({
+      code: err.code,
+      description: err.description,
+      path: err.path
+    });
+  } else {
+    res.status(500).json({
+      code: 500,
+      description: 'Internal Server Error',
+      path: req.path
+    });
+  }
+}

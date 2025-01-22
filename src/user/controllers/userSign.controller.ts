@@ -1,8 +1,8 @@
 
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { CustomError } from '../../middlewares/error.middleware.ts';
 import { signupReqDto } from '../dto/signup.dto.ts';
-import { duplicateService, signoutService, signupService } from '../services/userSign.service.ts';
+import { duplicateService, signoutService, signupService, modifyService } from '../services/userSign.service.ts';
 
 export const signupController = async (req:Request, res:Response): Promise<void> => {
     try{
@@ -59,4 +59,15 @@ export const signoutController = async (req: Request, res: Response): Promise<vo
           res.status(500).send('Internal Server Error');
         }
     }
+};
+
+export const modifyController = async (req: Request, res: Response, next:NextFunction): Promise<void> => {
+  try {
+
+
+      await modifyService();
+      res.status(200).json({isSuccess: true});
+  }catch (error) {
+      next(error);
+  }
 };
