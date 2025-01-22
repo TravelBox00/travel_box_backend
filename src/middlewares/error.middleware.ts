@@ -2,32 +2,45 @@ import { NextFunction, Request, Response } from "express";
 import { ErrorDTO } from "./dto/error.dto.ts";
 
 export class CustomError extends Error {
-  statusCode: number; // statusCode를 CustomError의 속성으로 추가
+  statusCode: number;
   code: number;
   description: string;
   path?: string;
 
-  constructor(error: Omit<ErrorDTO, 'path'>) {
+  constructor(error: Omit<ErrorDTO, 'path'>, existingError: Error) {
     super(error.description);
 
     this.statusCode = error.statusCode;
     this.code = error.code;
     this.description = error.description;
-    this.path = CustomError.extractErrorPath();
 
-    // Maintains proper stack trace for where the error was thrown
+    // 기존 에러 객체의 스택 사용
+    this.stack = existingError.stack;
+
+    // 스택 추적에서 CustomError 생성자 제외
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, CustomError);
+    }
+
+    this.path = this.extractErrorPath();
+
     Object.setPrototypeOf(this, CustomError.prototype);
   }
 
-  // 스택 추적 정보에서 경로 추출
-  private static extractErrorPath(): string {
-    const stackLines = new Error().stack?.split("\n") || [];
-    const errorOrigin = stackLines[2]?.trim();
-    const match = errorOrigin?.match(/\((.*):\d+:\d+\)/);
+  private extractErrorPath(): string {
+    if (!this.stack) {
+      return "Unknown location";
+    }
 
+    const stackLines = this.stack.split("\n");
+    const relevantLine = stackLines.find(line => line.includes('at'));
+    if (!relevantLine) return "Unknown location";
+
+    const match = relevantLine.match(/\((.*):\d+:\d+\)/);
     return match ? match[1] : "Unknown location";
   }
 }
+
 export function errorHandler(err: Error, req: Request, res: Response, next: NextFunction) {
   if (err instanceof CustomError) {
     res.status(err.statusCode).json({
@@ -99,6 +112,11 @@ export const errors = {
   INCORRECT_NICKNAME: {
     statusCode: 422,
     code: 3,
-    description: "Invalid nickname. Must be between 3 and 50 characters.",
+    description: "Invalid nickname. Must be between 3 and 10 characters.",
+  },
+  INCORRECT_PASSWORD: {
+    statusCode: 422,
+    code: 4,
+    description: "Invalid password. Must be between 5 and 10 characters.",
   },
 };

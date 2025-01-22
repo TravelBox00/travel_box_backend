@@ -25,7 +25,7 @@ router.patch("/modify", authenticateToken, modifyController)
 
 /**
  * @swagger
- * /users/login:
+ *  /users/login:
  *   post:
  *     summary: 사용자 로그인
  *     description: 사용자 로그인 후 accessToken과 refreshToken을 반환합니다.
@@ -73,7 +73,7 @@ router.patch("/modify", authenticateToken, modifyController)
 
 /**
  * @swagger
- * /users/login/refresh:
+ *  /users/login/refresh:
  *   post:
  *     summary: Access Token 재발급
  *     description: Refresh Token을 사용하여 새로운 Access Token을 발급합니다.
@@ -118,7 +118,7 @@ router.patch("/modify", authenticateToken, modifyController)
 
 /**
  * @swagger
- * /users/logout:
+ *  /users/logout:
  *   delete:
  *     summary: 로그아웃
  *     description: 사용자를 로그아웃하고 Refresh Token을 무효화합니다.
@@ -134,7 +134,7 @@ router.patch("/modify", authenticateToken, modifyController)
  *               userTag:
  *                 type: string
  *                 example: johndoe123
-*     responses:
+ *     responses:
  *       200:
  *         description: 로그아웃 성공
  *         content:
@@ -189,6 +189,10 @@ router.patch("/modify", authenticateToken, modifyController)
  *                   type: null
  *                   description: null
  *                   example: ""
+ *       403:
+ *         description: |
+ *           -Invalid nickname
+ *           -Invalid password
  *       500:
  *         description: Internal Server Error.
  */
@@ -228,7 +232,7 @@ router.patch("/modify", authenticateToken, modifyController)
 
 /**
  * @swagger
- * /users/signout:
+ *  /users/signout:
  *   delete:
  *     summary: 회원탈퇴
  *     description: 회원탈퇴
@@ -248,7 +252,7 @@ router.patch("/modify", authenticateToken, modifyController)
  *                 example: johndoe123
  *     responses:
  *       200:
- *         description: 회원가입 성공
+ *         description: 회원탈퇴 성공
  *         content:
  *           application/json:
  *             schema:
@@ -266,7 +270,7 @@ router.patch("/modify", authenticateToken, modifyController)
 
 /**
  * @swagger
- * /users/modify:
+ *  /users/modify:
  *   patch:
  *     summary: 사용자 정보 수정
  *     description: 사용자의 일부 정보를 수정합니다.
@@ -293,11 +297,22 @@ router.patch("/modify", authenticateToken, modifyController)
  *                 example: "New Nickname"
  *     responses:
  *       200:
- *         description: 사용자 정보 일부 수정 성공
- *       400:
- *         description: 요청 오류
+ *         description: 수정 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 userTag:
+ *                   type: null
+ *                   description: null
+ *                   example: ""
+ *       403: 
+ *         description: | 
+ *            -Invalid nickname
+ *            -Invalid password
  *       500:
- *         description: 서버 오류
+ *         description: Internal Server Error.
  */
 
 export default router;

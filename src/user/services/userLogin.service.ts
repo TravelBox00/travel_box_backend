@@ -13,11 +13,11 @@ export const loginService = async (userLoginInfo: loginReqDto): Promise<tokensDt
     
     // user 정보 맞는지 확인
     const userInfo = await findUserByUserTag(userTag);
-    if (!userInfo) throw new CustomError(errors.NOT_FOUND_USER_TAG); // custom error 적용시키기
+    if (!userInfo) throw new CustomError(errors.NOT_FOUND_USER_TAG, new Error()); // custom error 적용시키기
 
     const firstHash = crypto.createHash('sha256').update(userPassword).digest('hex');
     const isPasswordValid = await bcrypt.compare(firstHash, userInfo.userPassword);
-    if (!isPasswordValid) throw new CustomError(errors.INVALID_PASSWORD); // custom error 적용시키기
+    if (!isPasswordValid) throw new CustomError(errors.INVALID_PASSWORD, new Error()); // custom error 적용시키기
 
     const { accessToken, refreshToken } = await handleTokenOperations(userInfo.userTag);
 
@@ -30,7 +30,7 @@ export const refreshTokenService = async (userRefreshToken: refreshTokenDto): Pr
     const storedToken = await getRefreshTokenFromS3(userTag);
     
     if (!storedToken || storedToken !== refreshToken) {
-        throw new CustomError(errors.INVALID_TOKEN);
+        throw new CustomError(errors.INVALID_TOKEN, new Error());
     }
 
     const newToken = await handleTokenOperations(userTag);
@@ -66,7 +66,7 @@ const handleTokenOperations = async (userTag: string) => {
 export const logoutService = async (userTag: string) => {
     const success: boolean = await deleteRefreshTokenInS3(userTag)
     if(success == false){// 삭제 이후 존재여부 파악해서 error 처리를해야됨 return 0,1 로 redis에서 반환됨, accseetoken도 만료 시켜야됨
-        throw new CustomError(errors.NOT_FOUND_USER_TAG);
+        throw new CustomError(errors.NOT_FOUND_USER_TAG, new Error());
     }
 };
 
