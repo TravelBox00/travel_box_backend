@@ -15,7 +15,7 @@ export const loginService = async (userLoginInfo: loginReqDto): Promise<tokensDt
     const userInfo = await findUserByUserTag(userTag);
     if (!userInfo) throw new CustomError(errors.NOT_FOUND_USER_TAG, new Error()); // custom error 적용시키기
 
-    const firstHash = crypto.createHash('sha256').update(userPassword).digest('hex');
+    const firstHash = crypto.createHash('blake2b512').update(userPassword).digest('hex');
     const isPasswordValid = await bcrypt.compare(firstHash, userInfo.userPassword);
     if (!isPasswordValid) throw new CustomError(errors.INVALID_PASSWORD, new Error()); // custom error 적용시키기
 

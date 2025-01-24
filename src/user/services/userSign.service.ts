@@ -11,8 +11,9 @@ export const signupService = async (userInfo: signupReqDto) => {
     const {userTag, userPassword, userNickname} = userInfo
     await checkNickname(userNickname)
     await checkPassword(userPassword)
-    const firstHash = crypto.createHash('sha256').update(userPassword).digest('hex');
-    const hashedPassword: string = await bcrypt.hash(firstHash, 10);
+    const salt: string = await bcrypt.genSalt(10)
+    const firstHash:string = crypto.createHash('blake2b512').update(userPassword).digest('hex');
+    const hashedPassword: string = await bcrypt.hash(firstHash, salt);
     await userInfoRegisterByUserTag({userTag, hashedPassword, userNickname })
 };  
 

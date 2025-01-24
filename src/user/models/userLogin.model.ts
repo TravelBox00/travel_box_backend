@@ -13,7 +13,7 @@ export const findUserByUserTag = async (userTag: string): Promise<loginReqDto | 
             FROM User
             WHERE userTag = ?
             `,
-            [userTag]
+            [userTag]   
         );
         connection.release();
         return rows
