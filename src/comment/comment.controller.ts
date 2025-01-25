@@ -1,5 +1,10 @@
 import { RequestHandler } from 'express';
-import { addComment, editComment, removeComment } from './comment.service.ts';
+import {
+  addComment,
+  editComment,
+  removeComment,
+  fetchMyComments,
+} from './comment.service.ts';
 
 // 댓글 추가
 export const addCommentController: RequestHandler = async (
@@ -104,5 +109,29 @@ export const deleteCommentController: RequestHandler = async (
         message: '서버 내부 오류입니다.',
       });
     }
+  }
+};
+
+// 내가 작성한 댓글 조회
+export const getMyCommentsController: RequestHandler = async (req, res) => {
+  try {
+    const { userId } = req.query;
+
+    if (!userId) {
+      res.status(400).json({
+        isSuccess: false,
+        message: 'User ID is missing from the query.',
+      });
+      return;
+    }
+
+    const response = await fetchMyComments(Number(userId));
+    res.status(200).json(response);
+  } catch (error) {
+    console.error('Error in getMyCommentsController:', error);
+    res.status(500).json({
+      isSuccess: false,
+      message: 'Internal server error',
+    });
   }
 };

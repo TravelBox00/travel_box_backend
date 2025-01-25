@@ -3,6 +3,7 @@ import {
   updateComment,
   deleteComment,
   checkCommentExists,
+  getMyComments,
 } from './comment.model.ts';
 
 // 댓글 추가
@@ -56,5 +57,28 @@ export const removeComment = async (commentId: number) => {
   } catch (error) {
     console.error('Error in removeComment service:', error);
     throw error;
+  }
+};
+
+// 내가 작성한 댓글 조회
+export const fetchMyComments = async (userId: number) => {
+  try {
+    const comments = await getMyComments(userId);
+
+    if (comments.length === 0) {
+      return {
+        isSuccess: true,
+        message: 'No comments found.',
+        result: [],
+      };
+    }
+
+    return {
+      isSuccess: true,
+      result: comments,
+    };
+  } catch (error) {
+    console.error('Error in fetchMyComments service:', error);
+    throw new Error('Failed to fetch comments');
   }
 };

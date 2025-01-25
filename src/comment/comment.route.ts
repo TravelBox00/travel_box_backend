@@ -3,6 +3,7 @@ import {
   addCommentController,
   updateCommentController,
   deleteCommentController,
+  getMyCommentsController,
 } from './comment.controller.ts';
 
 const router = Router();
@@ -22,10 +23,16 @@ const router = Router();
  *       type: http
  *       scheme: bearer
  *       bearerFormat: JWT
+ */
+
+/**
+ * @swagger
  * /comment/add:
  *   post:
  *     summary: 댓글 추가
  *     tags: [Comments]
+ *     security:
+ *       - BearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -34,33 +41,31 @@ const router = Router();
  *             type: object
  *             properties:
  *               userId:
- *                 type: number
+ *                 type: integer
+ *                 description: 댓글을 작성한 사용자 ID
  *               threadId:
- *                 type: number
+ *                 type: integer
+ *                 description: 댓글이 작성될 게시글 ID
  *               commentContent:
  *                 type: string
+ *                 description: 댓글 내용
  *               commentVisible:
  *                 type: string
  *                 enum: [public, private]
+ *                 description: 댓글 공개 여부
  *     responses:
  *       201:
  *         description: 댓글 추가 성공
  *       400:
- *         description: Bad request
+ *         description: 잘못된 요청
  *       401:
- *         description: Unauthorized
+ *         description: 인증 실패
  *       500:
- *         description: Internal server error
+ *         description: 서버 에러
  */
 
 /**
  * @swagger
- * components:
- *   securitySchemes:
- *     BearerAuth:
- *       type: http
- *       scheme: bearer
- *       bearerFormat: JWT
  * /comment/fix:
  *   put:
  *     summary: 댓글 수정
@@ -75,29 +80,28 @@ const router = Router();
  *             type: object
  *             properties:
  *               commentId:
- *                 type: number
+ *                 type: integer
+ *                 description: 수정할 댓글 ID
  *               commentContent:
  *                 type: string
+ *                 description: 수정된 댓글 내용
  *               commentVisible:
  *                 type: string
  *                 enum: [public, private]
+ *                 description: 수정된 댓글 공개 여부
  *     responses:
  *       200:
  *         description: 댓글 수정 성공
  *       400:
- *         description: Bad request
+ *         description: 잘못된 요청
+ *       401:
+ *         description: 인증 실패
  *       500:
- *         description: Internal server error
+ *         description: 서버 에러
  */
 
 /**
  * @swagger
- * components:
- *   securitySchemes:
- *     BearerAuth:
- *       type: http
- *       scheme: bearer
- *       bearerFormat: JWT
  * /comment/remove:
  *   delete:
  *     summary: 댓글 삭제
@@ -112,18 +116,81 @@ const router = Router();
  *             type: object
  *             properties:
  *               commentId:
- *                 type: number
+ *                 type: integer
+ *                 description: 삭제할 댓글 ID
  *     responses:
  *       200:
  *         description: 댓글 삭제 성공
  *       400:
- *         description: Bad request
+ *         description: 잘못된 요청
+ *       401:
+ *         description: 인증 실패
  *       500:
- *         description: Internal server error
+ *         description: 서버 에러
+ */
+
+/**
+ * @swagger
+ * /comment/info:
+ *   get:
+ *     summary: 내가 작성한 댓글 목록 조회
+ *     tags:
+ *       - Comments
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           description: 댓글을 조회할 사용자 ID
+ *     responses:
+ *       200:
+ *         description: 댓글 목록 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 isSuccess:
+ *                   type: boolean
+ *                   description: 요청 성공 여부
+ *                 result:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       commentId:
+ *                         type: integer
+ *                         description: 댓글 ID
+ *                       commentContent:
+ *                         type: string
+ *                         description: 댓글 내용
+ *                       commentDate:
+ *                         type: string
+ *                         format: date
+ *                         description: 댓글 작성 날짜
+ *                       postTitle:
+ *                         type: string
+ *                         description: 댓글이 작성된 게시글 제목
+ *                       postContent:
+ *                         type: string
+ *                         description: 댓글이 작성된 게시글 내용
+ *                       postOwnerNickname:
+ *                         type: string
+ *                         description: 게시글 작성자의 닉네임
+ *       400:
+ *         description: 필수 필드 누락
+ *       401:
+ *         description: 인증 실패
+ *       500:
+ *         description: 서버 에러
  */
 
 router.post('/add', addCommentController);
 router.put('/fix', updateCommentController);
 router.delete('/remove', deleteCommentController);
+router.get('/info', getMyCommentsController);
 
 export default router;

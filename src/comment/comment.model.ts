@@ -101,3 +101,41 @@ export const deleteComment = async (commentId: number): Promise<boolean> => {
     throw error;
   }
 };
+
+// 내가 작성한 댓글 조회
+export const getMyComments = async (userId: number) => {
+  const query = `
+    SELECT 
+      c.commentId,
+      c.commentContent,
+      c.commentDate,
+      tt.postTitle,
+      tt.postContent,
+      u.userNickname AS postOwnerNickname
+    FROM 
+      Comment AS c
+    LEFT JOIN 
+      TravelThread AS tt ON c.threadId = tt.threadId
+    LEFT JOIN 
+      User AS u ON tt.userId = u.userId
+    WHERE 
+      c.userId = ?
+    ORDER BY 
+      c.commentDate DESC
+  `;
+
+  try {
+    const [rows] = await pool.execute<RowDataPacket[]>(query, [userId]);
+    return rows.map((row) => ({
+      commentId: row.commentId,
+      commentContent: row.commentContent,
+      commentDate: new Date(row.commentDate).toISOString().split('T')[0],
+      postTitle: row.postTitle,
+      postContent: row.postContent,
+      postOwnerNickname: row.postOwnerNickname,
+    }));
+  } catch (error) {
+    console.error('Error in getMyComments:', error);
+    throw error;
+  }
+};
