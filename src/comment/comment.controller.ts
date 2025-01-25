@@ -6,20 +6,20 @@ import {
   fetchMyComments,
   fetchCommentsByThread,
 } from './comment.service.ts';
+import { CustomError, errors } from '../middlewares/error.middleware.ts';
 
 // 댓글 추가
-export const addCommentController: RequestHandler = async (
-  req,
-  res
-): Promise<void> => {
+export const addCommentController: RequestHandler = async (req, res, next) => {
   try {
     const { userId, threadId, commentContent, commentVisible } = req.body;
 
-    if (!userId || !threadId || !commentContent || !commentVisible) {
-      res
-        .status(400)
-        .json({ isSuccess: false, message: 'Missing required fields' });
-      return;
+    if (
+      !userId ||
+      !threadId ||
+      !commentContent ||
+      commentVisible === undefined
+    ) {
+      throw new CustomError(errors.NOT_INPUT_VALUE, new Error());
     }
 
     const commentId = await addComment({
@@ -29,138 +29,112 @@ export const addCommentController: RequestHandler = async (
       commentVisible,
     });
 
-    if (commentId) {
-      res.status(201).json({ isSuccess: true, result: { commentId } });
-    } else {
-      res.status(500).json({ isSuccess: false });
+    if (!commentId) {
+      throw new CustomError(errors.SERVER_ERROR, new Error());
     }
+
+    res.status(201).json({ isSuccess: true, result: { commentId } });
   } catch (error) {
-    console.error('Error in addCommentController:', error);
-    res.status(500).json({ isSuccess: false, message: 'Server error' });
+    next(error);
   }
 };
 
 // 댓글 수정
-export const updateCommentController: RequestHandler = async (req, res) => {
+export const updateCommentController: RequestHandler = async (
+  req,
+  res,
+  next
+) => {
   try {
     const { commentId, commentContent, commentVisible } = req.body;
 
-    if (!commentId || !commentContent || !commentVisible) {
-      res
-        .status(400)
-        .json({ isSuccess: false, message: 'Missing required fields' });
-      return;
+    if (!commentId || !commentContent || commentVisible === undefined) {
+      throw new CustomError(errors.NOT_INPUT_VALUE, new Error());
     }
 
-    await editComment({ commentId, commentContent, commentVisible });
+    const result = await editComment({
+      commentId,
+      commentContent,
+      commentVisible,
+    });
+
+    if (!result) {
+      throw new CustomError(
+        errors.NOT_FOUND_USER_TAG,
+        new Error('존재하지 않는 댓글입니다.')
+      );
+    }
+
     res.status(200).json({ isSuccess: true });
   } catch (error) {
-    if (error instanceof Error) {
-      if (error.message === 'Comment not found') {
-        res
-          .status(404)
-          .json({ isSuccess: false, message: '존재하지 않는 댓글입니다.' });
-      } else {
-        res.status(500).json({ isSuccess: false, message: error.message });
-      }
-    } else {
-      res
-        .status(500)
-        .json({ isSuccess: false, message: 'Unknown server error' });
-    }
+    next(error);
   }
 };
 
 // 댓글 삭제
 export const deleteCommentController: RequestHandler = async (
   req,
-  res
-): Promise<void> => {
+  res,
+  next
+) => {
   try {
     const { commentId } = req.body;
 
     if (!commentId) {
-      res.status(400).json({
-        isSuccess: false,
-        message: '필수 필드가 누락되었습니다.',
-      });
-      return;
+      throw new CustomError(errors.NOT_INPUT_VALUE, new Error());
     }
 
     const result = await removeComment(commentId);
 
-    if (result) {
-      res.status(200).json({ isSuccess: true });
-    } else {
-      res.status(404).json({
-        isSuccess: false,
-        message: '댓글이 존재하지 않습니다.',
-      });
+    if (!result) {
+      throw new CustomError(
+        errors.NOT_FOUND_USER_TAG,
+        new Error('댓글이 존재하지 않습니다.')
+      );
     }
+
+    res.status(200).json({ isSuccess: true });
   } catch (error) {
-    if (error instanceof Error) {
-      res.status(404).json({
-        isSuccess: false,
-        message: error.message,
-      });
-    } else {
-      console.error('Unexpected error in deleteCommentController:', error);
-      res.status(500).json({
-        isSuccess: false,
-        message: '서버 내부 오류입니다.',
-      });
-    }
+    next(error);
   }
 };
 
 // 내가 작성한 댓글 조회
-export const getMyCommentsController: RequestHandler = async (req, res) => {
+export const getMyCommentsController: RequestHandler = async (
+  req,
+  res,
+  next
+) => {
   try {
     const { userId } = req.query;
 
     if (!userId) {
-      res.status(400).json({
-        isSuccess: false,
-        message: 'User ID is missing from the query.',
-      });
-      return;
+      throw new CustomError(errors.NOT_INPUT_VALUE, new Error());
     }
 
     const response = await fetchMyComments(Number(userId));
     res.status(200).json(response);
   } catch (error) {
-    console.error('Error in getMyCommentsController:', error);
-    res.status(500).json({
-      isSuccess: false,
-      message: 'Internal server error',
-    });
+    next(error);
   }
 };
 
 // 특정 게시글의 댓글 조회
 export const getCommentsByThreadController: RequestHandler = async (
   req,
-  res
-): Promise<void> => {
+  res,
+  next
+) => {
   try {
     const { threadId } = req.query;
 
     if (!threadId) {
-      res.status(400).json({
-        isSuccess: false,
-        message: 'Thread ID is missing from the query parameters.',
-      });
-      return;
+      throw new CustomError(errors.NOT_INPUT_VALUE, new Error());
     }
 
     const response = await fetchCommentsByThread(Number(threadId));
     res.status(200).json(response);
   } catch (error) {
-    console.error('Error in getCommentsByThreadController:', error);
-
-    res.status(500).json({
-      isSuccess: false,
-      message: 'Internal server error occurred while fetching comments.',
-    });
+    next(error);
   }
 };

@@ -8,10 +8,10 @@ import {
   signupController,
   duplicateController,
   signoutController,
+  modifyController,
 } from './controllers/userSign.controller.ts';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// eslint-disable-next-line import/newline-after-import
 import { authenticateToken } from '../middlewares/auth.middleware.ts';
-
 const router = express.Router();
 
 router.get('/', (req, res) => {
@@ -20,11 +20,11 @@ router.get('/', (req, res) => {
 
 router.post('/login', loginController);
 router.post('/login/refresh', refreshTokenController);
-router.delete('/logout/:userTag', logoutController);
+router.delete('/logout/:userTag', authenticateToken, logoutController);
 router.post('/signup', signupController);
 router.get('/signup/duplicate/:userTag', duplicateController);
-router.delete('/signout/:userTag', signoutController);
-// router.patch("/modify", modifyController)
+router.delete('/signout/:userTag', authenticateToken, signoutController);
+router.patch('/modify', authenticateToken, modifyController);
 
 /**
  * @swagger
@@ -35,7 +35,7 @@ router.delete('/signout/:userTag', signoutController);
 
 /**
  * @swagger
- * /users/login:
+ *  /users/login:
  *   post:
  *     summary: 사용자 로그인
  *     description: 사용자 로그인 후 accessToken과 refreshToken을 반환합니다.
@@ -83,7 +83,7 @@ router.delete('/signout/:userTag', signoutController);
 
 /**
  * @swagger
- * /users/login/refresh:
+ *  /users/login/refresh:
  *   post:
  *     summary: Access Token 재발급
  *     description: Refresh Token을 사용하여 새로운 Access Token을 발급합니다.
@@ -128,7 +128,7 @@ router.delete('/signout/:userTag', signoutController);
 
 /**
  * @swagger
- * /users/logout:
+ *  /users/logout:
  *   delete:
  *     summary: 로그아웃
  *     description: 사용자를 로그아웃하고 Refresh Token을 무효화합니다.
@@ -199,6 +199,10 @@ router.delete('/signout/:userTag', signoutController);
  *                   type: null
  *                   description: null
  *                   example: ""
+ *       403:
+ *         description: |
+ *           -Invalid nickname
+ *           -Invalid password
  *       500:
  *         description: Internal Server Error.
  */
@@ -223,7 +227,7 @@ router.delete('/signout/:userTag', signoutController);
  *                 example: johndoe123
  *     responses:
  *       200:
- *         description: 아이디 중복
+ *         description: "true면 중복, false면 중복x"
  *         content:
  *           application/json:
  *             schema:
@@ -232,23 +236,13 @@ router.delete('/signout/:userTag', signoutController);
  *                 isAvailable:
  *                   type: boolean
  *                   example: true
- *       200:
- *         description: 아이디 중복 x
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 isAvailable:
- *                   type: boolean
- *                   example: false
  *       500:
  *         description: Internal Server Error.
  */
 
 /**
  * @swagger
- * /users/signout:
+ *  /users/signout:
  *   delete:
  *     summary: 회원탈퇴
  *     description: 회원탈퇴
@@ -268,7 +262,7 @@ router.delete('/signout/:userTag', signoutController);
  *                 example: johndoe123
  *     responses:
  *       200:
- *         description: 회원가입 성공
+ *         description: 회원탈퇴 성공
  *         content:
  *           application/json:
  *             schema:
@@ -286,7 +280,7 @@ router.delete('/signout/:userTag', signoutController);
 
 /**
  * @swagger
- * /users/modify:
+ *  /users/modify:
  *   patch:
  *     summary: 사용자 정보 수정
  *     description: 사용자의 일부 정보를 수정합니다.
@@ -313,11 +307,22 @@ router.delete('/signout/:userTag', signoutController);
  *                 example: "New Nickname"
  *     responses:
  *       200:
- *         description: 사용자 정보 일부 수정 성공
- *       400:
- *         description: 요청 오류
+ *         description: 수정 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 userTag:
+ *                   type: null
+ *                   description: null
+ *                   example: ""
+ *       403:
+ *         description: |
+ *            -Invalid nickname
+ *            -Invalid password
  *       500:
- *         description: 서버 오류
+ *         description: Internal Server Error.
  */
 
 export default router;

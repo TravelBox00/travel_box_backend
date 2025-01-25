@@ -1,5 +1,6 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 
 import { CustomError, errors } from '../../middlewares/error.middleware.ts';
 import { generateTokens } from '../../middlewares/auth.middleware.ts';
@@ -20,13 +21,18 @@ export const loginService = async (
 
   // user 정보 맞는지 확인
   const userInfo = await findUserByUserTag(userTag);
-  if (!userInfo) throw new CustomError(errors.NOT_FOUND_USER_TAG); // custom error 적용시키기
+  if (!userInfo) throw new CustomError(errors.NOT_FOUND_USER_TAG, new Error()); // custom error 적용시키기
 
+  const firstHash = crypto
+    .createHash('sha256')
+    .update(userPassword)
+    .digest('hex');
   const isPasswordValid = await bcrypt.compare(
-    userPassword,
+    firstHash,
     userInfo.userPassword
   );
-  if (!isPasswordValid) throw new CustomError(errors.INVALID_PASSWORD); // custom error 적용시키기
+  if (!isPasswordValid)
+    throw new CustomError(errors.INVALID_PASSWORD, new Error()); // custom error 적용시키기
 
   // eslint-disable-next-line no-use-before-define
   const { accessToken, refreshToken } = await handleTokenOperations(
@@ -48,7 +54,7 @@ export const refreshTokenService = async (
   const storedToken = await getRefreshTokenFromS3(userTag);
 
   if (!storedToken || storedToken !== refreshToken) {
-    throw new CustomError(errors.INVALID_TOKEN);
+    throw new CustomError(errors.INVALID_TOKEN, new Error());
   }
 
   // eslint-disable-next-line no-use-before-define
@@ -81,10 +87,10 @@ const handleTokenOperations = async (userTag: string) => {
 };
 
 // 로그아웃 (S3에서 토큰 삭제)
-export const logoutService = async (userTag: string): Promise<null> => {
+export const logoutService = async (userTag: string) => {
   const success: boolean = await deleteRefreshTokenInS3(userTag);
-  if (!success) {
-    throw new CustomError(errors.NOT_FOUND_USER_TAG);
+  if (success == false) {
+    // 삭제 이후 존재여부 파악해서 error 처리를해야됨 return 0,1 로 redis에서 반환됨, accseetoken도 만료 시켜야됨
+    throw new CustomError(errors.NOT_FOUND_USER_TAG, new Error());
   }
-  return null;
 };
