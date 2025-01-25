@@ -1,11 +1,12 @@
-import { pool } from "./mysqlConnect.ts";
-import bcrypt from "bcrypt"
+// eslint-disable-next-line import/no-unresolved, import/no-extraneous-dependencies
+import bcrypt from 'bcrypt';
+import { pool } from './mysqlConnect.ts';
 
 // eslint-disable-next-line import/prefer-default-export
 export const insertMockData = async () => {
   const connection = await pool.getConnection();
 
-  try {      
+  try {
     const password = 'password3188';
     const nickname = 'ljm';
     const tag = 'ljm#123';
@@ -21,7 +22,7 @@ export const insertMockData = async () => {
         userPassword=VALUES(userPassword), userNickname=VALUES(userNickname);
     `;
     await connection.execute(query, [hashedPassword, nickname, tag]);
-    
+
     // Insert into User Table
     await connection.query(`
       INSERT INTO User (userPassword, userNickname, userTag) VALUES 
@@ -117,7 +118,6 @@ export const insertMockData = async () => {
   } finally {
     await connection.release();
   }
-    
 };
 
 // Add this at the end of your file

@@ -1,19 +1,29 @@
-import express from "express";
-import {loginController, refreshTokenController, logoutController} from "./controllers/userLogin.controller.ts"
-import {signupController, duplicateController, signoutController, modifyController} from "./controllers/userSign.controller.ts"
-import {authenticateToken} from "../middlewares/auth.middleware.ts"
-const router = express.Router()
+import express from 'express';
+import {
+  loginController,
+  refreshTokenController,
+  logoutController,
+} from './controllers/userLogin.controller.ts';
+import {
+  signupController,
+  duplicateController,
+  signoutController,
+} from './controllers/userSign.controller.ts';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { authenticateToken } from '../middlewares/auth.middleware.ts';
 
-router.get("/", (req, res) => {
-    res.send("User main route");
-  });
+const router = express.Router();
 
-router.post("/login", loginController);
-router.post("/login/refresh", refreshTokenController);
-router.delete("/logout/:userTag", logoutController);
-router.post("/signup", signupController)
-router.get("/signup/duplicate/:userTag", duplicateController)
-router.delete("/signout/:userTag" , signoutController)
+router.get('/', (req, res) => {
+  res.send('User main route');
+});
+
+router.post('/login', loginController);
+router.post('/login/refresh', refreshTokenController);
+router.delete('/logout/:userTag', logoutController);
+router.post('/signup', signupController);
+router.get('/signup/duplicate/:userTag', duplicateController);
+router.delete('/signout/:userTag', signoutController);
 // router.patch("/modify", modifyController)
 
 /**
@@ -134,7 +144,7 @@ router.delete("/signout/:userTag" , signoutController)
  *               userTag:
  *                 type: string
  *                 example: johndoe123
-*     responses:
+ *     responses:
  *       200:
  *         description: 로그아웃 성공
  *         content:
@@ -311,4 +321,3 @@ router.delete("/signout/:userTag" , signoutController)
  */
 
 export default router;
-

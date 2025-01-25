@@ -4,7 +4,7 @@ import morgan from 'morgan';
 import compression from 'compression';
 import dotenv from 'dotenv';
 import { swaggerUi, swaggerSpec } from './configs/swagger.ts';
-
+import commentRouter from './comment/comment.route.ts';
 import userRoutes from './user/user.route.ts';
 // dotenv 설정
 dotenv.config();
@@ -28,8 +28,10 @@ app.use(morgan('dev')); // HTTP 로깅
 // app.use('/calendar', calendarRoutes);
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-app.use('/', router);
+
 app.use('/users', userRoutes);
+app.use('/comment', commentRouter);
+app.use('/', router);
 
 // 서버 실행
 app.listen(port, () => {
