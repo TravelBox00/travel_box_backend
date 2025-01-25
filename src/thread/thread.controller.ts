@@ -84,3 +84,40 @@ export const toggleScrap = async (
     }
   }
 };
+
+// 스크랩한 게시물 목록
+export const getScrappedThreads = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { userId } = req.query;
+
+    if (!userId) {
+      res.status(400).json({
+        isSuccess: false,
+        code: '4000',
+        message: 'userId를 제공해야 합니다.',
+        result: null,
+      });
+      return;
+    }
+
+    const result = await threadService.getScrappedThreads(Number(userId));
+
+    res.status(200).json({
+      isSuccess: true,
+      code: '2000',
+      message: result.message,
+      result: result.scrappedThreads,
+    });
+  } catch (error) {
+    console.error('스크랩한 게시물 목록 API 에러:', error);
+    res.status(500).json({
+      isSuccess: false,
+      code: '5000',
+      message: '서버 오류',
+      result: null,
+    });
+  }
+};
