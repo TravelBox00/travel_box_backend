@@ -1,7 +1,7 @@
 {
   "name": "travel_box",
   "version": "1.0.0",
-  "main": "src/index.ts",
+  "main": "./dist/index.js",
   "type": "module",
   "scripts": {
     "test": "jest",
@@ -13,10 +13,13 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.729.0",
+    "bcrypt": "^5.1.1",
     "compression": "^1.7.5",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "mysql2": "^3.12.0",
     "swagger-jsdoc": "^6.2.8",
@@ -26,10 +29,12 @@
     "@babel/core": "^7.26.0",
     "@babel/preset-env": "^7.26.0",
     "@babel/preset-typescript": "^7.26.0",
+    "@types/bcrypt": "^5.0.2",
     "@types/compression": "^1.7.5",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.14",
+    "@types/jsonwebtoken": "^9.0.7",
     "@types/morgan": "^1.9.9",
     "@types/node": "^22.10.5",
     "@types/swagger-jsdoc": "^6.0.4",

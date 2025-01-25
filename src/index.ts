@@ -3,7 +3,11 @@ import cors from 'cors';
 import morgan from 'morgan';
 import compression from 'compression';
 import dotenv from 'dotenv';
-import { swaggerSpec, swaggerUi } from './configs/swagger.ts';
+import { swaggerUi, swaggerSpec } from './configs/swagger.ts';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { authenticateToken } from './middlewares/auth.middleware.ts';
+import userRoutes from './user/user.route.ts';
+import { errorHandler } from './middlewares/error.middleware.ts';
 import calendarRoutes from './calendar/calendar.route.ts';
 import threadRoutes from './thread/thread.route.ts';
 
@@ -13,8 +17,6 @@ dotenv.config();
 // Express 애플리케이션 생성
 const app = express();
 const port = process.env.PORT;
-
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 const router = Router();
 router.get('/', (req, res) => {
@@ -28,11 +30,17 @@ app.use(express.urlencoded({ extended: true })); // URL-encoded 요청 본문 �
 app.use(compression()); // 응답 압축
 app.use(morgan('dev')); // HTTP 로깅
 
+// api 문서
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// 라우터
+app.use('/', router);
+app.use('/users', userRoutes);
 app.use('/calendar', calendarRoutes);
 app.use('/thread', threadRoutes);
 
-app.use('/', router);
-
+// 에러 처리 미들웨어 적용
+app.use(errorHandler);
 // 서버 실행
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
