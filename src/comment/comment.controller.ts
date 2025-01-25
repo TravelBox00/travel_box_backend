@@ -1,8 +1,7 @@
 import { RequestHandler } from 'express';
-// eslint-disable-next-line import/extensions
-import { addComment } from './comment.service.ts';
+import { addComment, editComment, removeComment } from './comment.service.ts';
 
-// eslint-disable-next-line import/prefer-default-export
+// 댓글 추가
 export const addCommentController: RequestHandler = async (
   req,
   res
@@ -17,20 +16,93 @@ export const addCommentController: RequestHandler = async (
       return;
     }
 
-    const result = await addComment({
+    const commentId = await addComment({
       userId,
       threadId,
       commentContent,
       commentVisible,
     });
 
-    if (result) {
-      res.status(201).json({ isSuccess: true });
+    if (commentId) {
+      res.status(201).json({ isSuccess: true, result: { commentId } });
     } else {
       res.status(500).json({ isSuccess: false });
     }
   } catch (error) {
     console.error('Error in addCommentController:', error);
     res.status(500).json({ isSuccess: false, message: 'Server error' });
+  }
+};
+
+// 댓글 수정
+export const updateCommentController: RequestHandler = async (req, res) => {
+  try {
+    const { commentId, commentContent, commentVisible } = req.body;
+
+    if (!commentId || !commentContent || !commentVisible) {
+      res
+        .status(400)
+        .json({ isSuccess: false, message: 'Missing required fields' });
+      return;
+    }
+
+    await editComment({ commentId, commentContent, commentVisible });
+    res.status(200).json({ isSuccess: true });
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === 'Comment not found') {
+        res
+          .status(404)
+          .json({ isSuccess: false, message: '존재하지 않는 댓글입니다.' });
+      } else {
+        res.status(500).json({ isSuccess: false, message: error.message });
+      }
+    } else {
+      res
+        .status(500)
+        .json({ isSuccess: false, message: 'Unknown server error' });
+    }
+  }
+};
+
+// 댓글 삭제
+export const deleteCommentController: RequestHandler = async (
+  req,
+  res
+): Promise<void> => {
+  try {
+    const { commentId } = req.body;
+
+    if (!commentId) {
+      res.status(400).json({
+        isSuccess: false,
+        message: '필수 필드가 누락되었습니다.',
+      });
+      return;
+    }
+
+    const result = await removeComment(commentId);
+
+    if (result) {
+      res.status(200).json({ isSuccess: true });
+    } else {
+      res.status(404).json({
+        isSuccess: false,
+        message: '댓글이 존재하지 않습니다.',
+      });
+    }
+  } catch (error) {
+    if (error instanceof Error) {
+      res.status(404).json({
+        isSuccess: false,
+        message: error.message,
+      });
+    } else {
+      console.error('Unexpected error in deleteCommentController:', error);
+      res.status(500).json({
+        isSuccess: false,
+        message: '서버 내부 오류입니다.',
+      });
+    }
   }
 };
