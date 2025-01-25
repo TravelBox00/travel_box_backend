@@ -2,6 +2,7 @@
 import { Request, Response, NextFunction } from 'express';
 // eslint-disable-next-line import/extensions
 import * as calendarService from './calendar.service.ts';
+import { CustomError, errors } from '../middlewares/error.middleware.ts';
 
 // 일정 추가
 export const addCalendar = async (
@@ -19,11 +20,10 @@ export const addCalendar = async (
     } = req.body;
 
     if (!userId || !travelTitle) {
-      res.status(400).json({
-        isSuccess: false,
-        message: 'userId와 travelTitle은 필수 입력값입니다.',
-      });
-      return;
+      throw new CustomError(
+        errors.NOT_INPUT_VALUE,
+        new Error('Validation Error')
+      );
     }
 
     const result = await calendarService.addCalendar({
@@ -34,23 +34,18 @@ export const addCalendar = async (
       travelEndDate,
     });
 
-    if (result && result.travelId) {
-      res.status(200).json({
-        isSuccess: true,
-        result: { travelId: result.travelId },
-      });
-    } else {
-      res.status(500).json({
-        isSuccess: false,
-        message: '일정 추가에 실패했습니다. 다시 시도해주세요.',
-      });
+    if (!result || !result.travelId) {
+      throw new CustomError(
+        errors.CALENDAR_CREATION_FAILED,
+        new Error('Database Error')
+      );
     }
-  } catch (error) {
-    console.error('Error in addCalendar:', error);
-    res.status(500).json({
-      isSuccess: false,
-      message: '서버 내부 오류가 발생했습니다.',
+
+    res.status(200).json({
+      isSuccess: true,
+      result: { travelId: result.travelId },
     });
+  } catch (error) {
     next(error);
   }
 };
@@ -72,8 +67,10 @@ export const removeCalendar = async (
     const result = await calendarService.removeCalendar(travelId);
 
     if (result.affectedRows === 0) {
-      res.status(404).json({ message: '해당 일정이 존재하지 않습니다.' });
-      return;
+      throw new CustomError(
+        errors.CALENDAR_NOT_FOUND,
+        new Error('Calendar Not Found')
+      );
     }
 
     res.status(200).json({ isSuccess: true });
@@ -112,8 +109,10 @@ export const fixCalendar = async (
     });
 
     if (result.affectedRows === 0) {
-      res.status(404).json({ message: '해당 일정이 존재하지 않습니다.' });
-      return;
+      throw new CustomError(
+        errors.CALENDAR_NOT_FOUND,
+        new Error('Calendar Not Found')
+      );
     }
 
     res.status(200).json({ isSuccess: true });

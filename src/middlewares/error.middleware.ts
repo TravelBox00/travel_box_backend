@@ -129,4 +129,24 @@ export const errors = {
     code: 4,
     description: 'Invalid password. Must be between 5 and 10 characters.',
   },
+  CALENDAR_CREATION_FAILED: {
+    statusCode: 500,
+    code: 3,
+    description: 'Failed to create the calendar entry.',
+  },
+  CALENDAR_NOT_FOUND: {
+    statusCode: 404,
+    code: 4,
+    description: 'The specified calendar entry does not exist.',
+  },
+  CALENDAR_DELETION_FAILED: {
+    statusCode: 500,
+    code: 5,
+    description: 'Failed to delete the calendar entry.',
+  },
+  CALENDAR_UPDATE_FAILED: {
+    statusCode: 500,
+    code: 6,
+    description: 'Failed to update the calendar entry.',
+  },
 };
