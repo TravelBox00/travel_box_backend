@@ -1,9 +1,12 @@
-import { ErrorDTO } from "./dto/error.dto.ts";
+import { ErrorDTO } from './dto/error.dto.ts';
 
 export class CustomError extends Error {
   statusCode: number; // statusCode를 CustomError의 속성으로 추가
+
   code: number;
+
   description: string;
+
   path?: string;
 
   constructor(error: Omit<ErrorDTO, 'path'>) {
@@ -20,14 +23,13 @@ export class CustomError extends Error {
 
   // 스택 추적 정보에서 경로 추출
   private static extractErrorPath(): string {
-    const stackLines = new Error().stack?.split("\n") || [];
+    const stackLines = new Error().stack?.split('\n') || [];
     const errorOrigin = stackLines[2]?.trim();
     const match = errorOrigin?.match(/\((.*):\d+:\d+\)/);
 
-    return match ? match[1] : "Unknown location";
+    return match ? match[1] : 'Unknown location';
   }
 }
-
 
 // 아래와 같이 정의하고 사용 가능
 /*
@@ -49,17 +51,16 @@ export const errors = {
   NOT_FOUND_USER_TAG: {
     statusCode: 404,
     code: 1,
-    description: "User ID does not exist.",
+    description: 'User ID does not exist.',
   },
   INVALID_PASSWORD: {
     statusCode: 401,
     code: 1,
-    description: "The password provided is incorrect.",
+    description: 'The password provided is incorrect.',
   },
   INVALID_TOKEN: {
     statusCode: 401,
     code: 2,
-    description: "The token provided is invalid or expired.",
+    description: 'The token provided is invalid or expired.',
   },
 };
-  

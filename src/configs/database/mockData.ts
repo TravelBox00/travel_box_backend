@@ -1,6 +1,7 @@
 import { pool } from "./mysqlConnect.ts";
 import bcrypt from "bcrypt"
 
+// eslint-disable-next-line import/prefer-default-export
 export const insertMockData = async () => {
   const connection = await pool.getConnection();
 
@@ -110,9 +111,9 @@ export const insertMockData = async () => {
       (3, 'Style', '003');
     `);
 
-    console.log("Mock data inserted successfully!");
+    console.log('Mock data inserted successfully!');
   } catch (error) {
-    console.error("Error inserting mock data:", error);
+    console.error('Error inserting mock data:', error);
   } finally {
     await connection.release();
   }
