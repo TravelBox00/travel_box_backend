@@ -4,6 +4,7 @@ import {
   updateCommentController,
   deleteCommentController,
   getMyCommentsController,
+  getCommentsByThreadController,
 } from './comment.controller.ts';
 
 const router = Router();
@@ -188,9 +189,59 @@ const router = Router();
  *         description: 서버 에러
  */
 
+/**
+ * @swagger
+ * /comment/show:
+ *   get:
+ *     summary: 특정 게시글의 댓글 조회
+ *     tags:
+ *       - Comments
+ *     parameters:
+ *       - in: query
+ *         name: threadId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           description: 댓글을 조회할 게시글 ID
+ *     responses:
+ *       200:
+ *         description: 댓글 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 isSuccess:
+ *                   type: boolean
+ *                   description: 요청 성공 여부
+ *                 result:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       commentId:
+ *                         type: integer
+ *                         description: 댓글 ID
+ *                       commentContent:
+ *                         type: string
+ *                         description: 댓글 내용
+ *                       commentVisible:
+ *                         type: string
+ *                         enum: [public, private]
+ *                         description: 댓글 공개 여부
+ *                       commenterNickname:
+ *                         type: string
+ *                         description: 댓글 작성자 닉네임
+ *       400:
+ *         description: 잘못된 요청
+ *       500:
+ *         description: 서버 에러
+ */
+
 router.post('/add', addCommentController);
 router.put('/fix', updateCommentController);
 router.delete('/remove', deleteCommentController);
 router.get('/info', getMyCommentsController);
+router.get('/show', getCommentsByThreadController);
 
 export default router;

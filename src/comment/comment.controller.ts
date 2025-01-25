@@ -4,6 +4,7 @@ import {
   editComment,
   removeComment,
   fetchMyComments,
+  fetchCommentsByThread,
 } from './comment.service.ts';
 
 // 댓글 추가
@@ -132,6 +133,34 @@ export const getMyCommentsController: RequestHandler = async (req, res) => {
     res.status(500).json({
       isSuccess: false,
       message: 'Internal server error',
+    });
+  }
+};
+
+// 특정 게시글의 댓글 조회
+export const getCommentsByThreadController: RequestHandler = async (
+  req,
+  res
+): Promise<void> => {
+  try {
+    const { threadId } = req.query;
+
+    if (!threadId) {
+      res.status(400).json({
+        isSuccess: false,
+        message: 'Thread ID is missing from the query parameters.',
+      });
+      return;
+    }
+
+    const response = await fetchCommentsByThread(Number(threadId));
+    res.status(200).json(response);
+  } catch (error) {
+    console.error('Error in getCommentsByThreadController:', error);
+
+    res.status(500).json({
+      isSuccess: false,
+      message: 'Internal server error occurred while fetching comments.',
     });
   }
 };

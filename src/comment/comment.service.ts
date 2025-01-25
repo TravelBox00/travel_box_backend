@@ -4,6 +4,7 @@ import {
   deleteComment,
   checkCommentExists,
   getMyComments,
+  getCommentsByThreadId,
 } from './comment.model.ts';
 
 // 댓글 추가
@@ -80,5 +81,28 @@ export const fetchMyComments = async (userId: number) => {
   } catch (error) {
     console.error('Error in fetchMyComments service:', error);
     throw new Error('Failed to fetch comments');
+  }
+};
+
+// 특정 게시글의 댓글 조회
+export const fetchCommentsByThread = async (threadId: number) => {
+  try {
+    const comments = await getCommentsByThreadId(threadId);
+
+    if (comments.length === 0) {
+      return {
+        isSuccess: true,
+        message: 'No comments found for the given thread ID.',
+        result: [],
+      };
+    }
+
+    return {
+      isSuccess: true,
+      result: comments,
+    };
+  } catch (error) {
+    console.error('Error in fetchCommentsByThread service:', error);
+    throw new Error('Failed to fetch comments for the thread.');
   }
 };

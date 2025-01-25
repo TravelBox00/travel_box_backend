@@ -139,3 +139,35 @@ export const getMyComments = async (userId: number) => {
     throw error;
   }
 };
+
+// 특정 게시글의 댓글 조회
+export const getCommentsByThreadId = async (threadId: number) => {
+  const query = `
+    SELECT 
+      c.commentId,
+      c.commentContent,
+      c.commentVisible,
+      u.userNickname AS commenterNickname
+    FROM 
+      Comment AS c
+    LEFT JOIN 
+      User AS u ON c.userId = u.userId
+    WHERE 
+      c.threadId = ?
+    ORDER BY 
+      c.commentDate DESC
+  `;
+
+  try {
+    const [rows] = await pool.execute<RowDataPacket[]>(query, [threadId]);
+    return rows.map((row) => ({
+      commentId: row.commentId,
+      commentContent: row.commentContent,
+      commentVisible: row.commentVisible,
+      commenterNickname: row.commenterNickname || 'Unknown User',
+    }));
+  } catch (error) {
+    console.error('Error in getCommentsByThreadId:', error);
+    throw error;
+  }
+};
