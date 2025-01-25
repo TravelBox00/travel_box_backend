@@ -19,9 +19,10 @@ export const addCalendar = async (
     } = req.body;
 
     if (!userId || !travelTitle) {
-      res
-        .status(400)
-        .json({ message: 'userId와 travelTitle은 필수 입력값입니다.' });
+      res.status(400).json({
+        isSuccess: false,
+        message: 'userId와 travelTitle은 필수 입력값입니다.',
+      });
       return;
     }
 
@@ -33,13 +34,23 @@ export const addCalendar = async (
       travelEndDate,
     });
 
-    res.status(201).json({
-      message: '일정 추가 완료',
-      isSuccess: true,
-      data: { travelId: result.travelId },
-    });
+    if (result && result.travelId) {
+      res.status(200).json({
+        isSuccess: true,
+        result: { travelId: result.travelId },
+      });
+    } else {
+      res.status(500).json({
+        isSuccess: false,
+        message: '일정 추가에 실패했습니다. 다시 시도해주세요.',
+      });
+    }
   } catch (error) {
-    console.error(error);
+    console.error('Error in addCalendar:', error);
+    res.status(500).json({
+      isSuccess: false,
+      message: '서버 내부 오류가 발생했습니다.',
+    });
     next(error);
   }
 };
@@ -65,7 +76,7 @@ export const removeCalendar = async (
       return;
     }
 
-    res.status(200).json({ message: '일정 삭제 완료', isSuccess: true });
+    res.status(200).json({ isSuccess: true });
   } catch (error) {
     console.error(error);
     next(error);
@@ -105,7 +116,7 @@ export const fixCalendar = async (
       return;
     }
 
-    res.status(200).json({ message: '일정 수정 완료', isSuccess: true });
+    res.status(200).json({ isSuccess: true });
   } catch (error) {
     console.error(error);
     next(error);

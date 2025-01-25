@@ -1,7 +1,8 @@
-import { pool } from "./mysqlConnect"
+import { pool } from './mysqlConnect.ts';
+
+// eslint-disable-next-line import/prefer-default-export
 export const createTables = async () => {
-    
-  const connection = pool
+  const connection = pool;
 
   // User Table
   await connection.query(`
@@ -132,8 +133,8 @@ export const createTables = async () => {
     );
   `);
 
-  console.log("Tables created successfully!");
+  console.log('Tables created successfully!');
   await connection.end();
 };
 // Add this at the end of your file
-createTables()
+createTables();
