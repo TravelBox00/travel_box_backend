@@ -66,7 +66,7 @@ const handleTokenOperations = async (userTag: string) => {
 export const logoutService = async (userTag: string) => {
     //const success: boolean = await deleteRefreshTokenInS3(userTag)
     const success = await deleteRefreshTokenInRedis(userTag)
-    if(success == 0){// 삭제 이후 존재여부 파악해서 error 처리를해야됨 return 0,1 로 redis에서 반환됨, accseetoken도 만료 시켜야됨
+    if(success == 0){
         throw new CustomError(errors.NOT_FOUND_USER_TAG, new Error());
     }
 };

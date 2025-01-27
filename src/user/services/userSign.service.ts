@@ -6,6 +6,7 @@ import { findUserTagByUserTag, userInfoChangeByUserTag, userInfoDeleteByUserTag,
 import { CustomError, errors } from '../../middlewares/error.middleware.ts';
 import { modifyReqDto } from '../dto/modify.dto.ts';
 import { checkNickname, checkPassword } from '../utils/loginValidate.ts';
+import { deleteRefreshTokenInRedis } from '../models/userLogin.model.ts';
 
 export const signupService = async (userInfo: signupReqDto) => {
     const {userTag, userPassword, userNickname} = userInfo
@@ -29,7 +30,8 @@ export const duplicateService = async (userTag: string) => {
 
 export const signoutService = async (userTag: string) => {
     const deleteCount:number = await userInfoDeleteByUserTag(userTag)
-    if(deleteCount != 1){
+    const success = await deleteRefreshTokenInRedis(userTag)
+    if(deleteCount == 0 || success == 0){
         throw new CustomError(errors.NOT_FOUND_USER_TAG, new Error());
     }
 };
