@@ -91,6 +91,7 @@ export const deleteRefreshTokenInRedis = async (userTag: string): Promise<number
           return result;
         } catch (error) {
           console.error(error);
+          throw new Error()
         }
       
 };
@@ -115,5 +116,6 @@ export const getRefreshTokenFromRedis = async (userTag: string): Promise<string|
         return refreshToken
     } catch (error) {
         console.error(error);
+        throw new Error()
     }
 };
