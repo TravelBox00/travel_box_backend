@@ -1,4 +1,4 @@
-import { elastic } from "../configs/database/elasticConnect";
+import { elastic } from "../configs/database/elasticConnect.ts";
 
 const popularElasticsearch = async (category?: string, region?: string): Promise<number[]> => {
     try {

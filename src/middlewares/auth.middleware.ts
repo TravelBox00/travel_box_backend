@@ -47,7 +47,7 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
 app.get('/users', authenticateToken, (req, res) => {});
 */
 
-export const decodeTokenUserTag = (token: string) => {
+export const decodeTokenUserTag = (token: string) =>{
     try {
         const decoded = jwt.decode(token);
         const userTag: string | undefined = (decoded as JwtPayload).userTag;

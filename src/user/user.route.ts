@@ -10,10 +10,10 @@ router.get("/", (req, res) => {
 
 router.post("/login", loginController);
 router.post("/login/refresh", refreshTokenController);
-router.delete("/logout/:userTag", authenticateToken, logoutController);
+router.delete("/logout", authenticateToken, logoutController);
 router.post("/signup", signupController)
 router.get("/signup/duplicate/:userTag", duplicateController)
-router.delete("/signout/:userTag" , authenticateToken, signoutController)
+router.delete("/signout" , authenticateToken, signoutController)
 router.patch("/modify", authenticateToken, modifyController)
 
 /**
