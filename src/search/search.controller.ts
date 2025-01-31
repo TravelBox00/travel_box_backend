@@ -1,12 +1,11 @@
 import { NextFunction, Request, Response } from "express";
-import { filterService, searchService } from "./search.service.ts";
+import { filterService, searchService, wordService } from "./search.service.ts";
 import { searchResDto } from "./dto/searchDto.ts";
-import { searchFilterResDto } from "./dto/searchFilterDto.ts";
 
-export const searchController = async (req:Request, res:Response, next:NextFunction): Promise<void> => {// 시간별 검색된 게시물 반환
+export const searchController = async (req:Request, res:Response, next:NextFunction): Promise<void> => {
     try{
-        const searchReq: string = req.params.word;
-        const searchRes: searchResDto = await searchService(searchReq);
+        const searchReq = req.query.word as string;
+        const searchRes: searchResDto[] = await searchService(searchReq);
         
         res.status(200).json({ result: searchRes, isSuccess: true });
     }catch (error) {
@@ -14,10 +13,10 @@ export const searchController = async (req:Request, res:Response, next:NextFunct
     }
 }
 
-export const wordController = async (req:Request, res:Response, next:NextFunction): Promise<void> => {// 검색어 입력시 자동완성 단어 반환
+export const wordController = async (req:Request, res:Response, next:NextFunction): Promise<void> => {
   try{
-      const searchReq: string = req.params.word;
-      const searchRes: searchResDto = await searchService(searchReq);
+      const searchReq: string = req.query.word as string;
+      const searchRes: string[] = await wordService(searchReq);
       
       res.status(200).json({ result: searchRes, isSuccess: true });
   }catch (error) {
@@ -25,7 +24,7 @@ export const wordController = async (req:Request, res:Response, next:NextFunctio
   }
 }
 
-export const filterController = async (req: Request, res: Response, next: NextFunction): Promise<void> => {// 
+export const filterController = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const category: string | undefined = req.query.filter as string | undefined;
     const region: string | undefined = req.query.filter as string | undefined;

@@ -57,27 +57,16 @@ export function errorHandler(err: Error, req: Request, res: Response, next: Next
   }
 }
 
-// 아래와 같이 정의하고 사용 가능
-/*
-{
-  "statusCode": 404,// http-statusCode
-  "code": 1,// 동일 statusCode에서 상황별 코드
-  "description": "User with the given ID does not exist.",// 디테일한 설명
-  "path": "/custom/api/endpoint"// 에러 발생 위치
-}
-
-import {CustomError, errors} from " ";
-
-const error = new CustomError(errors.NOT_FOUND);
-
-console.error(error);// 콘솔에 에러 출력
-return res.status(error.statusCode).json(error);// error 객체 그대로 사용하여 응답
-*/
 export const errors = {
   NOT_FOUND_USER_TAG: {
     statusCode: 404,
     code: 1,
     description: "User ID does not exist.",
+  },
+  NOT_FOUND_WORD: {
+    statusCode: 404,
+    code: 2,
+    description: "not found similar data.",
   },
   INVALID_PASSWORD: {
     statusCode: 401,

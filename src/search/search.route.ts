@@ -1,33 +1,34 @@
 import express from "express";
-import {  filterController, searchController } from "./search.controller.ts";
+import { filterController, searchController, wordController } from "./search.controller.ts";
+
 const router = express.Router();
-
 router.get("/", searchController);
+router.get("/word", wordController);
 router.get("/filter", filterController);
-
 /**
  * @swagger
  * tags:
  *   name: Search
- *   description: 검색 관련 API
+ *   description: 검색 API
  */
 
 /**
  * @swagger
  * /search:
  *   get:
- *     summary: 검색 기능
+ *     summary: "시간별 검색된 게시물 반환"
+ *     description: "검색어를 입력하면 해당 검색어와 관련된 게시물을 최신순으로 반환합니다."
  *     tags: [Search]
  *     parameters:
- *       - in: query
- *         name: word
+ *       - name: word
+ *         in: query
+ *         description: "검색할 단어"
+ *         required: true
  *         schema:
  *           type: string
- *         required: true
- *         description: 검색할 키워드
  *     responses:
  *       200:
- *         description: 검색 결과 반환
+ *         description: "검색 결과 반환"
  *         content:
  *           application/json:
  *             schema:
@@ -36,46 +37,28 @@ router.get("/filter", filterController);
  *                 result:
  *                   type: array
  *                   items:
- *                     type: object
- *                     properties:
- *                       threadId:
- *                         type: number
- *                         description: 게시물 ID
- *                         example: 12345
- *                       postImageURL:
- *                         type: string
- *                         description: 게시물 이미지 URL
- *                         example: "https://s3.example.com/uploads/thread12345.jpg"
- *                       postTitle:
- *                         type: string
- *                         description: 게시물 제목
- *                         example: "나의 첫 번째 여행"
- *                       postDate:
- *                         type: string
- *                         format: date-time
- *                         description: 게시물 작성 날짜
- *                         example: "2024-01-27T15:30:00.000Z"
+ *                     $ref: '#/components/schemas/searchResDto'
  *                 isSuccess:
  *                   type: boolean
- *                   example: true
  */
 
 /**
  * @swagger
- * /search/region:
+ * /search/word:
  *   get:
- *     summary: 지역 검색
+ *     summary: "검색어 입력 시 자동완성 단어 반환"
+ *     description: "사용자가 입력한 검색어를 기반으로 자동완성 단어 목록을 반환합니다."
  *     tags: [Search]
  *     parameters:
- *       - in: query
- *         name: word
+ *       - name: word
+ *         in: query
+ *         description: "입력된 검색어"
+ *         required: true
  *         schema:
  *           type: string
- *         required: true
- *         description: 검색할 지역명
  *     responses:
  *       200:
- *         description: 지역 검색 결과 반환
+ *         description: "자동완성 검색어 반환"
  *         content:
  *           application/json:
  *             schema:
@@ -84,42 +67,35 @@ router.get("/filter", filterController);
  *                 result:
  *                   type: array
  *                   items:
- *                     type: object
- *                     properties:
- *                       threadId:
- *                         type: number
- *                         example: 54321
- *                       postImageURL:
- *                         type: string
- *                         example: "https://s3.example.com/uploads/thread54321.jpg"
- *                       postTitle:
- *                         type: string
- *                         example: "서울 여행 기록"
- *                       postDate:
- *                         type: string
- *                         format: date-time
- *                         example: "2023-12-10T08:15:00.000Z"
+ *                     type: string
  *                 isSuccess:
  *                   type: boolean
- *                   example: true
  */
+
 
 /**
  * @swagger
- * /search/hashtag:
+ * /search/filter:
  *   get:
- *     summary: 해시태그 검색
+ *     summary: "카테고리 & 지역 필터 검색"
+ *     description: "카테고리 또는 지역을 기준으로 게시물을 검색합니다."
  *     tags: [Search]
  *     parameters:
- *       - in: query
- *         name: word
+ *       - name: category
+ *         in: query
+ *         description: "검색할 카테고리 (예: 여행기록, 기념품 등)"
+ *         required: false
  *         schema:
  *           type: string
- *         required: true
- *         description: 검색할 해시태그
+ *       - name: region
+ *         in: query
+ *         description: "검색할 지역 (예: 서울, 부산 등)"
+ *         required: false
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
- *         description: 해시태그 검색 결과 반환
+ *         description: "필터링된 게시물 반환"
  *         content:
  *           application/json:
  *             schema:
@@ -128,61 +104,32 @@ router.get("/filter", filterController);
  *                 result:
  *                   type: array
  *                   items:
- *                     type: object
- *                     properties:
- *                       threadId:
- *                         type: number
- *                         example: 67890
- *                       postImageURL:
- *                         type: string
- *                         example: "https://s3.example.com/uploads/thread67890.jpg"
- *                       postTitle:
- *                         type: string
- *                         example: "여행 필수템"
- *                       postDate:
- *                         type: string
- *                         format: date-time
- *                         example: "2024-02-01T12:00:00.000Z"
+ *                     $ref: '#/components/schemas/searchResDto'
  *                 isSuccess:
  *                   type: boolean
- *                   example: true
  */
+
 
 /**
  * @swagger
- * /search/popular:
- *   get:
- *     summary: 인기 검색어 조회
- *     tags: [Search]
- *     responses:
- *       200:
- *         description: 인기 검색어 목록 반환
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 result:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       threadId:
- *                         type: number
- *                         example: 98765
- *                       postImageURL:
- *                         type: string
- *                         example: "https://s3.example.com/uploads/thread98765.jpg"
- *                       postTitle:
- *                         type: string
- *                         example: "가을 단풍 명소"
- *                       postDate:
- *                         type: string
- *                         format: date-time
- *                         example: "2024-02-05T09:45:00.000Z"
- *                 isSuccess:
- *                   type: boolean
- *                   example: true
+ * components:
+ *   schemas:
+ *     searchResDto:
+ *       type: object
+ *       properties:
+ *         threadId:
+ *           type: number
+ *           description: "게시물 ID"
+ *         postImageURL:
+ *           type: string
+ *           description: "게시물 대표 이미지 URL"
+ *         postTitle:
+ *           type: string
+ *           description: "게시물 제목"
+ *         postDate:
+ *           type: string
+ *           format: date-time
+ *           description: "게시물 작성 날짜"
  */
 
 export default router;

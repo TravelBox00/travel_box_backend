@@ -1,29 +1,36 @@
 import { CustomError, errors } from '../middlewares/error.middleware.ts';
 import { searchResDto } from './dto/searchDto.ts';
-import { searchFilterResDto } from './dto/searchFilterDto.ts';
-import { getThread, getTopRankedThreads, getFilterRankedThreads, getRegionTopRankedThreads, getCategoryFilterRankedThreads } from './search.model.ts';
+import { getThread, searchValidSuggestions, getFastTimeThread } from './search.model.ts';
+import { getCategoryFilterRankedThreads, getFilterRankedThreads, getRegionTopRankedThreads, getTopRankedThreads } from './searchPopul.model.ts';
 
-export const searchService = async (searchInfo:string):Promise<searchResDto> => {
-    const threadId:number = 0
-    const postImageURL: string = ""
-    const postTitle: string = ""
-    const postDate: Date = new Date();
-    const searchData: searchResDto = {threadId, postImageURL, postTitle, postDate}
-    return searchData
-};  
+export const searchService = async (word: string): Promise<searchResDto[]> => {
+      const threadIds = await getFastTimeThread(word);
 
-export const regionService = async (searchInfo: searchFilterResDto):Promise<searchResDto> => {
-    const {word, filter} = searchInfo
+      if(threadIds.length === 0){
+        throw new CustomError(errors.NOT_FOUND_WORD, new Error())
+      }
 
+      const threads = await Promise.all(threadIds.map((id) => getThread(id)));
+      const image = ""
 
+      const searchData: searchResDto[] = threads.map((thread: any) => ({
+        threadId: thread.threadId,
+        postImageURL: image,
+        postTitle: thread.title,
+        postDate: thread.date,
+      }));
 
+      return searchData
+  };
+   
 
-    const threadId:number = 0
-    const postImageURL: string = ""
-    const postTitle: string = ""
-    const postDate: Date = new Date();
-    const searchData: searchResDto = {threadId, postImageURL, postTitle, postDate}
-    return searchData
+export const wordService= async (word: string):Promise<string[]> => {
+    const words: string[] = await searchValidSuggestions(word)
+
+    if(words.length === 0){
+      throw new CustomError(errors.NOT_FOUND_WORD, new Error())
+    }
+    return words
 };  
 
 
@@ -42,12 +49,16 @@ export const filterService = async (category: string | undefined, region: string
     }else{
         threadIds = await getTopRankedThreads();
     }
+
+    if(threadIds.length === 0){
+      throw new CustomError(errors.NOT_FOUND_WORD, new Error())
+    }
     
     const threads = await Promise.all(threadIds.map((id) => getThread(id)));
-    console.log('threads', threads)
+    const image = ""
     const searchData: searchResDto[] = threads.map((thread: any) => ({
       threadId: thread.threadId,
-      postImageURL: thread.imageUrl,
+      postImageURL: image,
       postTitle: thread.title,
       postDate: thread.date,
     }));
