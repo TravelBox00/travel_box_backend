@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import { swaggerUi, swaggerSpec } from "./configs/swagger.ts";
 import {authenticateToken} from "./middlewares/auth.middleware.ts"
 import userRoutes from "./user/user.route.ts";
+import searchRoutes from "./search/search.route.ts"
 import { errorHandler } from "./middlewares/error.middleware.ts";
 
 // dotenv 설정
@@ -36,6 +37,7 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 // 라우터
 app.use('/', router);
 app.use("/users", userRoutes);
+app.use("/search",authenticateToken, searchRoutes);
 
 // 에러 처리 미들웨어 적용
 app.use(errorHandler);
