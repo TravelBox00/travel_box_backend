@@ -10,6 +10,8 @@ export const createTables = async () => {
       userPassword VARCHAR(255) NOT NULL,
       userNickname VARCHAR(50) NOT NULL,
       userTag VARCHAR(50) NOT NULL UNIQUE
+      email TEXT,
+      userExist Boolean DEFAULT TRUE NOT NULL,
     );
   `);
 
@@ -18,8 +20,8 @@ export const createTables = async () => {
     CREATE TABLE IF NOT EXISTS TravelThread (
       threadId INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
       userId INT NOT NULL,
-      clothId INT NOT NULL,
-      singId INT NOT NULL,
+      clothId INT,
+      singId INT,
       postCategory ENUM('여행기록', '기념품', '여행지', '여행 코디') NOT NULL,
       postTitle VARCHAR(255) NOT NULL,
       postContent TEXT NOT NULL,
@@ -98,8 +100,9 @@ export const createTables = async () => {
     CREATE TABLE IF NOT EXISTS Cloth (
       clothId INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
       threadId INT NOT NULL,
+      clothInfo TEXT NOT NULL,
       FOREIGN KEY (threadId) REFERENCES TravelThread(threadId)
-    );
+    );1
   `);
 
   // Sing Table
@@ -107,6 +110,7 @@ export const createTables = async () => {
     CREATE TABLE IF NOT EXISTS Sing (
       singId INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
       threadId INT NOT NULL,
+      singInfo TEXT NOT NULL,
       FOREIGN KEY (threadId) REFERENCES TravelThread(threadId)
     );
   `);
@@ -116,7 +120,7 @@ export const createTables = async () => {
     CREATE TABLE IF NOT EXISTS Image (
       imageId INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
       threadId INT NOT NULL,
-      imageInfoId INT NOT NULL,
+      imageURL TEXT NOT NULL,
       FOREIGN KEY (threadId) REFERENCES TravelThread(threadId)
     );
   `);

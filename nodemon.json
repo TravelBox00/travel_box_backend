@@ -1,15 +1,7 @@
 {
-<<<<<<< HEAD
-    "watch": ["src"],
-    "ext": "ts",
-    "ignore": ["node_modules"],
-    "exec": "node --loader ts-node/esm ./src/index.ts"
-  }
-  
-=======
   "watch": ["src"],
   "ext": "ts",
   "ignore": ["node_modules"],
   "exec": "node --loader ts-node/esm ./src/index.ts"
 }
->>>>>>> c85aae1978f0b3bb516063e007932680bff9141a
+  
