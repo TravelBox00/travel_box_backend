@@ -2,11 +2,11 @@
 import {
   S3Client,
   PutBucketLifecycleConfigurationCommand,
+  ExpirationStatus
   // eslint-disable-next-line import/no-duplicates
 } from '@aws-sdk/client-s3';
 import dotenv from 'dotenv';
-// eslint-disable-next-line import/no-duplicates, import/no-extraneous-dependencies
-import { ExpirationStatus } from '@aws-sdk/client-s3'; // 이 부분은 필요에 따라 import 할 수 있습니다.
+
 
 dotenv.config();
 
