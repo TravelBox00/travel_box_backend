@@ -1,10 +1,13 @@
-import { NextFunction, Request, Response } from "express";
-import { ErrorDTO } from "./dto/error.dto.ts";
+import { NextFunction, Request, Response } from 'express';
+import { ErrorDTO } from './dto/error.dto.ts';
 
 export class CustomError extends Error {
   statusCode: number;
+
   code: number;
+
   description: string;
+
   path?: string;
 
   constructor(error: Omit<ErrorDTO, 'path'>, existingError: Error) {
@@ -29,30 +32,36 @@ export class CustomError extends Error {
 
   private extractErrorPath(): string {
     if (!this.stack) {
-      return "Unknown location";
+      return 'Unknown location';
     }
 
-    const stackLines = this.stack.split("\n");
-    const relevantLine = stackLines.find(line => line.includes('at'));
-    if (!relevantLine) return "Unknown location";
+    const stackLines = this.stack.split('\n');
+    const relevantLine = stackLines.find((line) => line.includes('at'));
+    if (!relevantLine) return 'Unknown location';
 
     const match = relevantLine.match(/\((.*):\d+:\d+\)/);
-    return match ? match[1] : "Unknown location";
+    return match ? match[1] : 'Unknown location';
   }
 }
 
-export function errorHandler(err: Error, req: Request, res: Response, next: NextFunction) {
+export function errorHandler(
+  err: Error,
+  req: Request,
+  res: Response,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  next: NextFunction
+) {
   if (err instanceof CustomError) {
     res.status(err.statusCode).json({
       code: err.code,
       description: err.description,
-      path: err.path
+      path: err.path,
     });
   } else {
     res.status(500).json({
       code: 500,
       description: 'Internal Server Error',
-      path: req.path
+      path: req.path,
     });
   }
 }
@@ -61,7 +70,7 @@ export const errors = {
   NOT_FOUND_USER_TAG: {
     statusCode: 404,
     code: 1,
-    description: "User ID does not exist.",
+    description: 'User ID does not exist.',
   },
   NOT_FOUND_WORD: {
     statusCode: 404,
@@ -71,41 +80,62 @@ export const errors = {
   INVALID_PASSWORD: {
     statusCode: 401,
     code: 1,
-    description: "The password provided is incorrect.",
+    description: 'The password provided is incorrect.',
   },
   INVALID_TOKEN: {
     statusCode: 401,
     code: 2,
-    description: "The token provided is invalid or expired.",
+    description: 'The token provided is invalid or expired.',
   },
   NOT_INPUT_VALUE: {
     statusCode: 400,
     code: 1,
-    description: "Not provided value.",
+    description: 'Not provided value.',
   },
   INCORRECT_TYPE: {
     statusCode: 400,
     code: 2,
-    description: "Invalid value provided.",
+    description: 'Invalid value provided.',
   },
   INCORRECT_DATE: {
     statusCode: 422,
     code: 1,
-    description: "Invalid date format. Expected YYYY-MM-DD.",
+    description: 'Invalid date format. Expected YYYY-MM-DD.',
   },
   INCORRECT_EMAIL: {
     statusCode: 422,
     code: 2,
-    description: "Invalid email format. Expected something like user@example.com.",
+    description:
+      'Invalid email format. Expected something like user@example.com.',
   },
   INCORRECT_NICKNAME: {
     statusCode: 422,
     code: 3,
-    description: "Invalid nickname. Must be between 3 and 10 characters.",
+    description: 'Invalid nickname. Must be between 3 and 10 characters.',
   },
   INCORRECT_PASSWORD: {
     statusCode: 422,
     code: 4,
-    description: "Invalid password. Must be between 5 and 10 characters.",
+    description: 'Invalid password. Must be between 5 and 10 characters.',
+  },
+  NOT_PROVIDED_VALUES: {
+    statusCode: 400,
+    code: 1,
+    description: 'threadId와 userId를 모두 제공해야 합니다.',
+  },
+  SERVER_ERROR: {
+    statusCode: 500,
+    code: 2,
+    description: '서버 오류가 발생했습니다.',
+  },
+  TOGGLE_LIKE_ERROR: {
+    statusCode: 500,
+    code: 3,
+    description: '좋아요 토글 중 오류가 발생했습니다.',
+  },
+  TOGGLE_SCRAP_ERROR: {
+    statusCode: 500,
+    code: 4,
+    description: '스크랩 토글 중 오류가 발생했습니다.',
   },
 };

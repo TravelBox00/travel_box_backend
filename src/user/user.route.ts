@@ -1,12 +1,22 @@
-import express from "express";
-import {loginController, refreshTokenController, logoutController} from "./controllers/userLogin.controller.ts"
-import {signupController, duplicateController, signoutController, modifyController} from "./controllers/userSign.controller.ts"
-import {authenticateToken} from "../middlewares/auth.middleware.ts"
-const router = express.Router()
+import express from 'express';
+import {
+  loginController,
+  refreshTokenController,
+  logoutController,
+} from './controllers/userLogin.controller.ts';
+import {
+  signupController,
+  duplicateController,
+  signoutController,
+  modifyController,
+} from './controllers/userSign.controller.ts';
+// eslint-disable-next-line import/newline-after-import
+import { authenticateToken } from '../middlewares/auth.middleware.ts';
+const router = express.Router();
 
-router.get("/", (req, res) => {
-    res.send("User main route");
-  });
+router.get('/', (req, res) => {
+  res.send('User main route');
+});
 
 router.post("/login", loginController);
 router.post("/login/refresh", refreshTokenController);
@@ -307,8 +317,8 @@ router.patch("/modify", authenticateToken, modifyController)
  *                   type: null
  *                   description: null
  *                   example: ""
- *       403: 
- *         description: | 
+ *       403:
+ *         description: |
  *            -Invalid nickname
  *            -Invalid password
  *       500:
@@ -316,4 +326,3 @@ router.patch("/modify", authenticateToken, modifyController)
  */
 
 export default router;
-
