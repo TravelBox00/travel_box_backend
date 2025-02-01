@@ -1,9 +1,6 @@
-// eslint-disable-next-line import/no-extraneous-dependencies
 import bcrypt from 'bcrypt';
-// eslint-disable-next-line import/extensions
-import { pool } from './mysqlConnect';
+import { pool } from './mysqlConnect.ts';
 
-// eslint-disable-next-line import/prefer-default-export
 export const insertMockData = async () => {
   const connection = await pool.getConnection();
 

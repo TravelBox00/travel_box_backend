@@ -118,7 +118,6 @@ export const errors = {
     code: 4,
     description: 'Invalid password. Must be between 5 and 10 characters.',
   },
-
   CALENDAR_CREATION_FAILED: {
     statusCode: 500,
     code: 3,

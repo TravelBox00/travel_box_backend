@@ -12,6 +12,7 @@ import userRoutes from './user/user.route.ts';
 import calendarRoutes from './calendar/calendar.route.ts';
 import threadRoutes from './thread/thread.route.ts';
 import searchRoutes from "./search/search.route.ts";
+import commentRouter from './comment/comment.route.ts';
 
 dotenv.config();
 
@@ -39,6 +40,7 @@ app.use('/users', userRoutes);
 app.use('/calendar',authenticateToken, calendarRoutes);
 app.use('/thread',authenticateToken, threadRoutes);
 app.use('/search',authenticateToken, searchRoutes);
+app.use('/comment', authenticateToken, commentRouter);
 
 // 에러 처리 미들웨어 적용
 app.use(errorHandler);

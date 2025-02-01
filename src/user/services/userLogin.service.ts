@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-extraneous-dependencies
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 
@@ -8,21 +9,31 @@ import { deleteRefreshTokenInRedis, findUserByUserTag, getRefreshTokenFromRedis,
 import { loginReqDto } from "../dto/login.dto.ts"
 import { refreshTokenDto, tokensDto } from '../dto/token.dto.ts';
 
-export const loginService = async (userLoginInfo: loginReqDto): Promise<tokensDto> => {
-    const {userTag, userPassword} = userLoginInfo;
-    
-    // user 정보 맞는지 확인
-    const userInfo = await findUserByUserTag(userTag);
-    if (!userInfo) throw new CustomError(errors.NOT_FOUND_USER_TAG, new Error()); // custom error 적용시키기
+export const loginService = async (
+  userLoginInfo: loginReqDto
+): Promise<tokensDto> => {
+  const { userTag, userPassword } = userLoginInfo;
+
+  // user 정보 맞는지 확인
+  const userInfo = await findUserByUserTag(userTag);
+  if (!userInfo) throw new CustomError(errors.NOT_FOUND_USER_TAG, new Error()); // custom error 적용시키기
 
     const firstHash = crypto.createHash('blake2b512').update(userPassword).digest('hex');
     const isPasswordValid = await bcrypt.compare(firstHash, userInfo.userPassword);
     if (!isPasswordValid) throw new CustomError(errors.INVALID_PASSWORD, new Error()); // custom error 적용시키기
 
-    const { accessToken, refreshToken } = await handleTokenOperations(userInfo.userTag);
+ 
+  // eslint-disable-next-line no-use-before-define
+  const { accessToken, refreshToken } = await handleTokenOperations(
+    userInfo.userTag
+  );
 
-    const userTokenInfo: tokensDto = { userTag: userTag, accessToken, refreshToken };
-    return userTokenInfo;
+  const userTokenInfo: tokensDto = {
+    userTag,
+    accessToken,
+    refreshToken,
+  };
+  return userTokenInfo;
 };
 
 export const refreshTokenService = async (userRefreshToken: refreshTokenDto): Promise<tokensDto> => {
@@ -33,25 +44,30 @@ export const refreshTokenService = async (userRefreshToken: refreshTokenDto): Pr
         throw new CustomError(errors.INVALID_TOKEN, new Error());
     }
 
-    const newToken = await handleTokenOperations(userTag);
-  
-    const userTokenInfo: tokensDto = {
-        userTag, 
-        accessToken: newToken.accessToken, 
-        refreshToken: newToken.refreshToken
-    };
+  if (!storedToken || storedToken !== refreshToken) {
+    throw new CustomError(errors.INVALID_TOKEN, new Error());
+  }
 
-    return userTokenInfo;
+  // eslint-disable-next-line no-use-before-define
+  const newToken = await handleTokenOperations(userTag);
+
+  const userTokenInfo: tokensDto = {
+    userTag,
+    accessToken: newToken.accessToken,
+    refreshToken: newToken.refreshToken,
+  };
+
+  return userTokenInfo;
 };
 
 const handleTokenOperations = async (userTag: string) => {
-    
-        const tokens = generateTokens(userTag);
+  const tokens = generateTokens(userTag);
 
-        if(!tokens){// 500번 인데 이렇게 하는게 맞는지 잘 모르겠음
-            throw new Error()
-        }
-        const { accessToken, refreshToken } = tokens;
+  if (!tokens) {
+    // 500번 인데 이렇게 하는게 맞는지 잘 모르겠음
+    throw new Error();
+  }
+  const { accessToken, refreshToken } = tokens;
 
         const userRefreshToken = { userTag, refreshToken };
     
@@ -70,4 +86,3 @@ export const logoutService = async (userTag: string) => {
         throw new CustomError(errors.NOT_FOUND_USER_TAG, new Error());
     }
 };
-
