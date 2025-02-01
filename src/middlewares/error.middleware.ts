@@ -66,27 +66,16 @@ export function errorHandler(
   }
 }
 
-// 아래와 같이 정의하고 사용 가능
-/*
-{
-  "statusCode": 404,// http-statusCode
-  "code": 1,// 동일 statusCode에서 상황별 코드
-  "description": "User with the given ID does not exist.",// 디테일한 설명
-  "path": "/custom/api/endpoint"// 에러 발생 위치
-}
-
-import {CustomError, errors} from " ";
-
-const error = new CustomError(errors.NOT_FOUND);
-
-console.error(error);// 콘솔에 에러 출력
-return res.status(error.statusCode).json(error);// error 객체 그대로 사용하여 응답
-*/
 export const errors = {
   NOT_FOUND_USER_TAG: {
     statusCode: 404,
     code: 1,
     description: 'User ID does not exist.',
+  },
+  NOT_FOUND_WORD: {
+    statusCode: 404,
+    code: 2,
+    description: "not found similar data.",
   },
   INVALID_PASSWORD: {
     statusCode: 401,
@@ -129,6 +118,7 @@ export const errors = {
     code: 4,
     description: 'Invalid password. Must be between 5 and 10 characters.',
   },
+
   CALENDAR_CREATION_FAILED: {
     statusCode: 500,
     code: 3,
@@ -148,5 +138,25 @@ export const errors = {
     statusCode: 500,
     code: 6,
     description: 'Failed to update the calendar entry.',
+  },
+  NOT_PROVIDED_VALUES: {
+    statusCode: 400,
+    code: 1,
+    description: 'threadId와 userId를 모두 제공해야 합니다.',
+  },
+  SERVER_ERROR: {
+    statusCode: 500,
+    code: 2,
+    description: '서버 오류가 발생했습니다.',
+  },
+  TOGGLE_LIKE_ERROR: {
+    statusCode: 500,
+    code: 3,
+    description: '좋아요 토글 중 오류가 발생했습니다.',
+  },
+  TOGGLE_SCRAP_ERROR: {
+    statusCode: 500,
+    code: 4,
+    description: '스크랩 토글 중 오류가 발생했습니다.',
   },
 };

@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import { loginReqDto } from "../dto/login.dto.ts"
 import {loginService, logoutService, refreshTokenService} from "../services/userLogin.service.ts"
 import { refreshTokenDto, tokensDto } from '../dto/token.dto.ts';
+import { decodeTokenUserTag } from '../../middlewares/auth.middleware.ts';
 
 export const loginController = async (req:Request, res:Response, next:NextFunction): Promise<void> => {
     try{
@@ -27,7 +28,8 @@ export const refreshTokenController = async (req: Request, res: Response, next:N
 
 export const logoutController = async (req: Request, res: Response, next:NextFunction): Promise<void> => {
     try {
-        const userTag:string = req.params.userTag
+        const token = req.headers.authorization?.split(" ")[1] as string
+        const userTag: string = decodeTokenUserTag(token) as string
         await logoutService(userTag); 
 
         res.status(200).json({isSuccess: true});

@@ -4,12 +4,14 @@ import {
   refreshTokenController,
   logoutController,
 } from './controllers/userLogin.controller.ts';
+
 import {
   signupController,
   duplicateController,
   signoutController,
   modifyController,
 } from './controllers/userSign.controller.ts';
+
 import { authenticateToken } from '../middlewares/auth.middleware.ts';
 
 const router = express.Router();
@@ -18,13 +20,13 @@ router.get('/', (req, res) => {
   res.send('User main route');
 });
 
-router.post('/login', loginController);
-router.post('/login/refresh', refreshTokenController);
-router.delete('/logout/:userTag', authenticateToken, logoutController);
-router.post('/signup', signupController);
-router.get('/signup/duplicate/:userTag', duplicateController);
-router.delete('/signout/:userTag', authenticateToken, signoutController);
-router.patch('/modify', authenticateToken, modifyController);
+router.post("/login", loginController);
+router.post("/login/refresh", refreshTokenController);
+router.delete("/logout", authenticateToken, logoutController);
+router.post("/signup", signupController)
+router.get("/signup/duplicate/:userTag", duplicateController)
+router.delete("/signout" , authenticateToken, signoutController)
+router.patch("/modify", authenticateToken, modifyController)
 
 /**
  * @swagger

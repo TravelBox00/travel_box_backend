@@ -1,3 +1,5 @@
+// eslint-disable-next-line import/no-extraneous-dependencies
+import bcrypt from 'bcrypt';
 // eslint-disable-next-line import/extensions
 import { pool } from './mysqlConnect';
 
@@ -6,43 +8,55 @@ export const insertMockData = async () => {
   const connection = await pool.getConnection();
 
   try {
+    const password = 'password3188';
+    const nickname = 'ljm';
+    const tag = 'ljm#123';
+
+    // 비밀번호 해싱
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // 데이터베이스에 저장
+    const query = `
+        INSERT INTO User (userPassword, userNickname, userTag)
+        VALUES (?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+        userPassword=VALUES(userPassword), userNickname=VALUES(userNickname);
+    `;
+    await connection.execute(query, [hashedPassword, nickname, tag]);
+
     // Insert into User Table
     await connection.query(`
       INSERT INTO User (userPassword, userNickname, userTag) VALUES 
-      ('password123', 'JohnDoe', 'john#123')
-      ON DUPLICATE KEY UPDATE userPassword=VALUES(userPassword), userNickname=VALUES(userNickname);
-    `);
-
-    await connection.query(`
-      INSERT INTO User (userPassword, userNickname, userTag) VALUES 
-      ('password456', 'JaneSmith', 'jane#456')
-      ON DUPLICATE KEY UPDATE userPassword=VALUES(userPassword), userNickname=VALUES(userNickname);
-    `);
-
-    await connection.query(`
-      INSERT INTO User (userPassword, userNickname, userTag) VALUES 
+      ('password123', 'JohnDoe', 'john#123'),
+      ('password456', 'JaneSmith', 'jane#456'),
       ('password789', 'AliceJohnson', 'alice#789')
-      ON DUPLICATE KEY UPDATE userPassword=VALUES(userPassword), userNickname=VALUES(userNickname);
+      ON DUPLICATE KEY UPDATE 
+        userPassword=VALUES(userPassword), 
+        userNickname=VALUES(userNickname);
+    `);
+
+    // Insert into TravelThread Table (required before Cloth and Sing)
+    await connection.query(`
+      INSERT INTO TravelThread (userId, postCategory, postTitle, postContent, postDate, postRegionCode) VALUES 
+      (1, '여행기록', 'My First Trip', 'It was amazing!', '2025-01-01', 101),
+      (2, '기념품', 'Cool Souvenirs', 'Check out what I got!', '2025-01-02', 102),
+      (3, '여행 코디', 'Travel Outfit', 'Here is my style!', '2025-01-03', 103);
     `);
 
     // Insert into Cloth Table
     await connection.query(`
-      INSERT INTO Cloth () VALUES 
-      (), (), ();
+      INSERT INTO Cloth (threadId, clothInfo) VALUES 
+      (1, 'Casual T-shirt and Jeans'),
+      (2, 'Summer Dress'),
+      (3, 'Winter Jacket');
     `);
 
     // Insert into Sing Table
     await connection.query(`
-      INSERT INTO Sing () VALUES 
-      (), (), ();
-    `);
-
-    // Insert into TravelThread Table
-    await connection.query(`
-      INSERT INTO TravelThread (userId, clothId, singId, postCategory, postTitle, postContent, postDate, postRegionCode) VALUES 
-      (1, 1, 1, '여행기록', 'My First Trip', 'It was amazing!', '2025-01-01', 101),
-      (2, 2, 2, '기념품', 'Cool Souvenirs', 'Check out what I got!', '2025-01-02', 102),
-      (3, 3, 3, '여행 코디', 'Travel Outfit', 'Here is my style!', '2025-01-03', 103);
+      INSERT INTO Sing (threadId, singInfo) VALUES 
+      (1, 'Popular Song 1'),
+      (2, 'Popular Song 2'),
+      (3, 'Popular Song 3');
     `);
 
     // Insert into TravelCalendar Table
