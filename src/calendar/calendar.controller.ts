@@ -2,6 +2,7 @@
 import { Request, Response, NextFunction } from 'express';
 // eslint-disable-next-line import/extensions
 import * as calendarService from './calendar.service.ts';
+import { CustomError, errors } from '../middlewares/error.middleware.ts';
 
 // 일정 추가
 export const addCalendar = async (
@@ -19,10 +20,10 @@ export const addCalendar = async (
     } = req.body;
 
     if (!userId || !travelTitle) {
-      res
-        .status(400)
-        .json({ message: 'userId와 travelTitle은 필수 입력값입니다.' });
-      return;
+      throw new CustomError(
+        errors.NOT_INPUT_VALUE,
+        new Error('Validation Error')
+      );
     }
 
     const result = await calendarService.addCalendar({
@@ -33,13 +34,18 @@ export const addCalendar = async (
       travelEndDate,
     });
 
-    res.status(201).json({
-      message: '일정 추가 완료',
+    if (!result || !result.travelId) {
+      throw new CustomError(
+        errors.CALENDAR_CREATION_FAILED,
+        new Error('Database Error')
+      );
+    }
+
+    res.status(200).json({
       isSuccess: true,
-      data: { travelId: result.travelId },
+      result: { travelId: result.travelId },
     });
   } catch (error) {
-    console.error(error);
     next(error);
   }
 };
@@ -61,11 +67,13 @@ export const removeCalendar = async (
     const result = await calendarService.removeCalendar(travelId);
 
     if (result.affectedRows === 0) {
-      res.status(404).json({ message: '해당 일정이 존재하지 않습니다.' });
-      return;
+      throw new CustomError(
+        errors.CALENDAR_NOT_FOUND,
+        new Error('Calendar Not Found')
+      );
     }
 
-    res.status(200).json({ message: '일정 삭제 완료', isSuccess: true });
+    res.status(200).json({ isSuccess: true });
   } catch (error) {
     console.error(error);
     next(error);
@@ -101,11 +109,13 @@ export const fixCalendar = async (
     });
 
     if (result.affectedRows === 0) {
-      res.status(404).json({ message: '해당 일정이 존재하지 않습니다.' });
-      return;
+      throw new CustomError(
+        errors.CALENDAR_NOT_FOUND,
+        new Error('Calendar Not Found')
+      );
     }
 
-    res.status(200).json({ message: '일정 수정 완료', isSuccess: true });
+    res.status(200).json({ isSuccess: true });
   } catch (error) {
     console.error(error);
     next(error);

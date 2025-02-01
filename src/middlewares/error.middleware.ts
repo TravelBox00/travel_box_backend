@@ -66,27 +66,16 @@ export function errorHandler(
   }
 }
 
-// 아래와 같이 정의하고 사용 가능
-/*
-{
-  "statusCode": 404,// http-statusCode
-  "code": 1,// 동일 statusCode에서 상황별 코드
-  "description": "User with the given ID does not exist.",// 디테일한 설명
-  "path": "/custom/api/endpoint"// 에러 발생 위치
-}
-
-import {CustomError, errors} from " ";
-
-const error = new CustomError(errors.NOT_FOUND);
-
-console.error(error);// 콘솔에 에러 출력
-return res.status(error.statusCode).json(error);// error 객체 그대로 사용하여 응답
-*/
 export const errors = {
   NOT_FOUND_USER_TAG: {
     statusCode: 404,
     code: 1,
     description: 'User ID does not exist.',
+  },
+  NOT_FOUND_WORD: {
+    statusCode: 404,
+    code: 2,
+    description: "not found similar data.",
   },
   INVALID_PASSWORD: {
     statusCode: 401,
@@ -128,6 +117,26 @@ export const errors = {
     statusCode: 422,
     code: 4,
     description: 'Invalid password. Must be between 5 and 10 characters.',
+  },
+  CALENDAR_CREATION_FAILED: {
+    statusCode: 500,
+    code: 3,
+    description: 'Failed to create the calendar entry.',
+  },
+  CALENDAR_NOT_FOUND: {
+    statusCode: 404,
+    code: 4,
+    description: 'The specified calendar entry does not exist.',
+  },
+  CALENDAR_DELETION_FAILED: {
+    statusCode: 500,
+    code: 5,
+    description: 'Failed to delete the calendar entry.',
+  },
+  CALENDAR_UPDATE_FAILED: {
+    statusCode: 500,
+    code: 6,
+    description: 'Failed to update the calendar entry.',
   },
   NOT_PROVIDED_VALUES: {
     statusCode: 400,

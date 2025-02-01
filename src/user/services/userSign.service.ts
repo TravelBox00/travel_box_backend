@@ -13,18 +13,17 @@ import {
 import { CustomError, errors } from '../../middlewares/error.middleware.ts';
 import { modifyReqDto } from '../dto/modify.dto.ts';
 import { checkNickname, checkPassword } from '../utils/loginValidate.ts';
+import { deleteRefreshTokenInRedis } from '../models/userLogin.model.ts';
 
 export const signupService = async (userInfo: signupReqDto) => {
-  const { userTag, userPassword, userNickname } = userInfo;
-  await checkNickname(userNickname);
-  await checkPassword(userPassword);
-  const firstHash = crypto
-    .createHash('sha256')
-    .update(userPassword)
-    .digest('hex');
-  const hashedPassword: string = await bcrypt.hash(firstHash, 10);
-  await userInfoRegisterByUserTag({ userTag, hashedPassword, userNickname });
-};
+    const {userTag, userPassword, userNickname} = userInfo
+    await checkNickname(userNickname)
+    await checkPassword(userPassword)
+    const salt: string = await bcrypt.genSalt(10)
+    const firstHash:string = crypto.createHash('blake2b512').update(userPassword).digest('hex');
+    const hashedPassword: string = await bcrypt.hash(firstHash, salt);
+    await userInfoRegisterByUserTag({userTag, hashedPassword, userNickname })
+};  
 
 export const duplicateService = async (userTag: string) => {
   let duplicate = false;
@@ -38,10 +37,11 @@ export const duplicateService = async (userTag: string) => {
 };
 
 export const signoutService = async (userTag: string) => {
-  const deleteCount: number = await userInfoDeleteByUserTag(userTag);
-  if (deleteCount != 1) {
-    throw new CustomError(errors.NOT_FOUND_USER_TAG, new Error());
-  }
+    const deleteCount:number = await userInfoDeleteByUserTag(userTag)
+    const success = await deleteRefreshTokenInRedis(userTag)
+    if(deleteCount == 0 || success == 0){
+        throw new CustomError(errors.NOT_FOUND_USER_TAG, new Error());
+    }
 };
 
 export const modifyService = async (userInfo: modifyReqDto) => {
