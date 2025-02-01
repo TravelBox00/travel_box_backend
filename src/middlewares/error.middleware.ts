@@ -1,42 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { ErrorDTO } from './dto/error.dto.ts';
 
-// thread error handing
-export const notFoundThread = (err : Error, res: Response) => {
-    console.error(err.stack); // Server Error Log
-    res.status(404).json({
-        success: false,
-        message: "Thread Not Found",
-    });
-};
-
-// user not exsist
-export const notFoundUser = (err : Error, res: Response) => {
-    console.error(err.stack); // Server Error Log
-    res.status(404).json({
-        success: false,
-        message: "User Not Found",
-    });
-};
-
-// 이미지 not fund
-export const notFoundImage = (err : Error, res: Response) => {
-    console.error(err.stack); // Server Error Log
-    res.status(404).json({
-        success: false,
-        message: "Image Not Found",
-    });
-};
-
-// 버켓 not found
-export const notFoundBucket = (err : Error, res: Response) => {
-    console.error(err.stack); // Server Error Log
-    res.status(404).json({
-        success: false,
-        message: "Bucket Not Found",
-    });
-};
-
 export class CustomError extends Error {
   statusCode: number;
 
@@ -153,6 +117,27 @@ export const errors = {
     statusCode: 422,
     code: 4,
     description: 'Invalid password. Must be between 5 and 10 characters.',
+  },
+
+  CALENDAR_CREATION_FAILED: {
+    statusCode: 500,
+    code: 3,
+    description: 'Failed to create the calendar entry.',
+  },
+  CALENDAR_NOT_FOUND: {
+    statusCode: 404,
+    code: 4,
+    description: 'The specified calendar entry does not exist.',
+  },
+  CALENDAR_DELETION_FAILED: {
+    statusCode: 500,
+    code: 5,
+    description: 'Failed to delete the calendar entry.',
+  },
+  CALENDAR_UPDATE_FAILED: {
+    statusCode: 500,
+    code: 6,
+    description: 'Failed to update the calendar entry.',
   },
   NOT_PROVIDED_VALUES: {
     statusCode: 400,

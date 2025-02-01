@@ -42,8 +42,40 @@ const router = Router();
  *                 format: date
  *                 example: 2025-01-20
  *     responses:
- *       201:
- *         description: Successfully added
+ *       200:
+ *         description: 일정 추가 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 isSuccess:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: 일정 추가 완료
+ *                 result:
+ *                   type: object
+ *                   properties:
+ *                     travelId:
+ *                       type: integer
+ *                       example: 3
+ *       400:
+ *         description: 요청 필드가 유효하지 않음
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 isSuccess:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: userId와 travelTitle은 필수 입력값입니다.
+ *       500:
+ *         description: 서버 에러
  */
 
 /**
@@ -65,7 +97,7 @@ const router = Router();
  *                 example: 2
  *     responses:
  *       200:
- *         description: Successfully deleted
+ *         description: 일정 삭제 성공
  *       400:
  *         description: travelId는 필수 입력값입니다.
  *       404:
@@ -105,7 +137,7 @@ const router = Router();
  *                 example: 2025-01-20
  *     responses:
  *       200:
- *         description: Successfully updated
+ *         description: 일정 수정 성공
  *       400:
  *         description: travelId는 필수 입력값입니다.
  *       404:

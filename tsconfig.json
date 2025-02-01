@@ -12,7 +12,8 @@
     "strictPropertyInitialization": false // 소스 폴더
   },
   "ts-node": {
-    "esm": true // ts-node에서 ESM 지원
+    "esm": true, // ts-node에서 ESM 지원
+    "experimentalSpecifierResolution": "node"
   },
   "include": ["src/**/*"], // 포함 경로
   "exclude": ["node_modules", "dist"] // 제외 경로

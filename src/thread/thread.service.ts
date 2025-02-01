@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from "express";
-import { notFoundBucket, notFoundImage, notFoundThread } from "../middlewares/error.middleware.ts";
 import s3 from "../configs/s3.ts";
 import { Upload } from "@aws-sdk/lib-storage";
 import { deletePostModel, myPostCategoryModel, myPostSearchModel, popularPostModel, postInfoModel, postSearchModel, updatePostModel, uploadImageModel, upLoadPostModel } from "./thread.model.ts";

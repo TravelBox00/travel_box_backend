@@ -4,14 +4,16 @@ import {
   refreshTokenController,
   logoutController,
 } from './controllers/userLogin.controller.ts';
+
 import {
   signupController,
   duplicateController,
   signoutController,
   modifyController,
 } from './controllers/userSign.controller.ts';
-// eslint-disable-next-line import/newline-after-import
+
 import { authenticateToken } from '../middlewares/auth.middleware.ts';
+
 const router = express.Router();
 
 router.get('/', (req, res) => {
