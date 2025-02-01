@@ -1,18 +1,19 @@
 {
   "compilerOptions": {
-    "target": "ES2021",              // 최신 JavaScript 기능 지원
-    "module": "ESNext",              // ECMAScript Modules 사용
-    "moduleResolution": "Node",     // 모듈 해석 방식
-    "strict": true,                 // 엄격한 타입 검사
-    "esModuleInterop": true,        // CommonJS와 호환
-    "outDir": "./dist",             // 컴파일 결과 출력 폴더
-    "rootDir": "./src" ,
+    "target": "ES2021", // 최신 JavaScript 기능
+    "module": "ESNext", // ECMAScript Modules 사용
+    "moduleResolution": "Node", // Node.js 모듈 해석 방식
+    "strict": true, // 엄격한 타입 검사
+    "esModuleInterop": true, // CommonJS 모듈 호환
     "allowSyntheticDefaultImports": true,
-    "resolveJsonModule": true             // 소스 폴더
+    "resolveJsonModule": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "strictPropertyInitialization": false // 소스 폴더
   },
   "ts-node": {
-    "esm": true
+    "esm": true // ts-node에서 ESM 지원
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src/**/*"], // 포함 경로
+  "exclude": ["node_modules", "dist"] // 제외 경로
 }

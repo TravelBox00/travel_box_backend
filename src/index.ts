@@ -4,6 +4,8 @@ import morgan from "morgan";
 import compression from "compression";
 import dotenv from "dotenv";
 import { Router } from 'express';
+import  Thread  from './thread/thread.route.ts';
+import { swaggerSpec, swaggerUi } from "./configs/swagger.ts";
 
 // dotenv 설정
 dotenv.config();
@@ -24,7 +26,11 @@ app.use(express.urlencoded({ extended: true })); // URL-encoded 요청 본문 �
 app.use(compression()); // 응답 압축
 app.use(morgan("dev")); // HTTP 로깅
 
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 app.use('/', router);
+app.use('/thread', Thread);
+
 
 // 서버 실행
 app.listen(port, () => {
