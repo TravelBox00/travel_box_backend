@@ -1,9 +1,29 @@
-import { pool } from "./mysqlConnect";
+// eslint-disable-next-line import/no-extraneous-dependencies
+import bcrypt from 'bcrypt';
+// eslint-disable-next-line import/extensions
+import { pool } from './mysqlConnect';
 
+// eslint-disable-next-line import/prefer-default-export
 export const insertMockData = async () => {
   const connection = await pool.getConnection();
 
   try {
+    const password = 'password3188';
+    const nickname = 'ljm';
+    const tag = 'ljm#123';
+
+    // 비밀번호 해싱
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // 데이터베이스에 저장
+    const query = `
+        INSERT INTO User (userPassword, userNickname, userTag)
+        VALUES (?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+        userPassword=VALUES(userPassword), userNickname=VALUES(userNickname);
+    `;
+    await connection.execute(query, [hashedPassword, nickname, tag]);
+
     // Insert into User Table
     await connection.query(`
       INSERT INTO User (userPassword, userNickname, userTag) VALUES 
@@ -89,9 +109,9 @@ export const insertMockData = async () => {
       (3, 'Style', '003');
     `);
 
-    console.log("Mock data inserted successfully!");
+    console.log('Mock data inserted successfully!');
   } catch (error) {
-    console.error("Error inserting mock data:", error);
+    console.error('Error inserting mock data:', error);
   } finally {
     await connection.release();
   }
