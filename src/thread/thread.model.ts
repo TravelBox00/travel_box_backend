@@ -1,21 +1,146 @@
-import { pool } from "../configs/database/mysqlConnect.ts"; // DB 연결 설정
-import { ResultSetHeader } from 'mysql2'; // ResultSetHeader 타입 임포트
-import { updatePostDTO, userPostDTO } from "./dto/thread.dto.ts";
+import { ResultSetHeader, RowDataPacket } from 'mysql2'; // ResultSetHeader 타입 임포트
+import { pool } from '../configs/database/mysqlConnect.ts'; // DB 연결 설정
+import { updatePostDTO, userPostDTO } from './dto/thread.dto.ts';
 
+// 게시물 좋아요 상태
+export const checkLikeStatus = async (
+  threadId: number,
+  userId: number
+): Promise<boolean> => {
+  const query = `
+    SELECT COUNT(*) AS likeCount 
+    FROM \`Like\`
+    WHERE threadId = ? AND userId = ?;
+  `;
+
+  const [rows] = await pool.query<RowDataPacket[]>(query, [threadId, userId]);
+  const likeCount = rows[0].likeCount as number;
+
+  return likeCount > 0;
+};
+
+// 좋아요 추가
+export const addLike = async (threadId: number, userId: number) => {
+  const query = `
+    INSERT INTO \`Like\` (threadId, userId)
+    VALUES (?, ?);
+  `;
+  await pool.query(query, [threadId, userId]);
+};
+
+// 좋아요 삭제
+export const removeLike = async (threadId: number, userId: number) => {
+  const query = `
+    DELETE FROM \`Like\`
+    WHERE threadId = ? AND userId = ?;
+  `;
+  await pool.query(query, [threadId, userId]);
+};
+
+// 게시물 스크랩 상태
+export const checkScrapStatus = async (
+  threadId: number,
+  userId: number
+): Promise<boolean> => {
+  const query = `
+    SELECT COUNT(*) AS scrapCount 
+    FROM PostScrap
+    WHERE threadId = ? AND userId = ?;
+  `;
+  const [rows] = await pool.query<RowDataPacket[]>(query, [threadId, userId]);
+  return rows[0].scrapCount > 0;
+};
+
+// 스크랩 추가
+export const addScrap = async (
+  threadId: number,
+  userId: number
+): Promise<void> => {
+  const query = `
+    INSERT INTO PostScrap (threadId, userId)
+    VALUES (?, ?);
+  `;
+  await pool.query(query, [threadId, userId]);
+};
+
+// 스크랩 삭제
+export const removeScrap = async (
+  threadId: number,
+  userId: number
+): Promise<void> => {
+  const query = `
+    DELETE FROM PostScrap
+    WHERE threadId = ? AND userId = ?;
+  `;
+  await pool.query(query, [threadId, userId]);
+};
+
+// 스크랩한 게시물 목록
+export const getScrappedThreads = async (
+  userId: number
+): Promise<
+  Array<{
+    threadId: number;
+    postTitle: string;
+    postContent: string;
+    userNickname: string;
+    isScrapped: boolean;
+    photoUrl: string;
+  }>
+> => {
+  const query = `
+    SELECT 
+      t.threadId,
+      t.postTitle,
+      t.postContent,
+      u.userNickname,
+      CASE WHEN ps.scrapId IS NOT NULL THEN 1 ELSE 0 END AS isScrapped, 
+      i.imageInfoId AS photoUrl 
+    FROM PostScrap ps
+    INNER JOIN TravelThread t ON ps.threadId = t.threadId
+    INNER JOIN User u ON t.userId = u.userId
+    LEFT JOIN Image i ON t.threadId = i.threadId
+    WHERE ps.userId = ?;
+  `;
+
+  const [rows] = await pool.query<RowDataPacket[]>(query, [userId]);
+
+  return rows.map((row) => ({
+    threadId: row.threadId,
+    postTitle: row.postTitle,
+    postContent: row.postContent,
+    userNickname: row.userNickname,
+    isScrapped: !!row.isScrapped,
+    photoUrl: row.photoUrl || '',
+  })) as Array<{
+    threadId: number;
+    postTitle: string;
+    postContent: string;
+    userNickname: string;
+    isScrapped: boolean;
+    photoUrl: string;
+  }>;
+};
 
 // 이미지 업로드 Model
 export const uploadImageModel = {
-  saveImage: async (threadId: number | null, imageURL: string): Promise<any> => {
-    console.log("POST saveImage");
+  saveImage: async (
+    threadId: number | null,
+    imageURL: string
+  ): Promise<any> => {
+    console.log('POST saveImage');
 
     const query = `
       INSERT INTO Image (threadId, imageURL)
       VALUES (?, ?); 
     `;
-    
+
     // 이미지 정보 DB에 저장
-    const [result]: [ResultSetHeader, any[]] = await pool.query(query, [threadId, imageURL]);
-    
+    const [result]: [ResultSetHeader, any[]] = await pool.query(query, [
+      threadId,
+      imageURL,
+    ]);
+
     // 저장된 이미지의 imageId 반환
     return {
       imageId: result.insertId, // 삽입된 imageId를 반환
@@ -31,56 +156,63 @@ export const uploadImageModel = {
       FROM Image 
       WHERE threadId = ?;
     `;
-    
+
     // threadId에 해당하는 이미지들을 조회
     const [results] = await pool.query(query, [threadId]);
 
     return results as any[]; // 이미지 리스트 반환
-  }
+  },
 };
-
 
 // 게시물 업로드 Model
 export const upLoadPostModel = {
   // 게시물에 대한 threadId 생성
-  createThread: async (userTag: string, postData: userPostDTO): Promise<any> => {
-    console.log("Creating new thread");
-    console.log("User Tag:", userTag);
-  
+  createThread: async (
+    userTag: string,
+    postData: userPostDTO
+  ): Promise<any> => {
+    console.log('Creating new thread');
+    console.log('User Tag:', userTag);
+
     const connection = await pool.getConnection();
-    
+
     try {
       // userTag를 이용해 userId 조회
       const userQuery = `SELECT userId FROM User WHERE userTag = ?;`;
-      const [userResult]: [any[], any] = await connection.query(userQuery, [userTag]);
-  
+      const [userResult]: [any[], any] = await connection.query(userQuery, [
+        userTag,
+      ]);
+
       // userTag가 없는 경우 처리
       if (userResult.length === 0) {
-        throw new Error("User not found");
+        throw new Error('User not found');
       }
-  
-      const userId = userResult[0].userId;
-  
+
+      const { userId } = userResult[0];
+
       // TravelThread에 thread 생성
       const threadQuery = `
         INSERT INTO TravelThread (userId, clothId, postCategory, postTitle, postContent, postDate)
         VALUES (?, ?, ?, ?, ?, ?);
       `;
-      const [threadResult]: [ResultSetHeader, any[]] = await connection.query(threadQuery, [
-        userId,
-        postData.clothId,
-        postData.postCategory,
-        postData.postTitle,
-        postData.postContent,
-        postData.postDate,
-      ]);
-  
+      const [threadResult]: [ResultSetHeader, any[]] = await connection.query(
+        threadQuery,
+        [
+          userId,
+          postData.clothId,
+          postData.postCategory,
+          postData.postTitle,
+          postData.postContent,
+          postData.postDate,
+        ]
+      );
+
       const threadId = threadResult.insertId;
       console.log(`Thread created with threadId: ${threadId}`);
       return { threadId }; // threadId 반환
     } catch (error) {
-      console.error("Error creating thread:", error);
-      throw new Error("Failed to create thread");
+      console.error('Error creating thread:', error);
+      throw new Error('Failed to create thread');
     } finally {
       connection.release();
     }
@@ -88,20 +220,20 @@ export const upLoadPostModel = {
 
   // 게시물 생성이 취소될 경우 생성된 threadId 삭제
   deleteThread: async (threadId: number): Promise<void> => {
-    console.log("Deleting thread with threadId:", threadId);
+    console.log('Deleting thread with threadId:', threadId);
 
     const connection = await pool.getConnection();
     try {
       const deleteQuery = `DELETE FROM TravelThread WHERE threadId = ?`;
       await connection.query(deleteQuery, [threadId]);
-      console.log("Thread deleted successfully");
+      console.log('Thread deleted successfully');
     } catch (error) {
-      console.error("Error deleting thread:", error);
-      throw new Error("Failed to delete thread");
+      console.error('Error deleting thread:', error);
+      throw new Error('Failed to delete thread');
     } finally {
       connection.release();
     }
-  }
+  },
 };
 
 // 게시물 상세 조회 API
@@ -110,7 +242,7 @@ export const postInfoModel = async (
   threadId: number
 ): Promise<any> => {
   try {
-    console.log("POST Model Connected");
+    console.log('POST Model Connected');
 
     const query = `
       SELECT T.clothId, T.postCategory, T.postTitle, T.postContent, 
@@ -126,18 +258,14 @@ export const postInfoModel = async (
     // 부분 일치를 위해 userTag를 '%'로 감싸서 전달
     const [results] = await pool.query(query, [`%${userTag}%`, threadId]);
 
-    console.log("Post Info Model Results:", results);
+    console.log('Post Info Model Results:', results);
 
     return results;
-
   } catch (error) {
-    console.error("게시물 상세 조회 Model Error", error);
-    throw new Error("게시물 상세 조회 Model Error");
+    console.error('게시물 상세 조회 Model Error', error);
+    throw new Error('게시물 상세 조회 Model Error');
   }
 };
-
-
-
 
 // 검색어에 따른 게시물 조회 API
 export const postSearchModel = async (
@@ -145,7 +273,7 @@ export const postSearchModel = async (
   limit: number,
   offset: number
 ): Promise<any> => {
-  console.log("postSearch Model Connected");
+  console.log('postSearch Model Connected');
 
   const query = `
   SELECT T.postTitle, DATE_FORMAT(T.postDate, "%Y-%m-%d"), I.imageURL
@@ -165,15 +293,12 @@ export const postSearchModel = async (
   ]);
 
   return results as any[];
-};  
-
+};
 
 // 내가 쓴 글 조회 (이미지, 제목만)
-export const myPostSearchModel = async (  
-  userTag : string
-): Promise<any> => {
+export const myPostSearchModel = async (userTag: string): Promise<any> => {
   try {
-    console.log("POST myPostSearchModel Connected");
+    console.log('POST myPostSearchModel Connected');
 
     const query = `
       SELECT T.postTitle, I.imageURL as imageURL
@@ -185,22 +310,20 @@ export const myPostSearchModel = async (
     // 배열 디스트럭처링 -> 각 객체의 속성값을 접근할 수 있음
     const [results] = await pool.query(query, [userTag]);
 
-    return results
-
+    return results;
   } catch (error) {
-    console.error("My Post Search Model Error", error);
-    throw new Error("My Post Search Model Error");
+    console.error('My Post Search Model Error', error);
+    throw new Error('My Post Search Model Error');
   }
 };
 
 // Category 별로 조회
 export const myPostCategoryModel = async (
-  myCategory : string,
-  userTag : string
-) : Promise<any> => {
+  myCategory: string,
+  userTag: string
+): Promise<any> => {
   try {
-
-    console.log("POST myPostCategoryModel Connected");
+    console.log('POST myPostCategoryModel Connected');
 
     const query = `
       SELECT T.postTitle, I.imageURL as imageURL
@@ -212,22 +335,20 @@ export const myPostCategoryModel = async (
     const [results] = await pool.query(query, [myCategory, userTag]);
 
     return results;
-    
   } catch (error) {
-    console.error("My Post Category Model Error", error);
-    throw new Error("My Post Category Model Error");
-  } 
+    console.error('My Post Category Model Error', error);
+    throw new Error('My Post Category Model Error');
+  }
 };
-
 
 // 포스트 수정 Model
 export const updatePostModel = async (
-  userTag : string,
-  threadId : number,  
-  postData : updatePostDTO
-) : Promise<any> => {
+  userTag: string,
+  threadId: number,
+  postData: updatePostDTO
+): Promise<any> => {
   try {
-    console.log("PUT updatePostModel Connected");
+    console.log('PUT updatePostModel Connected');
 
     // userTag와 threadId값을 확인하는 로직
     const userQuery = `SELECT userId FROM User WHERE userTag = ?;`;
@@ -237,11 +358,14 @@ export const updatePostModel = async (
       throw new Error(`userTag(${userTag})가 존재하지 않음.`);
     }
 
-    const userId = userResult[0].userId; // userId 값 가져오기
+    const { userId } = userResult[0]; // userId 값 가져오기
 
     // threadId가 존재하는지 확인
     const threadQuery = `SELECT threadId FROM TravelThread WHERE userId = ? AND threadId = ?;`;
-    const [threadResult]: any = await pool.query(threadQuery, [userId, threadId]);
+    const [threadResult]: any = await pool.query(threadQuery, [
+      userId,
+      threadId,
+    ]);
 
     if (threadResult.length === 0) {
       throw new Error(`threadId(${threadId})가 존재하지 않음.`);
@@ -263,21 +387,19 @@ export const updatePostModel = async (
     ]);
 
     return updateResult;
-
-  } catch (error : any) {
-    console.error("Update Post Model Error", error.message);
-    throw new Error(error.message || "Update Post Model Error");
-  } 
+  } catch (error: any) {
+    console.error('Update Post Model Error', error.message);
+    throw new Error(error.message || 'Update Post Model Error');
+  }
 };
-
 
 // 포스트 삭제 Model
 export const deletePostModel = async (
-  userTag : string,
-  threadId : number
-) : Promise<any> => {
+  userTag: string,
+  threadId: number
+): Promise<any> => {
   try {
-    console.log("DELETE deletePostModel Connected");
+    console.log('DELETE deletePostModel Connected');
 
     // userTag와 threadId값을 확인하는 로직
     const userQuery = `SELECT userId FROM User WHERE userTag = ?;`;
@@ -287,39 +409,43 @@ export const deletePostModel = async (
       throw new Error(`userTag(${userTag})가 존재하지 않음.`);
     }
 
-    const userId = userResult[0].userId; // userId 값 가져오기
+    const { userId } = userResult[0]; // userId 값 가져오기
 
     // threadId가 존재하는지 확인
     const threadQuery = `SELECT threadId FROM TravelThread WHERE userId = ? AND threadId = ?;`;
-    const [threadResult]: any = await pool.query(threadQuery, [userId, threadId]);
+    const [threadResult]: any = await pool.query(threadQuery, [
+      userId,
+      threadId,
+    ]);
 
     if (threadResult.length === 0) {
       throw new Error(`threadId(${threadId})가 존재하지 않음.`);
     }
 
-    // 게시물 삭제 이미지 먼저 삭제 (외래 키 제약조건)  
+    // 게시물 삭제 이미지 먼저 삭제 (외래 키 제약조건)
     const delectImageQuery = `DELETE FROM Image WHERE threadId = ?;`;
     await pool.query(delectImageQuery, [threadId]);
 
     const deleteQuery = `DELETE FROM TravelThread WHERE userId = ? AND threadId = ?;`;
-    const [deleteResult]: any = await pool.query(deleteQuery, [userId, threadId]);
+    const [deleteResult]: any = await pool.query(deleteQuery, [
+      userId,
+      threadId,
+    ]);
 
     return deleteResult;
-
-  } catch (error : any) {
-    console.error("Delete Post Model Error", error.message);
-    throw new Error(error.message || "Delete Post Model Error");
+  } catch (error: any) {
+    console.error('Delete Post Model Error', error.message);
+    throw new Error(error.message || 'Delete Post Model Error');
   }
-};  
-
+};
 
 // 인기 게시물 조회 Model
 export const popularPostModel = async (
-  page: number, 
-  limit: number 
+  page: number,
+  limit: number
 ): Promise<any> => {
   try {
-    console.log("GET popularPostModel Connected");
+    console.log('GET popularPostModel Connected');
 
     const offset = (page - 1) * limit;
 
@@ -347,14 +473,13 @@ export const popularPostModel = async (
       GROUP BY threadId
     ) S ON T.threadId = S.threadId
     ORDER BY totalEngagement DESC
-    LiMIT ? OFFSET ?;`;  
+    LiMIT ? OFFSET ?;`;
 
     const [results] = await pool.query(query, [limit, offset]);
 
     return results as any[];
-
   } catch (error) {
-    console.error("Popular Post Model Error", error);
-    throw new Error("Popular Post Model Error");
+    console.error('Popular Post Model Error', error);
+    throw new Error('Popular Post Model Error');
   }
 };
