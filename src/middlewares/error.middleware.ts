@@ -75,7 +75,7 @@ export const errors = {
   NOT_FOUND_WORD: {
     statusCode: 404,
     code: 2,
-    description: "not found similar data.",
+    description: 'not found similar data.',
   },
   INVALID_PASSWORD: {
     statusCode: 401,

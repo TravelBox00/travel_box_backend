@@ -1,5 +1,6 @@
 import { Client } from '@elastic/elasticsearch';
 import dotenv from 'dotenv';
+
 dotenv.config();
 
 const elastic = new Client({
@@ -8,7 +9,7 @@ const elastic = new Client({
 });
 
 // ✅ 띄어쓰기 단위로 `postContent`를 배열 형태로 변환
-const splitContent = (content:any) => content.split(' ');
+const splitContent = (content: any) => content.split(' ');
 
 async function addTestDataToElastic() {
   for (let threadId = 92; threadId <= 99; threadId++) {
