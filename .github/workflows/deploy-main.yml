@@ -39,7 +39,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          ssh playground-umc-7th 'npm install --prefix /opt/app/travel_box_backend'
+          ssh playground-umc-7th 'npm install --prefix /opt/app/'
 
       - name: Copy systemd service file
         run: |
@@ -50,7 +50,7 @@ jobs:
 
             [Service]
             User=${USER}
-            ExecStart=/usr/bin/npm run dev --prefix /opt/app/travel_box_backend
+            ExecStart=/usr/bin/npm run dev --prefix /opt/app/
             Restart=always
 
             [Install]
