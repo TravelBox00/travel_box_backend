@@ -20,13 +20,13 @@ router.get('/', (req, res) => {
   res.send('User main route');
 });
 
-router.post("/login", loginController);
-router.post("/login/refresh", refreshTokenController);
-router.delete("/logout", authenticateToken, logoutController);
-router.post("/signup", signupController)
-router.get("/signup/duplicate/:userTag", duplicateController)
-router.delete("/signout" , authenticateToken, signoutController)
-router.patch("/modify", authenticateToken, modifyController)
+router.post('/login', loginController);
+router.post('/login/refresh', refreshTokenController);
+router.delete('/logout', authenticateToken, logoutController);
+router.post('/signup', signupController);
+router.get('/signup/duplicate/:userTag', duplicateController);
+router.delete('/signout', authenticateToken, signoutController);
+router.patch('/modify', authenticateToken, modifyController);
 
 /**
  * @swagger

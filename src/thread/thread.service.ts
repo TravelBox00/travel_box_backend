@@ -1,4 +1,4 @@
-import {  Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import { Upload } from '@aws-sdk/lib-storage';
 import s3 from '../configs/s3.ts';
 import {
