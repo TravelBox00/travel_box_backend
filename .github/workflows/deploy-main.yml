@@ -25,21 +25,34 @@ jobs:
             User $EC2_USER
             IdentityFile ~/.ssh/id_rsa
             StrictHostKeyChecking no
+            ConnectTimeout 30
+            ServerAliveInterval 60
           END
         env:
           EC2_USER: ubuntu
           EC2_HOST: ${{ secrets.EC2_HOST }}
           EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
 
+      - name: Wait for SSH connection
+        run: |
+          for i in {1..5}; do
+            if ssh playground-umc-7th 'exit'; then
+              break
+            fi
+            echo "Retrying SSH connection... ($i/5)"
+            sleep 10
+          done
+
       - name: Copy Workspace
         run: |
+          ssh playground-umc-7th 'sudo rm -rf /opt/app'
           ssh playground-umc-7th 'sudo mkdir -p /opt/app'
           ssh playground-umc-7th 'sudo chown ubuntu:ubuntu /opt/app'
-          scp -r ./[!.]* playground-umc-7th:/opt/app
+          scp -r ./travel_box_backend/[!.]* playground-umc-7th:/opt/app/
 
       - name: Install dependencies
         run: |
-          ssh playground-umc-7th 'npm install --prefix /opt/app/'
+          ssh playground-umc-7th 'cd /opt/app && npm install'
 
       - name: Copy systemd service file
         run: |
@@ -50,18 +63,17 @@ jobs:
 
             [Service]
             User=${USER}
-            ExecStart=/usr/bin/npm run dev --prefix /opt/app/
+            WorkingDirectory=/opt/app
+            ExecStart=/usr/bin/npm run dev
             Restart=always
+            Environment=NODE_ENV=production
 
             [Install]
             WantedBy=multi-user.target" | sudo tee /etc/systemd/system/app.service
           '
 
-      - name: Enable systemd service
+      - name: Enable and restart service
         run: |
           ssh playground-umc-7th 'sudo systemctl daemon-reload'
           ssh playground-umc-7th 'sudo systemctl enable app'
-
-      - name: Restart systemd service
-        run: |
           ssh playground-umc-7th 'sudo systemctl restart app'
