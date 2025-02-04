@@ -19,33 +19,23 @@ jobs:
           echo "$EC2_SSH_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
-          cat > ~/.ssh/config <<EOF
+          cat >>~/.ssh/config <<END
           Host playground-umc-7th
             HostName $EC2_HOST
-            User ubuntu
+            User $EC2_USER
             IdentityFile ~/.ssh/id_rsa
             StrictHostKeyChecking no
-            UserKnownHostsFile=/dev/null
-          EOF
+          END
         env:
+          EC2_USER: ubuntu
           EC2_HOST: ${{ secrets.EC2_HOST }}
           EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
 
-      - name: Wait for SSH to be available
+      - name: Copy Workspace
         run: |
-          for i in {1..5}; do
-            nc -zv ${{ secrets.EC2_HOST }} 22 && break
-            echo "Waiting for SSH to become available..."
-            sleep 5
-          done
-
-      - name: Copy Workspace (with retry)
-        run: |
-          for i in {1..5}; do
-            scp -r ./[!.]* playground-umc-7th:/opt/app && break
-            echo "Retrying in 5 seconds..."
-            sleep 5
-          done
+          ssh playground-umc-7th 'sudo mkdir -p /opt/app'
+          ssh playground-umc-7th 'sudo chown ubuntu:ubuntu /opt/app'
+          scp -r ./[!.]* playground-umc-7th:/opt/app
 
       - name: Install dependencies
         run: |
@@ -59,7 +49,7 @@ jobs:
             After=network.target
 
             [Service]
-            User=ubuntu
+            User=${USER}
             ExecStart=/usr/bin/npm run dev --prefix /opt/app/travel_box_backend
             Restart=always
 
