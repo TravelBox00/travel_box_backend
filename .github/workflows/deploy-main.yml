@@ -25,8 +25,6 @@ jobs:
             User $EC2_USER
             IdentityFile ~/.ssh/id_rsa
             StrictHostKeyChecking no
-            ServerAliveInterval 60
-            ServerAliveCountMax 5
           END
         env:
           EC2_USER: ubuntu
@@ -37,11 +35,11 @@ jobs:
         run: |
           ssh playground-umc-7th 'sudo mkdir -p /opt/app'
           ssh playground-umc-7th 'sudo chown ubuntu:ubuntu /opt/app'
-          scp -o ConnectTimeout=30 -r ./[!.]* playground-umc-7th:/opt/app
+          scp -r ./[!.]* playground-umc-7th:/opt/app
 
       - name: Install dependencies
         run: |
-          ssh playground-umc-7th 'npm install --prefix /opt/app/travel_box_backend --verbose'
+          ssh playground-umc-7th 'npm install --prefix /opt/app/travel_box_backend'
 
       - name: Copy systemd service file
         run: |
