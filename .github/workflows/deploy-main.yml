@@ -45,15 +45,14 @@ jobs:
 
       - name: Copy Workspace
         run: |
-          ssh playground-umc-7th 'sudo rm -rf /opt/app'
-          ssh playground-umc-7th 'sudo mkdir -p /opt/app'
-          ssh playground-umc-7th 'sudo chown ubuntu:ubuntu /opt/app'
-          scp -r ./* playground-umc-7th:/opt/app/
+          ssh playground-umc-7th 'sudo rm -rf ~/travel_box_backend'
+          ssh playground-umc-7th 'mkdir -p ~/travel_box_backend'
+          scp -r ./* playground-umc-7th:~/travel_box_backend/
 
       - name: Setup Node environment
         run: |
           ssh playground-umc-7th '
-            cd /opt/app
+            cd ~/travel_box_backend
             
             # Node.js 버전 확인 및 업데이트
             curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
@@ -66,14 +65,11 @@ jobs:
             
             # 프로젝트 의존성 설치
             npm install
-            
-            # TypeScript 설정 확인
-            npx tsc --version
           '
 
       - name: Create env file
         run: |
-          ssh playground-umc-7th 'cat > /opt/app/.env << EOL
+          ssh playground-umc-7th 'cat > ~/travel_box_backend/.env << EOL
           PORT=3000
           HOST=0.0.0.0
           NODE_ENV=production
@@ -89,7 +85,7 @@ jobs:
             [Service]
             Type=simple
             User=ubuntu
-            WorkingDirectory=/opt/app
+            WorkingDirectory=/home/ubuntu/travel_box_backend
             Environment=NODE_ENV=production
             Environment=PORT=3000
             Environment=HOST=0.0.0.0
