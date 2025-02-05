@@ -30,14 +30,23 @@ jobs:
             User ubuntu
             IdentityFile ~/.ssh/id_rsa
             StrictHostKeyChecking no
-            UserKnownHostsFile=/dev/null
+            UserKnownHostsFile /dev/null
+            LogLevel ERROR
           EOF
 
       - name: Copy Workspace
         run: |
-          ssh playground-umc-7th 'rm -rf ~/travel_box_backend'
-          ssh playground-umc-7th 'mkdir -p ~/travel_box_backend'
-          scp -r ./* playground-umc-7th:~/travel_box_backend/
+          # 제외할 파일/디렉토리 목록 생성
+          echo "node_modules/" > .gitignore
+          echo "dist/" >> .gitignore
+          echo ".git/" >> .gitignore
+          echo "*.log" >> .gitignore
+          
+          # 기존 디렉토리 제거 및 새 디렉토리 생성
+          ssh playground-umc-7th 'rm -rf ~/travel_box_backend && mkdir -p ~/travel_box_backend'
+          
+          # rsync를 사용하여 파일 전송 (제외 목록 적용)
+          rsync -avz --exclude-from=.gitignore --delete ./ playground-umc-7th:~/travel_box_backend/
 
       - name: Install Dependencies
         run: |
