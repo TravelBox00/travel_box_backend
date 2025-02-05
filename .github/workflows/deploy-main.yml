@@ -43,12 +43,17 @@ jobs:
             sleep 10
           done
 
+      - name: Debug directory
+        run: |
+          pwd
+          ls -la
+
       - name: Copy Workspace
         run: |
           ssh playground-umc-7th 'sudo rm -rf /opt/app'
           ssh playground-umc-7th 'sudo mkdir -p /opt/app'
           ssh playground-umc-7th 'sudo chown ubuntu:ubuntu /opt/app'
-          scp -r ./travel_box_backend/* playground-umc-7th:/opt/app/
+          scp -r ./* playground-umc-7th:/opt/app/
 
       - name: Install dependencies
         run: |
