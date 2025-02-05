@@ -13,12 +13,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh
           echo "$EC2_SSH_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-
           cat >>~/.ssh/config <<END
           Host playground-umc-7th
             HostName $EC2_HOST
@@ -33,38 +37,20 @@ jobs:
           EC2_HOST: ${{ secrets.EC2_HOST }}
           EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
 
-      - name: Wait for SSH connection
-        run: |
-          for i in {1..5}; do
-            if ssh playground-umc-7th 'exit'; then
-              break
-            fi
-            echo "Retrying SSH connection... ($i/5)"
-            sleep 10
-          done
-
       - name: Copy Workspace
         run: |
           ssh playground-umc-7th 'sudo rm -rf ~/travel_box_backend'
           ssh playground-umc-7th 'mkdir -p ~/travel_box_backend'
           scp -r ./* playground-umc-7th:~/travel_box_backend/
 
-      - name: Setup Node environment
+      - name: Install Dependencies
         run: |
           ssh playground-umc-7th '
             cd ~/travel_box_backend
-            
-            # Node.js 버전 확인 및 업데이트
-            curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-            sudo apt-get install -y nodejs
-            
-            # npm 캐시 클리어 및 전역 패키지 설치
-            sudo npm cache clean -f
-            sudo npm install -g npm@latest
-            sudo npm install -g typescript ts-node nodemon
-            
-            # 프로젝트 의존성 설치
-            npm install
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            npm install --no-audit --no-fund --legacy-peer-deps
+            npm install -g typescript ts-node nodemon --no-audit --no-fund
           '
 
       - name: Create env file
@@ -75,10 +61,12 @@ jobs:
           NODE_ENV=production
           EOL'
 
-      - name: Copy systemd service file
+      - name: Setup and Start Service
         run: |
           ssh playground-umc-7th '
-            echo "[Unit]
+            sudo systemctl stop app || true
+            sudo tee /etc/systemd/system/app.service << EOL
+            [Unit]
             Description=UMC 7th Project
             After=network.target
 
@@ -89,31 +77,28 @@ jobs:
             Environment=NODE_ENV=production
             Environment=PORT=3000
             Environment=HOST=0.0.0.0
-            Environment=PATH=/usr/bin:/usr/local/bin
             ExecStart=/usr/bin/npm run dev
-            Restart=always
+            Restart=on-failure
+            RestartSec=10
             StandardOutput=append:/var/log/app.log
             StandardError=append:/var/log/app.error.log
 
             [Install]
-            WantedBy=multi-user.target" | sudo tee /etc/systemd/system/app.service
-          '
+            WantedBy=multi-user.target
+            EOL
 
-      - name: Enable and restart service
-        run: |
-          ssh playground-umc-7th '
             sudo systemctl daemon-reload
             sudo systemctl enable app
-            sudo systemctl restart app
-            sleep 5
+            sudo systemctl start app
+            sleep 10
           '
 
-      - name: Check service status and logs
+      - name: Check Service Status
         run: |
           ssh playground-umc-7th '
-            sudo systemctl status app
+            sudo systemctl status app --no-pager
             echo "=== Application Logs ==="
-            sudo tail -n 50 /var/log/app.log
+            sudo tail -n 20 /var/log/app.log
             echo "=== Error Logs ==="
-            sudo tail -n 50 /var/log/app.error.log
+            sudo tail -n 20 /var/log/app.error.log
           '
