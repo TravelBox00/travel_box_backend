@@ -48,7 +48,7 @@ jobs:
           ssh playground-umc-7th 'sudo rm -rf /opt/app'
           ssh playground-umc-7th 'sudo mkdir -p /opt/app'
           ssh playground-umc-7th 'sudo chown ubuntu:ubuntu /opt/app'
-          scp -r ./travel_box_backend/[!.]* playground-umc-7th:/opt/app/
+          scp -r ./travel_box_backend/* playground-umc-7th:/opt/app/
 
       - name: Install dependencies
         run: |
@@ -62,11 +62,14 @@ jobs:
             After=network.target
 
             [Service]
-            User=${USER}
-            WorkingDirectory=/opt/app/travel_box_backend
+            Type=simple
+            User=ubuntu
+            WorkingDirectory=/opt/app
             ExecStart=/usr/bin/npm run dev
             Restart=always
             Environment=NODE_ENV=production
+            StandardOutput=append:/var/log/app.log
+            StandardError=append:/var/log/app.error.log
 
             [Install]
             WantedBy=multi-user.target" | sudo tee /etc/systemd/system/app.service
