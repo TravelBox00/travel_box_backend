@@ -50,10 +50,24 @@ jobs:
           ssh playground-umc-7th 'sudo chown ubuntu:ubuntu /opt/app'
           scp -r ./* playground-umc-7th:/opt/app/
 
-      - name: Install dependencies and build
+      - name: Setup Node environment
         run: |
-          ssh playground-umc-7th 'cd /opt/app && npm install --production=false'
-          ssh playground-umc-7th 'cd /opt/app && npm install -g typescript ts-node'
+          ssh playground-umc-7th '
+            # Node.js 환경 설정
+            sudo npm cache clean -f
+            sudo npm install -g n
+            sudo n stable
+            
+            # TypeScript 관련 패키지 전역 설치
+            sudo npm install -g typescript ts-node nodemon
+            
+            # 프로젝트 의존성 설치
+            cd /opt/app
+            npm install --production=false
+            
+            # 권한 설정
+            sudo chown -R ubuntu:ubuntu /opt/app
+          '
 
       - name: Create env file
         run: |
@@ -77,6 +91,7 @@ jobs:
             Environment=NODE_ENV=production
             Environment=PORT=3000
             Environment=HOST=0.0.0.0
+            Environment=PATH=/usr/bin:/usr/local/bin
             ExecStart=/usr/bin/npm run dev
             Restart=always
             StandardOutput=append:/var/log/app.log
@@ -92,8 +107,12 @@ jobs:
           ssh playground-umc-7th 'sudo systemctl enable app'
           ssh playground-umc-7th 'sudo systemctl restart app'
 
-      - name: Check service status
+      - name: Check service status and logs
         run: |
-          ssh playground-umc-7th 'sudo systemctl status app'
-          ssh playground-umc-7th 'tail -n 50 /var/log/app.log'
-          ssh playground-umc-7th 'tail -n 50 /var/log/app.error.log'
+          ssh playground-umc-7th '
+            sudo systemctl status app
+            echo "=== Application Logs ==="
+            sudo tail -n 50 /var/log/app.log
+            echo "=== Error Logs ==="
+            sudo tail -n 50 /var/log/app.error.log
+          '
