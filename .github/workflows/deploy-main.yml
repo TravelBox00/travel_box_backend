@@ -35,8 +35,7 @@ jobs:
           EOF
 
       - name: Test SSH Connection
-        run: |
-          ssh -vvv playground-umc-7th "echo '✅ SSH Connection Successful'"
+        run: ssh -vvv playground-umc-7th "echo '✅ SSH Connection Successful'"
 
       - name: Prepare rsync exclude list
         run: |
@@ -61,6 +60,7 @@ jobs:
             nvm use 20
             npm install --no-audit --no-fund --legacy-peer-deps
             npm install -g typescript ts-node nodemon --no-audit --no-fund
+            npm rebuild
           '
 
       - name: Create env file
@@ -86,6 +86,9 @@ jobs:
         run: |
           ssh playground-umc-7th '
             sudo systemctl stop app || true
+            NODE_PATH=$(which node)
+            NPM_PATH=$(which npm)
+
             sudo tee /etc/systemd/system/app.service << EOF
             [Unit]
             Description=UMC 7th Project
@@ -96,7 +99,7 @@ jobs:
             User=ubuntu
             WorkingDirectory=/home/ubuntu/travel_box_backend
             EnvironmentFile=/home/ubuntu/travel_box_backend/.env
-            ExecStart=$(which npm) run dev
+            ExecStart=/bin/bash -c "source ~/.bashrc && cd /home/ubuntu/travel_box_backend && $NPM_PATH run dev"
             Restart=always
             RestartSec=10
             StandardOutput=append:/var/log/app.log
@@ -116,7 +119,10 @@ jobs:
         if: always()
         run: |
           ssh playground-umc-7th '
+            echo "=== Systemctl Status ==="
             sudo systemctl status app --no-pager || true
+            echo "=== Journalctl Logs ==="
+            sudo journalctl -u app --no-pager --lines=30 || true
             echo "=== Application Logs ==="
             sudo tail -n 20 /var/log/app.log || true
             echo "=== Error Logs ==="
