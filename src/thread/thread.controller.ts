@@ -164,6 +164,20 @@ export const upLoadPostController = async (
   const parsedBody = JSON.parse(req.body.body);
   const { userTag, postCategory, postTitle, postContent, clothId } = parsedBody;
 
+  if (
+    postCategory !== '여행 기록' &&
+    postCategory !== '기념품' &&
+    postCategory !== '여행지' &&
+    postCategory !== '여행 코디'
+  ) {
+    console.log('Invalid category:', postCategory);
+
+    return res.status(400).json({
+      error:
+        'Category is Enum, must be one of 여행 기록, 기념품, 여행지, 여행 코디',
+    });
+  }
+
   console.log('Parsed Request Body:', parsedBody);
   console.log('User Tag:', userTag);
 
@@ -221,8 +235,7 @@ export const upLoadPostController = async (
     return res.status(201).json(postResponse);
   } catch (error: any) {
     console.error('Post Upload Controller Error', error.message);
-    res.status(400).json({ error: 'Post Upload Controller Error' });
-    throw new Error(error.message || 'Post Upload Controller Error');
+    return res.status(400).json({ error: 'Post Upload Controller Error' });
   }
 };
 
@@ -412,8 +425,11 @@ export const deletePostController = async (
   console.log('DELETE deletePostController Connected');
 
   try {
-    const { userTag, threadId } = req.body;
+    // URL 쿼리 파라미터에서 값 가져온 후 디코딩
+    const userTag = decodeURIComponent(req.query.userTag as string);
+    const threadId = Number(req.query.threadId);
 
+    // 포스트 삭제 서비스 호출
     const result = await deletePostService(userTag, threadId);
     return res.status(200).json(result);
   } catch (error: any) {
