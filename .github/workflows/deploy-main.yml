@@ -43,11 +43,6 @@ jobs:
             sleep 10
           done
 
-      - name: Debug directory
-        run: |
-          pwd
-          ls -la
-
       - name: Copy Workspace
         run: |
           ssh playground-umc-7th 'sudo rm -rf /opt/app'
@@ -58,6 +53,14 @@ jobs:
       - name: Install dependencies
         run: |
           ssh playground-umc-7th 'cd /opt/app && npm install'
+
+      - name: Create env file
+        run: |
+          ssh playground-umc-7th 'cat > /opt/app/.env << EOL
+          PORT=3000
+          HOST=0.0.0.0
+          NODE_ENV=production
+          EOL'
 
       - name: Copy systemd service file
         run: |
@@ -70,9 +73,11 @@ jobs:
             Type=simple
             User=ubuntu
             WorkingDirectory=/opt/app
+            Environment=NODE_ENV=production
+            Environment=PORT=3000
+            Environment=HOST=0.0.0.0
             ExecStart=/usr/bin/npm run dev
             Restart=always
-            Environment=NODE_ENV=production
             StandardOutput=append:/var/log/app.log
             StandardError=append:/var/log/app.error.log
 
@@ -85,3 +90,9 @@ jobs:
           ssh playground-umc-7th 'sudo systemctl daemon-reload'
           ssh playground-umc-7th 'sudo systemctl enable app'
           ssh playground-umc-7th 'sudo systemctl restart app'
+
+      - name: Check service status
+        run: |
+          ssh playground-umc-7th 'sudo systemctl status app'
+          ssh playground-umc-7th 'tail -n 50 /var/log/app.log'
+          ssh playground-umc-7th 'tail -n 50 /var/log/app.error.log'
