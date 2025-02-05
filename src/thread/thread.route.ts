@@ -506,6 +506,4 @@ router.delete("/delete", deletePostController);
  */
 router.get("/popular", popularPostController);
 
-
-
 export default router;

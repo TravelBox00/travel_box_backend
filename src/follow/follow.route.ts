@@ -1,0 +1,135 @@
+import { Router } from 'express';
+import { showFollowerController, showFollowingController, userAddFollowController } from './follow.controller.ts';
+
+const router = Router();
+
+router.get("/", (req, res) => {
+  res.send("Follow Main Route");
+});
+
+// 팔로우 추가 && if 팔로우가 이미 되어있다면 팔로우 취소
+/**
+ * @swagger
+ * /follow/addFollow:
+ *   post:
+ *     summary: "팔로우 추가 및 팔로우 취소"
+ *     description: "사용자가 다른 사용자를 팔로우하거나 이미 팔로우한 상태이면 팔로우를 취소하는 기능"
+ *     tags: [Follow]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userTag:
+ *                 type: string
+ *                 description: "팔로우를 하는 사용자의 태그"
+ *                 example: "john#123"
+ *               followTag:
+ *                 type: string
+ *                 description: "팔로우 대상 사용자의 태그"
+ *                 example: "jane#456"
+ *     responses:
+ *       200:
+ *         description: "팔로우가 추가되거나 취소되었습니다."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Follow added successfully" 
+ *       400:
+ *         description: "잘못된 요청"
+ *       404:
+ *         description: "사용자 또는 팔로우 대상이 존재하지 않음"
+ *       500:
+ *         description: "서버 오류"
+ */
+router.post('/addFollow', userAddFollowController);
+
+// Follower 보기
+/**
+ * @swagger
+ * /follow/showFollower/{userTag}:
+ *   get:
+ *     summary: "팔로워 목록 조회"
+ *     description: "사용자의 팔로워 목록을 조회하는 API"
+ *     tags: [Follow]
+ *     parameters:
+ *       - name: userTag
+ *         in: path
+ *         description: "팔로워 목록을 조회할 사용자의 태그"
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "john#123"
+ *     responses:
+ *       200:
+ *         description: "팔로워 목록을 정상적으로 조회"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   followerUserId:
+ *                     type: integer
+ *                     description: "팔로워의 사용자 ID"
+ *                   followerUserTag:
+ *                     type: string
+ *                     description: "팔로워의 사용자 태그"
+ *       400:
+ *         description: "잘못된 요청"
+ *       404:
+ *         description: "사용자 또는 팔로워가 존재하지 않음"
+ *       500:
+ *         description: "서버 오류"
+ */
+router.get('/showFollower/:userTag', showFollowerController);
+
+// Following 보기
+/**
+ * @swagger
+ * /follow/showFollowing/{userTag}:
+ *   get:
+ *     summary: "팔로잉 목록 조회"
+ *     description: "사용자가 팔로우한 목록을 조회하는 API"
+ *     tags: [Follow]
+ *     parameters:
+ *       - name: userTag
+ *         in: path
+ *         description: "팔로잉 목록을 조회할 사용자의 태그"
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "john#123"
+ *     responses:
+ *       200:
+ *         description: "팔로잉 목록을 정상적으로 조회"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   followingUserId:
+ *                     type: integer
+ *                     description: "팔로잉된 사용자의 ID"
+ *                   followingUserTag:
+ *                     type: string
+ *                     description: "팔로잉된 사용자의 태그"
+ *       400:
+ *         description: "잘못된 요청"
+ *       404:
+ *         description: "사용자 또는 팔로잉 목록이 존재하지 않음"
+ *       500:
+ *         description: "서버 오류"
+ */
+router.get('/showFollowing/:userTag', showFollowingController);
+
+export default router;
