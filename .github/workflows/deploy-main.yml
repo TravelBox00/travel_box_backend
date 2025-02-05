@@ -63,7 +63,7 @@ jobs:
 
             [Service]
             User=${USER}
-            WorkingDirectory=/opt/app
+            WorkingDirectory=/opt/app/travel_box_backend
             ExecStart=/usr/bin/npm run dev
             Restart=always
             Environment=NODE_ENV=production
