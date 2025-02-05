@@ -10,7 +10,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Setup Node.js
@@ -35,7 +35,8 @@ jobs:
           EOF
 
       - name: Test SSH Connection
-        run: ssh -vvv playground-umc-7th "echo '✅ SSH Connection Successful'"
+        run: |
+          ssh -vvv playground-umc-7th "echo '✅ SSH Connection Successful'"
 
       - name: Prepare rsync exclude list
         run: |
@@ -49,7 +50,7 @@ jobs:
           ssh playground-umc-7th 'rm -rf ~/travel_box_backend && mkdir -p ~/travel_box_backend'
           rsync -avz --exclude-from=exclude.txt --timeout=30 ./ playground-umc-7th:~/travel_box_backend/
 
-      - name: Install Dependencies
+      - name: Install Dependencies and Fix ts-node Issue
         run: |
           ssh playground-umc-7th '
             cd ~/travel_box_backend
@@ -58,12 +59,20 @@ jobs:
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             nvm install 20
             nvm use 20
+
+            echo "export NODE_PATH=$(npm root -g)" >> ~/.bashrc
+            echo "export NODE_OPTIONS=--experimental-specifier-resolution=node" >> ~/.bashrc
+            source ~/.bashrc
+
+            rm -rf node_modules package-lock.json
+            npm cache clean --force
             npm install --no-audit --no-fund --legacy-peer-deps
-            npm install -g typescript ts-node nodemon --no-audit --no-fund
+            npm install -g ts-node typescript nodemon
+
             npm rebuild
           '
 
-      - name: Create env file
+      - name: Create .env file
         run: |
           ssh playground-umc-7th 'cat > ~/travel_box_backend/.env << EOF
           DB_HOST=${{ secrets.DB_HOST }}
@@ -86,9 +95,6 @@ jobs:
         run: |
           ssh playground-umc-7th '
             sudo systemctl stop app || true
-            NODE_PATH=$(which node)
-            NPM_PATH=$(which npm)
-
             sudo tee /etc/systemd/system/app.service << EOF
             [Unit]
             Description=UMC 7th Project
@@ -99,7 +105,7 @@ jobs:
             User=ubuntu
             WorkingDirectory=/home/ubuntu/travel_box_backend
             EnvironmentFile=/home/ubuntu/travel_box_backend/.env
-            ExecStart=/bin/bash -c "source ~/.bashrc && cd /home/ubuntu/travel_box_backend && $NPM_PATH run dev"
+            ExecStart=/bin/bash -c "source ~/.bashrc && cd /home/ubuntu/travel_box_backend && $(which npm) run dev"
             Restart=always
             RestartSec=10
             StandardOutput=append:/var/log/app.log
@@ -111,7 +117,7 @@ jobs:
 
             sudo systemctl daemon-reload
             sudo systemctl enable app
-            sudo systemctl start app
+            sudo systemctl restart app
             sleep 5
           '
 
@@ -119,10 +125,7 @@ jobs:
         if: always()
         run: |
           ssh playground-umc-7th '
-            echo "=== Systemctl Status ==="
             sudo systemctl status app --no-pager || true
-            echo "=== Journalctl Logs ==="
-            sudo journalctl -u app --no-pager --lines=30 || true
             echo "=== Application Logs ==="
             sudo tail -n 20 /var/log/app.log || true
             echo "=== Error Logs ==="
