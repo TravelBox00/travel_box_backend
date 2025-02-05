@@ -50,9 +50,10 @@ jobs:
           ssh playground-umc-7th 'sudo chown ubuntu:ubuntu /opt/app'
           scp -r ./* playground-umc-7th:/opt/app/
 
-      - name: Install dependencies
+      - name: Install dependencies and build
         run: |
-          ssh playground-umc-7th 'cd /opt/app && npm install'
+          ssh playground-umc-7th 'cd /opt/app && npm install --production=false'
+          ssh playground-umc-7th 'cd /opt/app && npm install -g typescript ts-node'
 
       - name: Create env file
         run: |
