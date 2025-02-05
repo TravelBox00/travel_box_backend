@@ -23,12 +23,16 @@ jobs:
           mkdir -p ~/.ssh
           echo "$EC2_SSH_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+          
+          # known_hosts 파일 생성 및 호스트 키 추가
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+          
           cat >>~/.ssh/config <<END
           Host playground-umc-7th
             HostName $EC2_HOST
             User $EC2_USER
             IdentityFile ~/.ssh/id_rsa
-            StrictHostKeyChecking no
+            StrictHostKeyChecking accept-new
             ConnectTimeout 30
             ServerAliveInterval 60
           END
