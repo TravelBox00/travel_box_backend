@@ -39,16 +39,12 @@ jobs:
 
       - name: Check EBS Mount and Fix Permissions
         run: |
-          ssh playground-umc-7th '
-            if mountpoint -q /mnt/ebs; then
-              echo "✅ EBS is already mounted at /mnt/ebs"
-              sudo chown -R ubuntu:ubuntu /mnt/ebs
-              sudo chmod -R 775 /mnt/ebs
-            else
-              echo "❌ EBS is not mounted at /mnt/ebs"
-              exit 1
-            fi
-          '
+          ssh playground-umc-7th "
+            mountpoint -q /mnt/ebs || { echo '❌ EBS is not mounted'; exit 1; }
+            echo '✅ EBS is mounted'
+            sudo chown -R ubuntu:ubuntu /mnt/ebs
+            sudo chmod -R 775 /mnt/ebs
+          "
 
       - name: Copy Workspace to EBS
         run: |
