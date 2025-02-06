@@ -10,15 +10,15 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
+      - name: Checkout Repository # 저장소 체크아웃
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js # Node.js 설치
         uses: actions/setup-node@v3
         with:
-          node-version: '18'  # LTS 버전 사용
+          node-version: '18' # LTS 버전 사용
 
-      - name: Configure SSH
+      - name: Configure SSH # SSH 설정
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
@@ -33,11 +33,11 @@ jobs:
             LogLevel ERROR
           EOF
 
-      - name: Test SSH Connection
+      - name: Test SSH Connection # SSH 연결 테스트
         run: |
           ssh -vvv playground-umc-7th "echo '✅ SSH Connection Successful'"
 
-      - name: Ensure EBS is Mounted and Fix Permissions
+      - name: Ensure EBS is Mounted and Fix Permissions # EBS 마운트 확인 및 권한 설정
         run: |
           ssh playground-umc-7th '
             if ! mountpoint -q /mnt/ebs; then
@@ -47,36 +47,37 @@ jobs:
             sudo chown -R ubuntu:ubuntu /mnt/ebs
             sudo chmod -R 775 /mnt/ebs
           '
-      - name: Stop Previous Process (Important!)
+
+      - name: Stop Previous Process (Important!) # 기존 프로세스 종료 (핵심)
         run: |
           ssh playground-umc-7th '
             cd /mnt/ebs/travel_box_backend
-            for PID in $(pgrep -f "node | npm run dev"); do  # Iterate through all PIDs
+            # ***CRITICAL CHANGE: Make pgrep SPECIFIC***
+            for PID in $(pgrep -f "npm run dev"); do  # Or "node your_app.js", or "pm2 name"
               if [[ -n "$PID" ]]; then
                 echo "Stopping process with PID: $PID"
                 kill $PID
-                sleep 1  # Reduce sleep time; we're killing multiple processes
-                # Check if the process is still running (important!)
-                if [[ $(pgrep -f "node | npm run dev" | grep $PID) ]]; then # Check for *this* PID specifically
+                sleep 1
+                if [[ $(pgrep -f "npm run dev" | grep $PID) ]]; then # Check for *this* PID
                   echo "Process $PID did not terminate after kill. Force killing."
                   kill -9 $PID
                 fi
               fi
             done
           '
-        
-      - name: Copy Workspace to EBS
-        run: |
-          rsync -avz --exclude={'.git','dist'} ./ playground-umc-7th:/mnt/ebs/travel_box_backend/
 
-      - name: Install Dependencies
+      - name: Copy Workspace to EBS # EBS에 파일 복사 (node_modules 제외)
+        run: |
+          rsync -avz --exclude={'.git','dist','node_modules'} ./ playground-umc-7th:/mnt/ebs/travel_box_backend/
+
+      - name: Install Dependencies # 의존성 설치
         run: |
           ssh playground-umc-7th '
             cd /mnt/ebs/travel_box_backend
             npm install
           '
 
-      - name: Create .env file
+      - name: Create .env file # .env 파일 생성
         run: |
           ssh playground-umc-7th 'cat > /mnt/ebs/travel_box_backend/.env << EOF
           DB_HOST=${{ secrets.DB_HOST }}
@@ -95,14 +96,14 @@ jobs:
           ELASTIC_SEARCH_API=${{ secrets.ELASTIC_SEARCH_API }}
           EOF'
 
-      - name: Start Application
+      - name: Start Application # 애플리케이션 실행
         run: |
           ssh playground-umc-7th '
             cd /mnt/ebs/travel_box_backend
             nohup npm run dev
           '
 
-      - name: Check Service Status
+      - name: Check Service Status # 서비스 상태 확인
         if: always()
         run: |
           ssh playground-umc-7th '
