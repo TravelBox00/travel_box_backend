@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2021", // 최신 JavaScript 기능
-    "module": "ESNext", // ECMAScript Modules 사용
+    "common": "ESNext", // ECMAScript Modules 사용
     "moduleResolution": "node",
     "esModuleInterop": true,
     "strict": true, // 엄격한 타입 검사
@@ -10,7 +10,6 @@
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "allowImportingTsExtensions": true,
-    "noEmit": true,
     "strictPropertyInitialization": false // 소스 폴더
   },
   "ts-node": {
