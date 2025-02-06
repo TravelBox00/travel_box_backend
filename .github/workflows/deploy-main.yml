@@ -50,19 +50,21 @@ jobs:
       - name: Stop Previous Process (Important!)
         run: |
           ssh playground-umc-7th '
-            cd /mnt/ebs/travel_box_backend 
-            PID=$(pgrep -f "node | npm run dev") 
-            if [[ -n "$PID" ]]; then 
-              echo "Stopping previous process with PID: $PID"
-              kill $PID 
-              sleep 5 
-              if [[ $(pgrep -f "node | npm run dev") ]]; then
-                echo "Process did not terminate after kill. Force killing."
-                kill -9 $PID
+            cd /mnt/ebs/travel_box_backend
+            for PID in $(pgrep -f "node | npm run dev"); do  # Iterate through all PIDs
+              if [[ -n "$PID" ]]; then
+                echo "Stopping process with PID: $PID"
+                kill $PID
+                sleep 1  # Reduce sleep time; we're killing multiple processes
+                # Check if the process is still running (important!)
+                if [[ $(pgrep -f "node | npm run dev" | grep $PID) ]]; then # Check for *this* PID specifically
+                  echo "Process $PID did not terminate after kill. Force killing."
+                  kill -9 $PID
+                fi
               fi
-            fi
+            done
           '
-
+        
       - name: Copy Workspace to EBS
         run: |
           rsync -avz --exclude={'.git','dist'} ./ playground-umc-7th:/mnt/ebs/travel_box_backend/
