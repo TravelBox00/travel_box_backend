@@ -47,6 +47,21 @@ jobs:
             sudo chown -R ubuntu:ubuntu /mnt/ebs
             sudo chmod -R 775 /mnt/ebs
           '
+      - name: Stop Previous Process (Important!)
+        run: |
+          ssh playground-umc-7th '
+            cd /mnt/ebs/travel_box_backend 
+            PID=$(pgrep -f "node | npm run dev") 
+            if [[ -n "$PID" ]]; then 
+              echo "Stopping previous process with PID: $PID"
+              kill $PID 
+              sleep 5 
+              if [[ $(pgrep -f "node | npm run dev") ]]; then
+                echo "Process did not terminate after kill. Force killing."
+                kill -9 $PID
+              fi
+            fi
+          '
 
       - name: Copy Workspace to EBS
         run: |
