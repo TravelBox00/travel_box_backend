@@ -116,8 +116,7 @@ jobs:
             User=ubuntu
             WorkingDirectory=/mnt/ebs/travel_box_backend
             EnvironmentFile=/mnt/ebs/travel_box_backend/.env
-            ExecStart=/bin/bash -c "source ~/.bashrc && cd /mnt/ebs/travel_box_backend && $(which npm) run dev"
-            Restart=always
+            ExecStart=/bin/bash -c "cd /mnt/ebs/travel_box_backend && npx ts-node src/index.ts"
             RestartSec=10
             StandardOutput=append:/var/log/app.log
             StandardError=append:/var/log/app.error.log
