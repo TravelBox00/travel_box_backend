@@ -48,14 +48,20 @@ jobs:
             sudo chmod -R 775 /mnt/ebs
           '
 
-      - name: Sync Workspace and Install Dependencies
+      - name: Prepare Workspace on EBS
         run: |
-          ssh -T playground-umc-7th << 'EOF'
-          mkdir -p /mnt/ebs/travel_box_backend
-          cd /mnt/ebs/travel_box_backend
-          rsync -avz --exclude={'.git','dist','.env','node_modules','*.log'} $GITHUB_WORKSPACE/ .
-          npm install
-          EOF
+          ssh playground-umc-7th '
+            mkdir -p /mnt/ebs/travel_box_backend
+            cd /mnt/ebs/travel_box_backend
+            rsync -avz --exclude={'.git','dist','.env','node_modules','*.log'} ./ playground-umc-7th:/mnt/ebs/travel_box_backend/
+          '
+
+      - name: Install Dependencies
+        run: |
+          ssh playground-umc-7th '
+            cd /mnt/ebs/travel_box_backend
+            npm install
+          '
 
       - name: Create .env file
         run: |
@@ -76,22 +82,26 @@ jobs:
           ELASTIC_SEARCH_API=${{ secrets.ELASTIC_SEARCH_API }}
           EOF'
 
+      - name: Kill Existing Node Processes
+        run: |
+          ssh playground-umc-7th 'pkill node || true'
+
       - name: Start Application in Background
         run: |
           ssh playground-umc-7th '
-            pkill node || true
             cd /mnt/ebs/travel_box_backend
             nohup npm run dev > app.log 2> app.error.log &
+          '
+
+      - name: Check if Application is Running
+        run: |
+          ssh playground-umc-7th '
             sleep 10  # Give some time for the application to start
-            if pgrep -x "node" > /dev/null; then
+            if pgrep -x "node" > /dev/null
+            then
               echo "Application is running."
             else
-              echo "Application failed to start. Check logs for errors."
+              echo "Application failed to start."
               exit 1
             fi
           '
-
-      - name: Check Application Logs
-        run: |
-          ssh playground-umc-7th 'tail -n 50 /mnt/ebs/travel_box_backend/app.log'
-          ssh playground-umc-7th 'tail -n 50 /mnt/ebs/travel_box_backend/app.error.log'
