@@ -50,7 +50,7 @@ jobs:
 
       - name: Copy Workspace to EBS
         run: |
-          rsync -avz --exclude={'.git','dist'} ./ playground-umc-7th:/mnt/ebs/travel_box_backend/
+          rsync -avz --exclude={'.git','dist','/.env','node_modules','*.log'} ./ playground-umc-7th:/mnt/ebs/travel_box_backend/
 
       - name: Install Dependencies
         run: |
@@ -59,11 +59,28 @@ jobs:
             npm install
           '
 
+      - name: Create .env file
+        run: |
+          ssh playground-umc-7th 'cat > /mnt/ebs/travel_box_backend/.env << EOF
+          DB_HOST=${{ secrets.DB_HOST }}
+          DB_USER=${{ secrets.DB_USER }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          DB_NAME=${{ secrets.DB_NAME }}
+          DB_PORT=${{ secrets.DB_PORT }}
+          PORT=${{ secrets.PORT }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          S3_ACCESS_KEY=${{ secrets.S3_ACCESS_KEY }}
+          S3_SECRET_KEY=${{ secrets.S3_SECRET_KEY }}
+          AWS_BUCKET=${{ secrets.AWS_BUCKET }}
+          AWS_REGION=${{ secrets.AWS_REGION }}
+          REDIS_HOST=${{ secrets.REDIS_HOST }}
+          ELASTIC_SEARCH=${{ secrets.ELASTIC_SEARCH }}
+          ELASTIC_SEARCH_API=${{ secrets.ELASTIC_SEARCH_API }}
+          EOF'
+
       - name: Kill Existing Node Processes
         run: |
-          ssh playground-umc-7th '
-            pkill node || true
-          '
+          ssh playground-umc-7th 'pkill node || true'
 
       - name: Start Application in Background
         run: |
