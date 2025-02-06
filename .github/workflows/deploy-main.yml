@@ -45,15 +45,24 @@ jobs:
           echo ".git/" >> exclude.txt
           echo "*.log" >> exclude.txt
 
-      - name: Copy Workspace
+      - name: Ensure EBS is Mounted
         run: |
-          ssh playground-umc-7th 'rm -rf ~/travel_box_backend && mkdir -p ~/travel_box_backend'
-          rsync -avz --exclude-from=exclude.txt --timeout=30 ./ playground-umc-7th:~/travel_box_backend/
+          ssh playground-umc-7th '
+            if ! mountpoint -q /mnt/ebs; then
+              echo "❌ EBS is not mounted!"
+              exit 1
+            fi
+          '
+
+      - name: Copy Workspace to EBS
+        run: |
+          ssh playground-umc-7th 'rm -rf /mnt/ebs/travel_box_backend && mkdir -p /mnt/ebs/travel_box_backend'
+          rsync -avz --exclude-from=exclude.txt --timeout=30 ./ playground-umc-7th:/mnt/ebs/travel_box_backend/
 
       - name: Install Dependencies and Fix ts-node Issue
         run: |
           ssh playground-umc-7th '
-            cd ~/travel_box_backend
+            cd /mnt/ebs/travel_box_backend
             curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
@@ -74,7 +83,7 @@ jobs:
 
       - name: Create .env file
         run: |
-          ssh playground-umc-7th 'cat > ~/travel_box_backend/.env << EOF
+          ssh playground-umc-7th 'cat > /mnt/ebs/travel_box_backend/.env << EOF
           DB_HOST=${{ secrets.DB_HOST }}
           DB_USER=${{ secrets.DB_USER }}
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
@@ -103,9 +112,9 @@ jobs:
             [Service]
             Type=simple
             User=ubuntu
-            WorkingDirectory=/home/ubuntu/travel_box_backend
-            EnvironmentFile=/home/ubuntu/travel_box_backend/.env
-            ExecStart=/bin/bash -c "source ~/.bashrc && cd /home/ubuntu/travel_box_backend && $(which npm) run dev"
+            WorkingDirectory=/mnt/ebs/travel_box_backend
+            EnvironmentFile=/mnt/ebs/travel_box_backend/.env
+            ExecStart=/bin/bash -c "source ~/.bashrc && cd /mnt/ebs/travel_box_backend && $(which npm) run dev"
             Restart=always
             RestartSec=10
             StandardOutput=append:/var/log/app.log
