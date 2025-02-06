@@ -18,13 +18,11 @@ jobs:
         with:
           node-version: '18'  # LTS 버전 사용
 
-
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          
           cat > ~/.ssh/config << EOF
           Host playground-umc-7th
             HostName ${{ secrets.EC2_HOST }}
@@ -50,38 +48,15 @@ jobs:
             sudo chmod -R 775 /mnt/ebs
           '
 
-      - name: Prepare rsync exclude list
-        run: |
-          echo "node_modules/" > exclude.txt
-          echo "dist/" >> exclude.txt
-          echo ".git/" >> exclude.txt
-          echo "*.log" >> exclude.txt
-
       - name: Copy Workspace to EBS
         run: |
-          ssh playground-umc-7th 'mkdir -p /mnt/ebs/travel_box_backend'
-          rsync -avz --exclude-from=exclude.txt --timeout=30 ./ playground-umc-7th:/mnt/ebs/travel_box_backend/
+          rsync -avz --exclude={'.git','dist'} ./ playground-umc-7th:/mnt/ebs/travel_box_backend/
 
-      - name: Install Dependencies and Fix ts-node Issue
+      - name: Install Dependencies
         run: |
           ssh playground-umc-7th '
             cd /mnt/ebs/travel_box_backend
-            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            nvm install 20
-            nvm use 20
-
-            echo "export NODE_PATH=$(npm root -g)" >> ~/.bashrc
-            echo "export NODE_OPTIONS=--experimental-specifier-resolution=node" >> ~/.bashrc
-            source ~/.bashrc
-
-            rm -rf node_modules package-lock.json
-            npm cache clean --force
-            npm install --no-audit --no-fund --legacy-peer-deps
-            npm install -g ts-node typescript nodemon
-
-            npm rebuild
+            npm install
           '
 
       - name: Create .env file
@@ -103,42 +78,19 @@ jobs:
           ELASTIC_SEARCH_API=${{ secrets.ELASTIC_SEARCH_API }}
           EOF'
 
-      - name: Setup and Start Service
+      - name: Start Application
         run: |
           ssh playground-umc-7th '
-            sudo systemctl stop app || true
-            sudo tee /etc/systemd/system/app.service << EOF
-            [Unit]
-            Description=UMC 7th Project
-            After=network.target
-
-            [Service]
-            Type=simple
-            User=ubuntu
-            WorkingDirectory=/mnt/ebs/travel_box_backend
-            EnvironmentFile=/mnt/ebs/travel_box_backend/.env
-            ExecStart=/bin/bash -c "source ~/.bashrc && cd /mnt/ebs/travel_box_backend && /usr/local/bin/node --loader ts-node/esm src/index.ts"
-            RestartSec=10
-            StandardOutput=append:/var/log/app.log
-            StandardError=append:/var/log/app.error.log
-
-            [Install]
-            WantedBy=multi-user.target
-            EOF
-
-            sudo systemctl daemon-reload
-            sudo systemctl enable app
-            sudo systemctl restart app
-            sleep 5
+            cd /mnt/ebs/travel_box_backend
+            npm run dev
           '
 
       - name: Check Service Status
         if: always()
         run: |
           ssh playground-umc-7th '
-            sudo systemctl status app --no-pager || true
             echo "=== Application Logs ==="
-            sudo tail -n 20 /var/log/app.log || true
+            tail -n 20 /mnt/ebs/travel_box_backend/app.log
             echo "=== Error Logs ==="
-            sudo tail -n 20 /var/log/app.error.log || true
+            tail -n 20 /mnt/ebs/travel_box_backend/app.error.log
           '
