@@ -56,7 +56,7 @@ jobs:
             for PID in $(pgrep -f "npm run dev"); do  # Or "node your_app.js", or "pm2 name"
               if [[ -n "$PID" ]]; then
                 echo "Stopping process with PID: $PID"
-                kill $PID
+                sudo kill $PID
                 sleep 1
                 if [[ $(pgrep -f "npm run dev" | grep $PID) ]]; then # Check for *this* PID
                   echo "Process $PID did not terminate after kill. Force killing."
