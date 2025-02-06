@@ -39,14 +39,14 @@ jobs:
 
       - name: Ensure EBS is Mounted and Fix Permissions
         run: |
-          ssh -T playground-umc-7th << 'EOF'
-          if ! mountpoint -q /mnt/ebs; then
-            echo "❌ EBS is not mounted!"
-            exit 1
-          fi
-          sudo chown -R ubuntu:ubuntu /mnt/ebs
-          sudo chmod -R 775 /mnt/ebs
-          EOF
+          ssh playground-umc-7th '
+            if ! mountpoint -q /mnt/ebs; then
+              echo "❌ EBS is not mounted!"
+              exit 1
+            fi
+            sudo chown -R ubuntu:ubuntu /mnt/ebs
+            sudo chmod -R 775 /mnt/ebs
+          '
 
       - name: Sync Workspace and Install Dependencies
         run: |
