@@ -37,15 +37,17 @@ jobs:
         run: |
           ssh -vvv playground-umc-7th "echo '✅ SSH Connection Successful'"
 
-      - name: Ensure EBS is Mounted and Fix Permissions
+      - name: Check EBS Mount and Fix Permissions
         run: |
           ssh playground-umc-7th '
-            if ! mountpoint -q /mnt/ebs; then
-              echo "⚠️ EBS is not mounted. Mounting now..."
-              sudo mount /dev/xvdbf /mnt/ebs || { echo "❌ Failed to mount EBS"; exit 1; }
+            if mountpoint -q /mnt/ebs; then
+              echo "✅ EBS is already mounted at /mnt/ebs"
+              sudo chown -R ubuntu:ubuntu /mnt/ebs
+              sudo chmod -R 775 /mnt/ebs
+            else
+              echo "❌ EBS is not mounted at /mnt/ebs"
+              exit 1
             fi
-            sudo chown -R ubuntu:ubuntu /mnt/ebs
-            sudo chmod -R 775 /mnt/ebs
           '
 
       - name: Copy Workspace to EBS
