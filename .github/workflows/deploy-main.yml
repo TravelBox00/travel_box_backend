@@ -51,12 +51,13 @@ jobs:
       - name: Stop Previous Process (Important!) # 기존 프로세스 종료 (핵심)
         run: |
           ssh playground-umc-7th '
+            set -x # 명령어 실행 전 출력 (디버깅용)
             cd /mnt/ebs/travel_box_backend
             # ***CRITICAL CHANGE: Make pgrep SPECIFIC***
-            for PID in $(pgrep -f "npm run dev"); do  # Or "node your_app.js", or "pm2 name"
+            for PID in $(pgrep -f "npm run dev"); do  # 또는 "node your_app.js", 또는 "your_pm2_app_name"
               if [[ -n "$PID" ]]; then
                 echo "Stopping process with PID: $PID"
-                sudo kill $PID
+                sudo kill $PID # 필요시 sudo 사용 (권한 문제)
                 sleep 1
                 if [[ $(pgrep -f "npm run dev" | grep $PID) ]]; then # Check for *this* PID
                   echo "Process $PID did not terminate after kill. Force killing."
@@ -64,6 +65,7 @@ jobs:
                 fi
               fi
             done
+            exit $? # 종료 코드 반환 (디버깅용)
           '
 
       - name: Copy Workspace to EBS # EBS에 파일 복사 (node_modules 제외)
@@ -100,7 +102,7 @@ jobs:
         run: |
           ssh playground-umc-7th '
             cd /mnt/ebs/travel_box_backend
-            nohup npm run dev
+            nohup npm run dev # 또는 pm2 start ...
           '
 
       - name: Check Service Status # 서비스 상태 확인
@@ -108,7 +110,7 @@ jobs:
         run: |
           ssh playground-umc-7th '
             echo "=== Application Logs ==="
-            tail -n 20 /mnt/ebs/travel_box_backend/app.log
+            tail -n 20 /mnt/ebs/travel_box_backend/app.log # 정확한 로그 파일 경로로 수정
             echo "=== Error Logs ==="
-            tail -n 20 /mnt/ebs/travel_box_backend/app.error.log
+            tail -n 20 /mnt/ebs/travel_box_backend/app.error.log # 정확한 로그 파일 경로로 수정
           '
