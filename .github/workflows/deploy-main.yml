@@ -33,6 +33,37 @@ jobs:
             LogLevel ERROR
           EOF
 
+      - name: Check EBS Volume and Mount Point
+        run: |
+          ssh playground-umc-7th '
+            # EBS 볼륨 존재 확인
+            if [ -e /dev/xvdbf ]; then
+              echo "✅ EBS volume /dev/xvdbf exists"
+            else
+              echo "❌ EBS volume /dev/xvdbf does not exist"
+              exit 1
+            fi
+
+            # 마운트 포인트 확인
+            if mountpoint -q /mnt/ebs; then
+              echo "✅ /mnt/ebs is mounted"
+            else
+              echo "❌ /mnt/ebs is not mounted"
+              exit 1
+            fi
+
+            # 디렉토리 접근 권한 확인
+            if [ -w /mnt/ebs ]; then
+              echo "✅ /mnt/ebs is writable"
+            else
+              echo "❌ /mnt/ebs is not writable"
+              exit 1
+            fi
+
+            # 디스크 공간 확인
+            df -h /mnt/ebs
+          '
+
       - name: Test SSH Connection
         run: |
           ssh -vvv playground-umc-7th "echo '✅ SSH Connection Successful'"
