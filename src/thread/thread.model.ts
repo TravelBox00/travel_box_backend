@@ -1,6 +1,10 @@
 import { ResultSetHeader, RowDataPacket } from 'mysql2'; // ResultSetHeader 타입 임포트
 import { pool } from '../configs/database/mysqlConnect.ts'; // DB 연결 설정
 import { updatePostDTO, userPostDTO } from './dto/thread.dto.ts';
+import { elastic } from '../configs/database/elasticConnect.ts';
+import s3 from '../configs/s3.ts';
+import { DeleteObjectCommand } from '@aws-sdk/client-s3';
+
 
 // 게시물 좋아요 상태
 export const checkLikeStatus = async (
@@ -166,7 +170,6 @@ export const uploadImageModel = {
 
 // 게시물 업로드 Model
 export const upLoadPostModel = {
-  // 게시물에 대한 threadId 생성
   createThread: async (
     userTag: string,
     postData: userPostDTO
@@ -177,13 +180,30 @@ export const upLoadPostModel = {
     const connection = await pool.getConnection();
 
     try {
+      await connection.beginTransaction();
+
+      // 동일한 제목과 내용으로 최근에 생성된 게시물이 있는지 확인
+      const checkDuplicateQuery = `
+        SELECT threadId FROM TravelThread 
+        WHERE postTitle = ? 
+        AND postContent = ? 
+        AND postDate > DATE_SUB(NOW(), INTERVAL 1 MINUTE)
+      `;
+      const [duplicates]: [any[], any] = await connection.query(
+        checkDuplicateQuery,
+        [postData.postTitle, postData.postContent]
+      );
+
+      if (duplicates.length > 0) {
+        throw new Error('Duplicate post detected');
+      }
+
       // userTag를 이용해 userId 조회
       const userQuery = `SELECT userId FROM User WHERE userTag = ?;`;
       const [userResult]: [any[], any] = await connection.query(userQuery, [
         userTag,
       ]);
 
-      // userTag가 없는 경우 처리
       if (userResult.length === 0) {
         throw new Error('User not found');
       }
@@ -209,25 +229,63 @@ export const upLoadPostModel = {
 
       const threadId = threadResult.insertId;
       console.log(`Thread created with threadId: ${threadId}`);
-      return { threadId }; // threadId 반환
-    } catch (error) {
+
+      const splitContent = (content: string) => content.split(' ');
+
+      // ElasticSearch에 데이터 추가
+      const elasticDoc = {
+        threadId,
+        category: postData.postCategory,
+        postTitle: splitContent(postData.postTitle),
+        postContent: splitContent(postData.postContent),
+        postDate: postData.postDate,
+        postRegionCode: Math.floor(Math.random() * 100) + 1,
+        likes: 0,
+        comments: 0,
+      };
+
+      await elastic.index({
+        index: 'post_stats',
+        id: threadId.toString(),
+        document: elasticDoc,
+      });
+
+      await connection.commit();
+
+      return { threadId };
+    } catch (error : any) {
+      await connection.rollback();
       console.error('Error creating thread:', error);
+      if (error.message === 'Duplicate post detected') {
+        throw new Error('Duplicate post detected');
+      }
       throw new Error('Failed to create thread');
     } finally {
       connection.release();
     }
   },
-
   // 게시물 생성이 취소될 경우 생성된 threadId 삭제
   deleteThread: async (threadId: number): Promise<void> => {
     console.log('Deleting thread with threadId:', threadId);
 
     const connection = await pool.getConnection();
     try {
+      await connection.beginTransaction(); // 트랜잭션 시작
+
       const deleteQuery = `DELETE FROM TravelThread WHERE threadId = ?`;
       await connection.query(deleteQuery, [threadId]);
-      console.log('Thread deleted successfully');
+
+      // ElasticSearch에서도 삭제
+      await elastic.delete({
+        index: 'post_stats',
+        id: threadId.toString(),
+      });
+
+      await connection.commit(); // 트랜잭션 커밋
+
+      console.log(`Thread=${threadId} deleted successfully`);
     } catch (error) {
+      await connection.rollback(); // 오류 발생 시 롤백
       console.error('Error deleting thread:', error);
       throw new Error('Failed to delete thread');
     } finally {
@@ -235,6 +293,8 @@ export const upLoadPostModel = {
     }
   },
 };
+
+
 
 // 게시물 상세 조회 API
 export const postInfoModel = async (
@@ -267,32 +327,66 @@ export const postInfoModel = async (
   }
 };
 
-// 검색어에 따른 게시물 조회 API
+// 게시물 검색 Model
 export const postSearchModel = async (
   searchKeyword: string,
   limit: number,
   offset: number
 ): Promise<any> => {
-  console.log('postSearch Model Connected');
+  console.log('ElasticSearch + MySQL 기반 postSearch Model Connected');
 
-  const query = `
-  SELECT T.postTitle, DATE_FORMAT(T.postDate, "%Y-%m-%d"), I.imageURL
-  FROM TravelThread T
-  LEFT JOIN Image I ON T.threadId = I.threadId
-  WHERE T.postTitle LIKE ? OR I.imageURL LIKE ? OR T.postDate LIKE ?
-  LIMIT ? OFFSET ?;
-`;
+  try {
+    // 🔹 ElasticSearch 검색
+    const { hits } = await elastic.search({
+      index: 'post_stats',
+      size: limit,
+      from: offset,
+      query: {
+        multi_match: {
+          query: searchKeyword,
+          fields: ['postTitle^3', 'postContent'],
+          fuzziness: 'AUTO',
+        },
+      },
+    });
 
-  // 스크롤링 형식
-  const [results] = await pool.query(query, [
-    `%${searchKeyword}%`,
-    `%${searchKeyword}%`,
-    `%${searchKeyword}%`,
-    limit,
-    offset,
-  ]);
+    const elasticResults = hits.hits.map((hit: any) => ({
+      threadId: hit._id,
+      postTitle: hit._source.postTitle,
+      postDate: hit._source.postDate,
+      postRegionCode: hit._source.postRegionCode,
+      likes: hit._source.likes,
+      comments: hit._source.comments,
+    }));
 
-  return results as any[];
+    // MySQL 검색
+    const mysqlQuery = `
+      SELECT T.threadId, T.postTitle, DATE_FORMAT(T.postDate, "%Y-%m-%d") as postDate, I.imageURL
+      FROM TravelThread T
+      LEFT JOIN Image I ON T.threadId = I.threadId
+      WHERE T.postTitle LIKE ? OR T.postContent LIKE ?
+      LIMIT ? OFFSET ?;
+    `;
+
+    // MySQL 검색 실행
+    const [mysqlResults]: any[] = await pool.query(mysqlQuery, [
+      `%${searchKeyword}%`,
+      `%${searchKeyword}%`,
+      limit,
+      offset,
+    ]);
+
+    // MySQL 결과가 배열인지 확인 후 변환
+    const mysqlResultsArray = Array.isArray(mysqlResults) ? mysqlResults : [];
+
+    // 두 결과를 병합 (ElasticSearch 결과를 우선)
+    const combinedResults = [...elasticResults, ...mysqlResultsArray];
+
+    return combinedResults;
+  } catch (error) {
+    console.error('검색 오류:', error);
+    throw new Error('검색 실패');
+  }
 };
 
 // 내가 쓴 글 조회 (이미지, 제목만)
@@ -348,7 +442,7 @@ export const updatePostModel = async (
   postData: updatePostDTO
 ): Promise<any> => {
   try {
-    console.log('PUT updatePostModel Connected');
+    console.log('PATCH updatePostModel Connected');
 
     // userTag와 threadId값을 확인하는 로직
     const userQuery = `SELECT userId FROM User WHERE userTag = ?;`;
@@ -386,6 +480,24 @@ export const updatePostModel = async (
       threadId,
     ]);
 
+     //postTitle과 postContent를 합쳐서 ElasticSearch에 저장할 배열 생성
+     const splitContent = (content: string) => content.split(' ');
+
+     const elasticDoc = {
+       category: postData.postCategory,
+       postTitle: splitContent(postData.postTitle),
+       postContent: splitContent(postData.postContent),
+     };
+ 
+     // ElasticSearch에 데이터 업데이트 (PATCH 역할)
+     await elastic.update({
+       index: 'post_stats',
+       id: threadId.toString(),
+       doc: elasticDoc,  // 변경할 데이터
+     });
+
+     console.log(`threadId=${threadId} ElasticSearch 업데이트 완료`);
+
     return updateResult;
   } catch (error: any) {
     console.error('Update Post Model Error', error.message);
@@ -393,7 +505,7 @@ export const updatePostModel = async (
   }
 };
 
-// 포스트 삭제 Model
+// 게시물 삭제 Model
 export const deletePostModel = async (
   userTag: string,
   threadId: number
@@ -422,10 +534,95 @@ export const deletePostModel = async (
       throw new Error(`threadId(${threadId})가 존재하지 않음.`);
     }
 
-    // 게시물 삭제 이미지 먼저 삭제 (외래 키 제약조건)
-    const delectImageQuery = `DELETE FROM Image WHERE threadId = ?;`;
-    await pool.query(delectImageQuery, [threadId]);
+    
 
+      // 먼저 문서 존재 여부 확인
+      const checkDocument = await elastic.search({
+          index: 'post_stats',
+          body: {
+              query: {
+                  match: {
+                      threadId: threadId
+                  }
+              }
+          }
+      });
+  
+      console.log('검색 결과:', checkDocument.hits.hits);
+
+  // ElasticSearch에서 해당 게시물 삭제
+    const response = await elastic.deleteByQuery({
+      index: 'post_stats', 
+      body: {
+        query: {
+          bool: {
+            must: [
+              { term: { threadId: threadId } } 
+            ]
+          }
+        }
+      },
+      refresh: true
+    });
+
+    // 삭제된 문서 수를 확인하고 로그 출력
+    if (response && response.deleted !== undefined && response.deleted > 0) {
+      console.log(`ElasticSearch에서 threadId ${threadId} 삭제 완료. 삭제된 문서 수: ${response.deleted}`);
+    } else {
+      console.log(`ElasticSearch에서 threadId ${threadId} 삭제 실패 또는 해당 문서 없음.`);
+    }
+
+    // 댓글 삭제
+    const deleteCommentsQuery = `DELETE FROM Comment WHERE threadId = ?;`;
+    await pool.query(deleteCommentsQuery, [threadId]);
+
+    // 해시태그 삭제
+    const deleteHashTagsQuery = `DELETE FROM HashTag WHERE threadId = ?;`;
+    await pool.query(deleteHashTagsQuery, [threadId]);
+
+    // 좋아요 삭제
+    const deleteLikesQuery = `DELETE FROM \`Like\` WHERE threadId = ?;`;
+    await pool.query(deleteLikesQuery, [threadId]);
+
+    // 스크랩 삭제
+    const deleteScrapQuery = `DELETE FROM PostScrap WHERE threadId = ?;`;
+    await pool.query(deleteScrapQuery, [threadId]);
+
+    // Sing
+    const deleteSingQuery = `DELETE FROM Sing WHERE threadId = ?;`;
+    await pool.query(deleteSingQuery, [threadId]);
+
+    // 이미지 URL 조회 (삭제할 이미지를 가져오기 위해)
+    const imageQuery = `SELECT imageURL FROM Image WHERE threadId = ?;`;
+    const [imageResult]: any = await pool.query(imageQuery, [threadId]);
+
+    if (imageResult.length > 0) {
+      // 이미지 삭제 (S3에서)
+      for (const image of imageResult) {
+        const imageURL = image.imageURL;
+
+        // URL을 디코딩
+        const decodedURL = decodeURIComponent(imageURL);
+
+        // URL에서 파일명 추출 (마지막 '/' 이후의 부분이 파일명)
+        const fileName = decodedURL.substring(decodedURL.lastIndexOf('/') + 1);
+
+        const params = {
+          Bucket: process.env.AWS_BUCKET, // S3 버킷 이름
+          Key: `image/${fileName}`, // 이미지 경로 (URL에서 추출한 파일명)
+        };
+
+        // S3에서 이미지 삭제
+        await s3.send(new DeleteObjectCommand(params)); // v3 방식에서는 send 메서드를 사용
+        console.log(`S3에서 이미지 삭제 완료: ${fileName}`);
+      }
+    }
+
+    // 게시물 삭제 (이미지 먼저 삭제)
+    const deleteImageQuery = `DELETE FROM Image WHERE threadId = ?;`;
+    await pool.query(deleteImageQuery, [threadId]);
+
+    // 게시물 삭제
     const deleteQuery = `DELETE FROM TravelThread WHERE userId = ? AND threadId = ?;`;
     const [deleteResult]: any = await pool.query(deleteQuery, [
       userId,
@@ -438,6 +635,7 @@ export const deletePostModel = async (
     throw new Error(error.message || 'Delete Post Model Error');
   }
 };
+
 
 // 인기 게시물 조회 Model
 export const popularPostModel = async (

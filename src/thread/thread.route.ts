@@ -626,7 +626,51 @@ router.get('/category', myPostCategoryController);
 router.patch('/update', updatePostController);
 
 // 포스트 삭제 (DB상에서 삭제는 잘됨 단 S3에 있는 이미지는 삭제가 안됨 해결해야함)
-
+/**
+ * @swagger
+ * /thread/delete:
+ *   delete:
+ *     summary: Delete a post and associated images
+ *     description: Deletes a post from the database and removes associated images from S3.
+ *     tags:
+ *       - Thread
+ *     parameters:
+ *       - in: query
+ *         name: userTag
+ *         description: The user tag of the user who created the post.
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: john#123
+ *       - in: query
+ *         name: threadId
+ *         description: The ID of the thread to delete.
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *     responses:
+ *       200:
+ *         description: Post and associated images deleted successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: 'Post deleted successfully'
+ *       400:
+ *         description: Error deleting the post or image.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: 'Error deleting post: No images uploaded'
+ */
 router.delete('/delete', deletePostController);
 
 /**
