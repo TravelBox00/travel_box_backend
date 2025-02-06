@@ -38,6 +38,17 @@ jobs:
         run: |
           ssh -vvv playground-umc-7th "echo '✅ SSH Connection Successful'"
 
+      - name: Ensure EBS is Mounted and Fix Permissions
+        run: |
+          ssh playground-umc-7th '
+            if ! mountpoint -q /mnt/ebs; then
+              echo "❌ EBS is not mounted!"
+              exit 1
+            fi
+            sudo chown -R ubuntu:ubuntu /mnt/ebs
+            sudo chmod -R 775 /mnt/ebs
+          '
+
       - name: Prepare rsync exclude list
         run: |
           echo "node_modules/" > exclude.txt
@@ -45,18 +56,9 @@ jobs:
           echo ".git/" >> exclude.txt
           echo "*.log" >> exclude.txt
 
-      - name: Ensure EBS is Mounted
-        run: |
-          ssh playground-umc-7th '
-            if ! mountpoint -q /mnt/ebs; then
-              echo "❌ EBS is not mounted!"
-              exit 1
-            fi
-          '
-
       - name: Copy Workspace to EBS
         run: |
-          ssh playground-umc-7th 'rm -rf /mnt/ebs/travel_box_backend && mkdir -p /mnt/ebs/travel_box_backend'
+          ssh playground-umc-7th 'mkdir -p /mnt/ebs/travel_box_backend'
           rsync -avz --exclude-from=exclude.txt --timeout=30 ./ playground-umc-7th:/mnt/ebs/travel_box_backend/
 
       - name: Install Dependencies and Fix ts-node Issue
