@@ -3,7 +3,10 @@
     "target": "ES2021", // 최신 JavaScript 기능
     "module": "ESNext", // ECMAScript Modules 사용
     "moduleResolution": "Node", // Node.js 모듈 해석 방식
+    "moduleResolution": "node",
+    "esModuleInterop": true,
     "strict": true, // 엄격한 타입 검사
+    "allowJs": true,
     "esModuleInterop": true, // CommonJS 모듈 호환
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,

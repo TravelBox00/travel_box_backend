@@ -11,7 +11,7 @@ import { errorHandler } from './middlewares/error.middleware.ts';
 import userRoutes from './user/user.route.ts';
 import calendarRoutes from './calendar/calendar.route.ts';
 import threadRoutes from './thread/thread.route.ts';
-import searchRoutes from "./search/search.route.ts";
+import searchRoutes from './search/search.route.ts';
 import commentRouter from './comment/comment.route.ts';
 import followRouter from './follow/follow.route.ts';
 
@@ -27,9 +27,9 @@ router.get('/', (req, res) => {
 
 // 미들웨어 설정
 app.use(cors());
-app.use(express.json()); 
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(compression()); 
+app.use(compression());
 app.use(morgan('dev'));
 
 // api 문서
@@ -38,9 +38,9 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 // 라우터
 app.use('/', router);
 app.use('/users', userRoutes);
-app.use('/calendar',authenticateToken, calendarRoutes);
-app.use('/thread',authenticateToken, threadRoutes);
-app.use('/search',authenticateToken, searchRoutes);
+app.use('/calendar', authenticateToken, calendarRoutes);
+app.use('/thread', authenticateToken, threadRoutes);
+app.use('/search', authenticateToken, searchRoutes);
 app.use('/comment', authenticateToken, commentRouter);
 app.use('/follow', authenticateToken,followRouter);
 

@@ -3,65 +3,131 @@ name: deploy-main
 on:
   push:
     branches:
-      - main
+      - dev
   workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
 
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh
-          echo "$EC2_SSH_KEY" > ~/.ssh/id_rsa
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-
-          cat >>~/.ssh/config <<END
+          
+          cat > ~/.ssh/config << EOF
           Host playground-umc-7th
-            HostName $EC2_HOST
-            User $EC2_USER
+            HostName ${{ secrets.EC2_HOST }}
+            User ubuntu
             IdentityFile ~/.ssh/id_rsa
             StrictHostKeyChecking no
-          END
-        env:
-          EC2_USER: ubuntu
-          EC2_HOST: ${{ secrets.EC2_HOST }}
-          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+            UserKnownHostsFile /dev/null
+            LogLevel ERROR
+          EOF
+
+      - name: Test SSH Connection
+        run: |
+          ssh -vvv playground-umc-7th "echo '✅ SSH Connection Successful'"
+
+      - name: Prepare rsync exclude list
+        run: |
+          echo "node_modules/" > exclude.txt
+          echo "dist/" >> exclude.txt
+          echo ".git/" >> exclude.txt
+          echo "*.log" >> exclude.txt
 
       - name: Copy Workspace
         run: |
-          ssh playground-umc-7th 'sudo mkdir -p /opt/app'
-          ssh playground-umc-7th 'sudo chown ubuntu:ubuntu /opt/app'
-          scp -r ./[!.]* playground-umc-7th:/opt/app
+          ssh playground-umc-7th 'rm -rf ~/travel_box_backend && mkdir -p ~/travel_box_backend'
+          rsync -avz --exclude-from=exclude.txt --timeout=30 ./ playground-umc-7th:~/travel_box_backend/
 
-      - name: Install dependencies
-        run: |
-          ssh playground-umc-7th 'npm install --prefix /opt/app/'
-
-      - name: Copy systemd service file
+      - name: Install Dependencies and Fix ts-node Issue
         run: |
           ssh playground-umc-7th '
-            echo "[Unit]
+            cd ~/travel_box_backend
+            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            nvm install 20
+            nvm use 20
+
+            echo "export NODE_PATH=$(npm root -g)" >> ~/.bashrc
+            echo "export NODE_OPTIONS=--experimental-specifier-resolution=node" >> ~/.bashrc
+            source ~/.bashrc
+
+            rm -rf node_modules package-lock.json
+            npm cache clean --force
+            npm install --no-audit --no-fund --legacy-peer-deps
+            npm install -g ts-node typescript nodemon
+
+            npm rebuild
+          '
+
+      - name: Create .env file
+        run: |
+          ssh playground-umc-7th 'cat > ~/travel_box_backend/.env << EOF
+          DB_HOST=${{ secrets.DB_HOST }}
+          DB_USER=${{ secrets.DB_USER }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          DB_NAME=${{ secrets.DB_NAME }}
+          DB_PORT=${{ secrets.DB_PORT }}
+          PORT=${{ secrets.PORT }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          S3_ACCESS_KEY=${{ secrets.S3_ACCESS_KEY }}
+          S3_SECRET_KEY=${{ secrets.S3_SECRET_KEY }}
+          AWS_BUCKET=${{ secrets.AWS_BUCKET }}
+          AWS_REGION=${{ secrets.AWS_REGION }}
+          REDIS_HOST=${{ secrets.REDIS_HOST }}
+          ELASTIC_SEARCH=${{ secrets.ELASTIC_SEARCH }}
+          ELASTIC_SEARCH_API=${{ secrets.ELASTIC_SEARCH_API }}
+          EOF'
+
+      - name: Setup and Start Service
+        run: |
+          ssh playground-umc-7th '
+            sudo systemctl stop app || true
+            sudo tee /etc/systemd/system/app.service << EOF
+            [Unit]
             Description=UMC 7th Project
             After=network.target
 
             [Service]
-            User=${USER}
-            ExecStart=/usr/bin/npm run dev --prefix /opt/app/
+            Type=simple
+            User=ubuntu
+            WorkingDirectory=/home/ubuntu/travel_box_backend
+            EnvironmentFile=/home/ubuntu/travel_box_backend/.env
+            ExecStart=/bin/bash -c "source ~/.bashrc && cd /home/ubuntu/travel_box_backend && $(which npm) run dev"
             Restart=always
+            RestartSec=10
+            StandardOutput=append:/var/log/app.log
+            StandardError=append:/var/log/app.error.log
 
             [Install]
-            WantedBy=multi-user.target" | sudo tee /etc/systemd/system/app.service
+            WantedBy=multi-user.target
+            EOF
+
+            sudo systemctl daemon-reload
+            sudo systemctl enable app
+            sudo systemctl restart app
+            sleep 5
           '
 
-      - name: Enable systemd service
+      - name: Check Service Status
+        if: always()
         run: |
-          ssh playground-umc-7th 'sudo systemctl daemon-reload'
-          ssh playground-umc-7th 'sudo systemctl enable app'
-
-      - name: Restart systemd service
-        run: |
-          ssh playground-umc-7th 'sudo systemctl restart app'
+          ssh playground-umc-7th '
+            sudo systemctl status app --no-pager || true
+            echo "=== Application Logs ==="
+            sudo tail -n 20 /var/log/app.log || true
+            echo "=== Error Logs ==="
+            sudo tail -n 20 /var/log/app.error.log || true
+          '

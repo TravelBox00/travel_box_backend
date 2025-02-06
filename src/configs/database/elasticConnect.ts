@@ -1,5 +1,6 @@
 import { Client } from '@elastic/elasticsearch';
 import dotenv from 'dotenv';
+
 dotenv.config();
 
 export const elastic = new Client({
@@ -8,4 +9,3 @@ export const elastic = new Client({
     apiKey: process.env.ELASTIC_SEARCH_API!,
   },
 });
-

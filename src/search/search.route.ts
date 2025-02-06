@@ -1,10 +1,14 @@
-import express from "express";
-import { filterController, searchController, wordController } from "./search.controller.ts";
+import express from 'express';
+import {
+  filterController,
+  searchController,
+  wordController,
+} from './search.controller.ts';
 
 const router = express.Router();
-router.get("/", searchController);
-router.get("/word", wordController);
-router.get("/filter", filterController);
+router.get('/', searchController);
+router.get('/word', wordController);
+router.get('/filter', filterController);
 /**
  * @swagger
  * tags:
@@ -72,7 +76,6 @@ router.get("/filter", filterController);
  *                   type: boolean
  */
 
-
 /**
  * @swagger
  * /search/filter:
@@ -108,7 +111,6 @@ router.get("/filter", filterController);
  *                 isSuccess:
  *                   type: boolean
  */
-
 
 /**
  * @swagger

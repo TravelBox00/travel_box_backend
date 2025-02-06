@@ -1,9 +1,12 @@
-export class loginReqDto {
-    userTag:string;
-    userPassword:string;
+class loginReqDto {
+  userTag: string;
 
-    constructor(userTag: string, userPassword: string) {
-        this.userTag = userTag;
-        this.userPassword = userPassword;
-    }
+  userPassword: string;
+
+  constructor(userTag: string, userPassword: string) {
+    this.userTag = userTag;
+    this.userPassword = userPassword;
+  }
 }
+
+export default loginReqDto;
