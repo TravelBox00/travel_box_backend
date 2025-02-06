@@ -32,11 +32,9 @@ jobs:
             UserKnownHostsFile /dev/null
             LogLevel ERROR
           EOF
-
       - name: Test SSH Connection
         run: |
           ssh -vvv playground-umc-7th "echo '✅ SSH Connection Successful'"
-
       - name: Ensure EBS is Mounted and Fix Permissions
         run: |
           ssh playground-umc-7th '
@@ -47,22 +45,15 @@ jobs:
             sudo chown -R ubuntu:ubuntu /mnt/ebs
             sudo chmod -R 775 /mnt/ebs
           '
-
-      - name: Prepare Workspace on EBS
+      - name: Copy Workspace to EBS
         run: |
-          ssh playground-umc-7th '
-            mkdir -p /mnt/ebs/travel_box_backend
-            cd /mnt/ebs/travel_box_backend
-            rsync -avz --exclude={'.git','dist','.env','node_modules','*.log'} ./ playground-umc-7th:/mnt/ebs/travel_box_backend/
-          '
-
+          rsync -avz --exclude={'.git','dist','/.env','node_modules','*.log'} ./ playground-umc-7th:/mnt/ebs/travel_box_backend/
       - name: Install Dependencies
         run: |
           ssh playground-umc-7th '
             cd /mnt/ebs/travel_box_backend
             npm install
           '
-
       - name: Create .env file
         run: |
           ssh playground-umc-7th 'cat > /mnt/ebs/travel_box_backend/.env << EOF
@@ -81,18 +72,15 @@ jobs:
           ELASTIC_SEARCH=${{ secrets.ELASTIC_SEARCH }}
           ELASTIC_SEARCH_API=${{ secrets.ELASTIC_SEARCH_API }}
           EOF'
-
       - name: Kill Existing Node Processes
         run: |
           ssh playground-umc-7th 'pkill node || true'
-
       - name: Start Application in Background
         run: |
           ssh playground-umc-7th '
             cd /mnt/ebs/travel_box_backend
             nohup npm run dev > app.log 2> app.error.log &
           '
-
       - name: Check if Application is Running
         run: |
           ssh playground-umc-7th '
