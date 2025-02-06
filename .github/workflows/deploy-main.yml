@@ -116,7 +116,7 @@ jobs:
             User=ubuntu
             WorkingDirectory=/mnt/ebs/travel_box_backend
             EnvironmentFile=/mnt/ebs/travel_box_backend/.env
-            ExecStart=/bin/bash -c "source ~/.bashrc && cd /mnt/ebs/travel_box_backend && /usr/local/bin/ts-node --loader ts-node/esm src/index.ts"
+            ExecStart=/bin/bash -c "source ~/.bashrc && cd /mnt/ebs/travel_box_backend && /usr/local/bin/node --loader ts-node/esm src/index.ts"
             RestartSec=10
             StandardOutput=append:/var/log/app.log
             StandardError=append:/var/log/app.error.log
