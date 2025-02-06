@@ -16,7 +16,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'  # LTS 버전 사용
+          node-version: '18'  # Node.js LTS 버전 사용
 
       - name: Configure SSH
         run: |
@@ -48,14 +48,14 @@ jobs:
             sudo chmod -R 775 /mnt/ebs
           '
 
-      - name: Prepare Environment and Dependencies
+      - name: Sync Workspace and Install Dependencies
         run: |
-          ssh playground-umc-7th '
-            mkdir -p /mnt/ebs/travel_box_backend
-            cd /mnt/ebs/travel_box_backend
-            rsync -avz --exclude={'.git','dist','/.env','node_modules','*.log'} $GITHUB_WORKSPACE/ .
-            npm install
-          '
+          ssh -T playground-umc-7th << 'EOF'
+          mkdir -p /mnt/ebs/travel_box_backend
+          cd /mnt/ebs/travel_box_backend
+          rsync -avz --exclude={'.git','dist','.env','node_modules','*.log'} $GITHUB_WORKSPACE/ .
+          npm install
+          EOF
 
       - name: Create .env file
         run: |
@@ -82,7 +82,6 @@ jobs:
             pkill node || true
             cd /mnt/ebs/travel_box_backend
             nohup npm run dev > app.log 2> app.error.log &
-            echo "Application starting..."
             sleep 10  # Give some time for the application to start
             if pgrep -x "node" > /dev/null; then
               echo "Application is running."
