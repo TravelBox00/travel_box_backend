@@ -703,6 +703,6 @@ router.delete('/delete', deletePostController);
  *       500:
  *         description: 서버 오류
  */
-router.get('/popular', popularPostController);
+router.get("/popular", popularPostController);
 
 export default router;
