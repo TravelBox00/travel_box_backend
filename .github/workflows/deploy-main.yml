@@ -10,15 +10,15 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository # 저장소 체크아웃
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js # Node.js 설치
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18' # LTS 버전 사용
+          node-version: '18'  # LTS 버전 사용
 
-      - name: Configure SSH # SSH 설정
+      - name: Configure SSH
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
@@ -33,11 +33,11 @@ jobs:
             LogLevel ERROR
           EOF
 
-      - name: Test SSH Connection # SSH 연결 테스트
+      - name: Test SSH Connection
         run: |
           ssh -vvv playground-umc-7th "echo '✅ SSH Connection Successful'"
 
-      - name: Ensure EBS is Mounted and Fix Permissions # EBS 마운트 확인 및 권한 설정
+      - name: Ensure EBS is Mounted and Fix Permissions
         run: |
           ssh playground-umc-7th '
             if ! mountpoint -q /mnt/ebs; then
@@ -48,69 +48,39 @@ jobs:
             sudo chmod -R 775 /mnt/ebs
           '
 
-      - name: Stop Previous Process (Important!) # 기존 프로세스 종료 (핵심)
+      - name: Copy Workspace to EBS
         run: |
-          ssh playground-umc-7th '
-            set -x # 명령어 실행 전 출력 (디버깅용)
-            cd /mnt/ebs/travel_box_backend
-            # ***CRITICAL CHANGE: Make pgrep SPECIFIC***
-            for PID in $(pgrep -f "npm run dev"); do  # 또는 "node your_app.js", 또는 "your_pm2_app_name"
-              if [[ -n "$PID" ]]; then
-                echo "Stopping process with PID: $PID"
-                sudo kill $PID # 필요시 sudo 사용 (권한 문제)
-                sleep 1
-                if [[ $(pgrep -f "npm run dev" | grep $PID) ]]; then # Check for *this* PID
-                  echo "Process $PID did not terminate after kill. Force killing."
-                  kill -9 $PID
-                fi
-              fi
-            done
-            exit $? # 종료 코드 반환 (디버깅용)
-          '
+          rsync -avz --exclude={'.git','dist'} ./ playground-umc-7th:/mnt/ebs/travel_box_backend/
 
-      - name: Copy Workspace to EBS # EBS에 파일 복사 (node_modules 제외)
-        run: |
-          rsync -avz --exclude={'.git','dist','node_modules'} ./ playground-umc-7th:/mnt/ebs/travel_box_backend/
-
-      - name: Install Dependencies # 의존성 설치
+      - name: Install Dependencies
         run: |
           ssh playground-umc-7th '
             cd /mnt/ebs/travel_box_backend
             npm install
           '
 
-      - name: Create .env file # .env 파일 생성
+      - name: Kill Existing Node Processes
         run: |
-          ssh playground-umc-7th 'cat > /mnt/ebs/travel_box_backend/.env << EOF
-          DB_HOST=${{ secrets.DB_HOST }}
-          DB_USER=${{ secrets.DB_USER }}
-          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-          DB_NAME=${{ secrets.DB_NAME }}
-          DB_PORT=${{ secrets.DB_PORT }}
-          PORT=${{ secrets.PORT }}
-          JWT_SECRET=${{ secrets.JWT_SECRET }}
-          S3_ACCESS_KEY=${{ secrets.S3_ACCESS_KEY }}
-          S3_SECRET_KEY=${{ secrets.S3_SECRET_KEY }}
-          AWS_BUCKET=${{ secrets.AWS_BUCKET }}
-          AWS_REGION=${{ secrets.AWS_REGION }}
-          REDIS_HOST=${{ secrets.REDIS_HOST }}
-          ELASTIC_SEARCH=${{ secrets.ELASTIC_SEARCH }}
-          ELASTIC_SEARCH_API=${{ secrets.ELASTIC_SEARCH_API }}
-          EOF'
+          ssh playground-umc-7th '
+            pkill node || true
+          '
 
-      - name: Start Application # 애플리케이션 실행
+      - name: Start Application in Background
         run: |
           ssh playground-umc-7th '
             cd /mnt/ebs/travel_box_backend
-            nohup npm run dev # 또는 pm2 start ...
+            nohup npm run dev > app.log 2> app.error.log &
           '
 
-      - name: Check Service Status # 서비스 상태 확인
-        if: always()
+      - name: Check if Application is Running
         run: |
           ssh playground-umc-7th '
-            echo "=== Application Logs ==="
-            tail -n 20 /mnt/ebs/travel_box_backend/app.log # 정확한 로그 파일 경로로 수정
-            echo "=== Error Logs ==="
-            tail -n 20 /mnt/ebs/travel_box_backend/app.error.log # 정확한 로그 파일 경로로 수정
+            sleep 10  # Give some time for the application to start
+            if pgrep -x "node" > /dev/null
+            then
+              echo "Application is running."
+            else
+              echo "Application failed to start."
+              exit 1
+            fi
           '
