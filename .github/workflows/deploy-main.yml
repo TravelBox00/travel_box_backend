@@ -48,14 +48,12 @@ jobs:
             sudo chmod -R 775 /mnt/ebs
           '
 
-      - name: Copy Workspace to EBS
-        run: |
-          rsync -avz --exclude={'.git','dist','/.env','node_modules','*.log'} ./ playground-umc-7th:/mnt/ebs/travel_box_backend/
-
-      - name: Install Dependencies
+      - name: Prepare Environment and Dependencies
         run: |
           ssh playground-umc-7th '
+            mkdir -p /mnt/ebs/travel_box_backend
             cd /mnt/ebs/travel_box_backend
+            rsync -avz --exclude={'.git','dist','/.env','node_modules','*.log'} $GITHUB_WORKSPACE/ .
             npm install
           '
 
@@ -78,26 +76,23 @@ jobs:
           ELASTIC_SEARCH_API=${{ secrets.ELASTIC_SEARCH_API }}
           EOF'
 
-      - name: Kill Existing Node Processes
-        run: |
-          ssh playground-umc-7th 'pkill node || true'
-
       - name: Start Application in Background
         run: |
           ssh playground-umc-7th '
+            pkill node || true
             cd /mnt/ebs/travel_box_backend
             nohup npm run dev > app.log 2> app.error.log &
-          '
-
-      - name: Check if Application is Running
-        run: |
-          ssh playground-umc-7th '
+            echo "Application starting..."
             sleep 10  # Give some time for the application to start
-            if pgrep -x "node" > /dev/null
-            then
+            if pgrep -x "node" > /dev/null; then
               echo "Application is running."
             else
-              echo "Application failed to start."
+              echo "Application failed to start. Check logs for errors."
               exit 1
             fi
           '
+
+      - name: Check Application Logs
+        run: |
+          ssh playground-umc-7th 'tail -n 50 /mnt/ebs/travel_box_backend/app.log'
+          ssh playground-umc-7th 'tail -n 50 /mnt/ebs/travel_box_backend/app.error.log'
