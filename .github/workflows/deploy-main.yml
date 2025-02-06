@@ -82,7 +82,7 @@ jobs:
         run: |
           ssh playground-umc-7th '
             cd /mnt/ebs/travel_box_backend
-            npm run dev
+            nohup npm run dev
           '
 
       - name: Check Service Status
