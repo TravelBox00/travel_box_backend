@@ -37,15 +37,6 @@ jobs:
         run: |
           ssh -vvv playground-umc-7th "echo '✅ SSH Connection Successful'"
 
-      - name: Check EBS Mount and Fix Permissions
-        run: |
-          ssh playground-umc-7th "
-            mountpoint -q /mnt/ebs || { echo '❌ EBS is not mounted'; exit 1; }
-            echo '✅ EBS is mounted'
-            sudo chown -R ubuntu:ubuntu /mnt/ebs
-            sudo chmod -R 775 /mnt/ebs
-          "
-
       - name: Copy Workspace to EBS
         run: |
           rsync -avz --exclude={'.git','dist','/.env','node_modules','*.log'} ./ playground-umc-7th:/mnt/ebs/travel_box_backend/
