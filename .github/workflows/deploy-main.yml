@@ -68,9 +68,45 @@ jobs:
         run: |
           ssh -vvv playground-umc-7th "echo '✅ SSH Connection Successful'"
 
+      - name: Check and Clean Disk Space
+        run: |
+          ssh playground-umc-7th '
+            echo "현재 디스크 사용량:"
+            df -h /mnt/ebs
+            
+            echo "큰 파일 및 디렉토리 확인:"
+            du -h /mnt/ebs | sort -rh | head -n 10
+            
+            echo "오래된 로그 파일 제거:"
+            find /mnt/ebs -name "*.log" -type f -mtime +7 -delete
+            
+            echo "node_modules 정리:"
+            find /mnt/ebs -name "node_modules" -type d -exec rm -rf {} +
+            
+            echo "임시 파일 정리:"
+            find /mnt/ebs -name "*.tmp" -type f -delete
+            
+            echo "정리 후 디스크 사용량:"
+            df -h /mnt/ebs
+          '
+
+      - name: Monitor Disk Space
+        run: |
+          ssh playground-umc-7th '
+            DISK_USAGE=$(df -h /mnt/ebs | awk "NR==2 {print \$5}" | sed "s/%//")
+            if [ "$DISK_USAGE" -gt 90 ]; then
+              echo "⚠️ Warning: Disk usage is above 90% ($DISK_USAGE%)"
+              echo "Attempting emergency cleanup..."
+              find /mnt/ebs -name "*.log" -type f -delete
+              find /mnt/ebs -name "*.tmp" -type f -delete
+              df -h /mnt/ebs
+            fi
+          '
+
       - name: Copy Workspace to EBS
         run: |
-          rsync -avz --exclude={'.git','dist','/.env','node_modules','*.log'} ./ playground-umc-7th:/mnt/ebs/travel_box_backend/
+          ssh playground-umc-7th 'mkdir -p /mnt/ebs/travel_box_backend'
+          rsync -avz --delete --exclude={'.git','dist','/.env','node_modules','*.log'} ./ playground-umc-7th:/mnt/ebs/travel_box_backend/
 
       - name: Install Dependencies
         run: |
