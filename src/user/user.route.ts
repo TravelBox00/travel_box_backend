@@ -65,16 +65,21 @@ router.patch('/modify', authenticateToken, modifyController);
  *             schema:
  *               type: object
  *               properties:
- *                 userTag:
- *                   type: string
- *                   description: 사용자의 태그.
- *                   example: "ljm#123"
- *                 accessToken:
- *                   type: string
- *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyVGFnIjoibGptIzEyMyIsImlhdCI6MTczNzUyNTE3NiwiZXhwIjoxNzM3Nzg0Mzc2fQ.rwZBrS4-yK4xIZTffH1QmxHKLUGkf8Vl2tobEADwqYE"
- *                 refreshToken:
- *                   type: string
- *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyVGFnIjoibGptIzEyMyIsImlhdCI6MTczNzUyNTE3NiwiZXhwIjoxNzM4MTI5OTc2fQ.CO4Ys_jEn31J-7n-SB8h11aQ-0hNG8juP5xBpPfO9qw"
+ *                 result:
+ *                   type: object
+ *                   properties:
+ *                     userTag:
+ *                       type: string
+ *                       example: "johndoe123"
+ *                     accessToken:
+ *                       type: string
+ *                       example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *                     refreshToken:
+ *                       type: string
+ *                       example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *                 isSuccess:
+ *                   type: boolean
+ *                   example: true
  *       401:
  *         description: Invalid password.
  *       404:
@@ -112,16 +117,18 @@ router.patch('/modify', authenticateToken, modifyController);
  *             schema:
  *               type: object
  *               properties:
- *                 userTag:
- *                   type: string
- *                   description: 사용자의 태그.
- *                   example: "ljm#123"
- *                 accessToken:
- *                   type: string
- *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyVGFnIjoibGptIzEyMyIsImlhdCI6MTczNzUyNTE3NiwiZXhwIjoxNzM3Nzg0Mzc2fQ.rwZBrS4-yK4xIZTffH1QmxHKLUGkf8Vl2tobEADwqYE"
- *                 refreshToken:
- *                   type: string
- *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyVGFnIjoibGptIzEyMyIsImlhdCI6MTczNzUyNTE3NiwiZXhwIjoxNzM4MTI5OTc2fQ.CO4Ys_jEn31J-7n-SB8h11aQ-0hNG8juP5xBpPfO9qw"
+ *                 result:
+ *                   type: object
+ *                   properties:
+ *                     accessToken:
+ *                       type: string
+ *                       example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *                     refreshToken:
+ *                       type: string
+ *                       example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *                 isSuccess:
+ *                   type: boolean
+ *                   example: true
  *       401:
  *         description: The token provided is invalid or expired.
  *       500:
@@ -136,16 +143,8 @@ router.patch('/modify', authenticateToken, modifyController);
  *     description: 사용자를 로그아웃하고 Refresh Token을 무효화합니다.
  *     tags:
  *       - User
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               userTag:
- *                 type: string
- *                 example: johndoe123
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: 로그아웃 성공
@@ -154,10 +153,9 @@ router.patch('/modify', authenticateToken, modifyController);
  *             schema:
  *               type: object
  *               properties:
- *                 userTag:
- *                   type: null
- *                   description: null
- *                   example: ""
+ *                 isSuccess:
+ *                   type: boolean
+ *                   example: true
  *       404:
  *         description: User ID does not exist.
  *       500:
@@ -197,10 +195,15 @@ router.patch('/modify', authenticateToken, modifyController);
  *             schema:
  *               type: object
  *               properties:
- *                 userTag:
- *                   type: null
- *                   description: null
- *                   example: ""
+ *                 result:
+ *                   type: object
+ *                   properties:
+ *                     userTag:
+ *                       type: string
+ *                       example: "johndoe123"
+ *                 isSuccess:
+ *                   type: boolean
+ *                   example: true
  *       403:
  *         description: |
  *           -Invalid nickname
@@ -229,13 +232,20 @@ router.patch('/modify', authenticateToken, modifyController);
  *                 example: johndoe123
  *     responses:
  *       200:
- *         description: "true면 중복, false면 중복x"
+ *         description: 아이디 중복 검사 결과
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 isAvailable:
+ *                 result:
+ *                   type: object
+ *                   properties:
+ *                     isAvailable:
+ *                       type: boolean
+ *                       description: 아이디 사용 가능 여부
+ *                       example: false
+ *                 isSuccess:
  *                   type: boolean
  *                   example: true
  *       500:
@@ -252,16 +262,6 @@ router.patch('/modify', authenticateToken, modifyController);
  *       - User
  *     security:
  *       - BearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               userTag:
- *                 type: string
- *                 example: johndoe123
  *     responses:
  *       200:
  *         description: 회원탈퇴 성공
@@ -309,16 +309,15 @@ router.patch('/modify', authenticateToken, modifyController);
  *                 example: "New Nickname"
  *     responses:
  *       200:
- *         description: 수정 성공
+ *         description: 사용자 정보 수정 성공
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 userTag:
- *                   type: null
- *                   description: null
- *                   example: ""
+ *                 isSuccess:
+ *                   type: boolean
+ *                   example: true
  *       403:
  *         description: |
  *            -Invalid nickname
