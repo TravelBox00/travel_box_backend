@@ -270,10 +270,10 @@ router.patch('/modify', authenticateToken, modifyController);
  *             schema:
  *               type: object
  *               properties:
- *                 userTag:
- *                   type: null
- *                   description: null
- *                   example: ""
+ *                 isSuccess:
+ *                   type: boolean
+ *                   description: 회원탈퇴 성공 여부
+ *                   example: true
  *       404:
  *         description: User ID does not exist.
  *       500:
