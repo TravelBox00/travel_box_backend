@@ -12,11 +12,14 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # 이전 커밋도 가져오기 위해 설정
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'  # LTS 버전 사용
+          node-version: '18'
+          cache: 'npm'   # npm 캐시 활성화
 
       - name: Configure SSH
         run: |
@@ -32,22 +35,50 @@ jobs:
             UserKnownHostsFile /dev/null
             LogLevel ERROR
           EOF
+
       - name: Test SSH Connection
         run: |
           ssh -vvv playground-umc-7th "echo '✅ SSH Connection Successful'"
-      - name: Copy Workspace to EC2
+
+      - name: Check for package.json changes
+        id: check-package
+        run: |
+          CHANGED=$(git diff HEAD^1 --name-only | grep "package.json" || echo "")
+          echo "::set-output name=changed::${CHANGED}"
+
+      - name: Get package-lock.json hash
+        id: package-lock-hash
+        run: |
+          if ssh playground-umc-7th "test -f /home/ubuntu/travel_box_backend/package-lock.json"; then
+            REMOTE_HASH=$(ssh playground-umc-7th "md5sum /home/ubuntu/travel_box_backend/package-lock.json | cut -d' ' -f1")
+            LOCAL_HASH=$(md5sum package-lock.json | cut -d' ' -f1)
+            if [ "$REMOTE_HASH" != "$LOCAL_HASH" ]; then
+              echo "::set-output name=changed::true"
+            else
+              echo "::set-output name=changed::false"
+            fi
+          else
+            echo "::set-output name=changed::true"
+          fi
+
+      - name: Sync Changed Files
         run: |
           ssh playground-umc-7th 'mkdir -p /home/ubuntu/travel_box_backend'
-          rsync -avz --delete --exclude={'.git','dist','/.env','node_modules','*.log'} ./ playground-umc-7th:/home/ubuntu/travel_box_backend/
+          git diff --name-only HEAD^1 HEAD | while read file; do
+            if [ -f "$file" ]; then
+              rsync -avz --relative "$file" playground-umc-7th:/home/ubuntu/travel_box_backend/
+            fi
+          done
 
-      - name: Install Dependencies
+      - name: Install Dependencies if needed
+        if: steps.check-package.outputs.changed != '' || steps.package-lock-hash.outputs.changed == 'true'
         run: |
           ssh playground-umc-7th '
             cd /home/ubuntu/travel_box_backend
-            npm install
+            npm ci --only=production
           '
 
-      - name: Create .env file
+      - name: Create or Update .env file
         run: |
           ssh playground-umc-7th 'cat > /home/ubuntu/travel_box_backend/.env << EOF
           DB_HOST=${{ secrets.DB_HOST }}
@@ -66,26 +97,26 @@ jobs:
           ELASTIC_SEARCH_API=${{ secrets.ELASTIC_SEARCH_API }}
           EOF'
 
-      - name: Kill Existing Node Processes
-        run: |
-          ssh playground-umc-7th 'pkill node || true'
-
-      - name: Start Application in Background
+      - name: Restart Application
         run: |
           ssh playground-umc-7th '
             cd /home/ubuntu/travel_box_backend
+            if pgrep node; then
+              pkill node
+              sleep 5
+            fi
             nohup npm run dev > app.log 2> app.error.log &
           '
 
       - name: Check if Application is Running
         run: |
           ssh playground-umc-7th '
-            sleep 10  # Give some time for the application to start
-            if pgrep -x "node" > /dev/null
-            then
+            sleep 10
+            if pgrep -x "node" > /dev/null; then
               echo "✅ Application is running."
             else
               echo "❌ Application failed to start."
+              cat app.error.log
               exit 1
             fi
           '
