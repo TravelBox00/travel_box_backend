@@ -32,92 +32,24 @@ jobs:
             UserKnownHostsFile /dev/null
             LogLevel ERROR
           EOF
-
-      - name: Check EBS Volume and Mount Point
-        run: |
-          ssh playground-umc-7th '
-            # EBS 볼륨 존재 확인
-            if [ -e /dev/xvdbf ]; then
-              echo "✅ EBS volume /dev/xvdbf exists"
-            else
-              echo "❌ EBS volume /dev/xvdbf does not exist"
-              exit 1
-            fi
-
-            # 마운트 포인트 확인
-            if mountpoint -q /mnt/ebs; then
-              echo "✅ /mnt/ebs is mounted"
-            else
-              echo "❌ /mnt/ebs is not mounted"
-              exit 1
-            fi
-
-            # 디렉토리 접근 권한 확인
-            if [ -w /mnt/ebs ]; then
-              echo "✅ /mnt/ebs is writable"
-            else
-              echo "❌ /mnt/ebs is not writable"
-              exit 1
-            fi
-
-            # 디스크 공간 확인
-            df -h /mnt/ebs
-          '
-
       - name: Test SSH Connection
         run: |
           ssh -vvv playground-umc-7th "echo '✅ SSH Connection Successful'"
-
-      - name: Check and Clean Disk Space
+      - name: Copy Workspace to EC2
         run: |
-          ssh playground-umc-7th '
-            echo "현재 디스크 사용량:"
-            df -h /mnt/ebs
-            
-            echo "큰 파일 및 디렉토리 확인:"
-            du -h /mnt/ebs | sort -rh | head -n 10
-            
-            echo "오래된 로그 파일 제거:"
-            find /mnt/ebs -name "*.log" -type f -mtime +7 -delete
-            
-            echo "node_modules 정리:"
-            find /mnt/ebs -name "node_modules" -type d -exec rm -rf {} +
-            
-            echo "임시 파일 정리:"
-            find /mnt/ebs -name "*.tmp" -type f -delete
-            
-            echo "정리 후 디스크 사용량:"
-            df -h /mnt/ebs
-          '
-
-      - name: Monitor Disk Space
-        run: |
-          ssh playground-umc-7th '
-            DISK_USAGE=$(df -h /mnt/ebs | awk "NR==2 {print \$5}" | sed "s/%//")
-            if [ "$DISK_USAGE" -gt 90 ]; then
-              echo "⚠️ Warning: Disk usage is above 90% ($DISK_USAGE%)"
-              echo "Attempting emergency cleanup..."
-              find /mnt/ebs -name "*.log" -type f -delete
-              find /mnt/ebs -name "*.tmp" -type f -delete
-              df -h /mnt/ebs
-            fi
-          '
-
-      - name: Copy Workspace to EBS
-        run: |
-          ssh playground-umc-7th 'mkdir -p /mnt/ebs/travel_box_backend'
-          rsync -avz --delete --exclude={'.git','dist','/.env','node_modules','*.log'} ./ playground-umc-7th:/mnt/ebs/travel_box_backend/
+          ssh playground-umc-7th 'mkdir -p /home/ubuntu/travel_box_backend'
+          rsync -avz --delete --exclude={'.git','dist','/.env','node_modules','*.log'} ./ playground-umc-7th:/home/ubuntu/travel_box_backend/
 
       - name: Install Dependencies
         run: |
           ssh playground-umc-7th '
-            cd /mnt/ebs/travel_box_backend
+            cd /home/ubuntu/travel_box_backend
             npm install
           '
 
       - name: Create .env file
         run: |
-          ssh playground-umc-7th 'cat > /mnt/ebs/travel_box_backend/.env << EOF
+          ssh playground-umc-7th 'cat > /home/ubuntu/travel_box_backend/.env << EOF
           DB_HOST=${{ secrets.DB_HOST }}
           DB_USER=${{ secrets.DB_USER }}
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
@@ -141,7 +73,7 @@ jobs:
       - name: Start Application in Background
         run: |
           ssh playground-umc-7th '
-            cd /mnt/ebs/travel_box_backend
+            cd /home/ubuntu/travel_box_backend
             nohup npm run dev > app.log 2> app.error.log &
           '
 
