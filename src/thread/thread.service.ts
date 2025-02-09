@@ -138,37 +138,43 @@ export const uploadImageService = async (
 };
 
 // 게시물 업로드 서비스
+// 게시물 업로드 서비스
 export const upLoadPostService = async (
   userTag: string,
   postData: userPostDTO,
-  imageLocations: string[],
+  files: Express.Multer.File[],
   res: Response,
   next: NextFunction
 ): Promise<any> => {
   console.log('POST upLoadPostService: Service Started');
 
   try {
-    console.log('POST upLoadPostService: Calling model to insert post data');
+    // 1. Thread 생성
+    const threadResponse = await upLoadPostModel.createThread(userTag, postData);
+    const { threadId } = threadResponse;
 
-    // 게시물 데이터 및 이미지 정보 업로드
-    const threadResponse = await upLoadPostModel.createThread(
-      userTag,
-      postData
-    );
-
-    if (!threadResponse) {
-      console.error('POST upLoadPostService: Thread creation failed');
-      return res.status(400).json({
-        success: false,
-        error: 'Post upload failed: Thread creation failed',
-      });
+    if (!threadId) {
+      throw new Error('Thread creation failed');
     }
 
-    console.log('POST upLoadPostService: Post upload success');
-    res.status(201).json({ success: true, message: 'Post upload success' });
+    // 2. 이미지 업로드
+    const imageResponse = await uploadImageService(threadId, files);
+
+    if (!imageResponse || !imageResponse.locations || imageResponse.locations.length === 0) {
+      // 이미지 업로드 실패 시 thread 삭제
+      await upLoadPostModel.deleteThread(threadId);
+      throw new Error('Image Upload Error: No images uploaded');
+    }
+
+    return {
+      success: true,
+      message: 'Post upload success',
+      threadId,
+      imageLocations: imageResponse.locations
+    };
   } catch (error) {
     console.error('POST upLoadPostService: Error occurred', error);
-    return next(error); // 전역 에러 핸들러로 전달
+    throw error;
   }
 };
 
