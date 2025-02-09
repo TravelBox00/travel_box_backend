@@ -58,7 +58,7 @@ export const modifyService = async (userInfo: modifyReqDto) => {
   if (userPassword) {
     await checkPassword(userPassword);
     const firstHash: string = crypto
-      .createHash('sha256')
+      .createHash('blake2b512')
       .update(userPassword)
       .digest('hex');
     hashedPassword = await bcrypt.hash(firstHash, 10);
