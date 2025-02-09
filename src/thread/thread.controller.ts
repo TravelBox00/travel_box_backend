@@ -287,23 +287,29 @@ export const myPostCategoryController = async (
   try {
     console.log('POST myPostCategoryController Connected');
 
-    const myCategory = req.query.myCategory as string;
+    let myCategory = req.query.myCategory as string;
     const userTag = req.query.userTag as string;
 
-    console.log('My Category:', myCategory);
+    // 카테고리 매핑 객체
+    const categoryMapping: { [key: string]: string } = {
+      '여행기록': '여행 기록',
+      '여행코디': '여행 코디'
+    };
+
+    // 디코딩 후 trim() 적용
+    myCategory = decodeURIComponent(myCategory).trim();
+    
+    // 매핑된 카테고리가 있으면 변환
+    myCategory = categoryMapping[myCategory] || myCategory;
+
+    console.log('Decoded My Category:', myCategory);
     console.log('User Tag:', userTag);
 
-    if (
-      myCategory !== '여행 기록' &&
-      myCategory !== '기념품' &&
-      myCategory !== '여행지' &&
-      myCategory !== '여행 코디'
-    ) {
+    const validCategories = ['여행 기록', '기념품', '여행지', '여행 코디'];
+    if (!validCategories.includes(myCategory)) {
       console.log('Invalid category:', myCategory);
-
       return res.status(400).json({
-        error:
-          'Category is Enum, must be one of 여행 기록, 기념품, 여행지, 여행 코디',
+        error: `Category is Enum, must be one of ${validCategories.join(', ')}`,
       });
     }
 
