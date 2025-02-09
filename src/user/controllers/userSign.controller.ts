@@ -58,7 +58,10 @@ export const modifyController = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const userInfo: modifyReqDto = req.body;
+    const token = req.headers.authorization?.split(' ')[1] as string;
+    const userTag: string = decodeTokenUserTag(token) as string;
+    const { userPassword, userNickname } = req.body;
+    const userInfo: modifyReqDto = { userTag, userPassword, userNickname };
     await modifyService(userInfo);
     res.status(200).json({ isSuccess: true });
   } catch (error) {
