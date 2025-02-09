@@ -429,7 +429,7 @@ router.get('/search', postSearchController);
 
 /**
  * @swagger
- * /thread/my-search:
+ * /thread/specific:
  *   get:
  *     summary: 내가 쓴 글 조회
  *     description: "특정 사용자가 작성한 게시물 목록을 조회합니다. (이미지, 제목만 반환)"
