@@ -160,7 +160,6 @@ export const upLoadPostController = async (
 ): Promise<any> => {
   console.log('POST upLoadPostController');
 
-  // 문자열로 된 JSON 파싱
   const parsedBody = JSON.parse(req.body.body);
   const { userTag, postCategory, postTitle, postContent, clothId } = parsedBody;
 
@@ -171,18 +170,12 @@ export const upLoadPostController = async (
     postCategory !== '여행 코디'
   ) {
     console.log('Invalid category:', postCategory);
-
     return res.status(400).json({
-      error:
-        'Category is Enum, must be one of 여행 기록, 기념품, 여행지, 여행 코디',
+      error: 'Category must be one of 여행 기록, 기념품, 여행지, 여행 코디',
     });
   }
 
-  console.log('Parsed Request Body:', parsedBody);
-  console.log('User Tag:', userTag);
-
   const postDate = new Date();
-
   const postData: userPostDTO = {
     postCategory,
     postTitle,
@@ -192,47 +185,15 @@ export const upLoadPostController = async (
   };
 
   try {
-    // thread 생성
-    const threadResponse = await upLoadPostModel.createThread(
-      userTag,
-      postData
-    );
-    const { threadId } = threadResponse;
-
-    if (!threadId) {
-      return res.status(400).json({ error: 'Thread creation failed' });
-    }
-
-    // 이미지 업로드
-    const imageResponse = await uploadImageService(
-      threadId,
-      req.files as Express.Multer.File[]
-    );
-    console.log('Image Upload Response:', imageResponse);
-
-    if (
-      !imageResponse ||
-      !imageResponse.locations ||
-      imageResponse.locations.length === 0
-    ) {
-      // 이미지 업로드 실패 시, 생성한 threadId 삭제
-      await upLoadPostModel.deleteThread(threadId);
-      return res
-        .status(400)
-        .json({ error: 'Image Upload Error: No images uploaded' });
-    }
-
-    const imageLocations = imageResponse.locations;
-
-    // 게시물 업로드 서비스 호출
-    const postResponse = await upLoadPostService(
+    // 게시물 생성 및 이미지 업로드를 서비스로 통합
+    const response = await upLoadPostService(
       userTag,
       postData,
-      imageLocations,
+      req.files as Express.Multer.File[],
       res,
       next
     );
-    return res.status(201).json(postResponse);
+    return res.status(201).json(response);
   } catch (error: any) {
     console.error('Post Upload Controller Error', error.message);
     return res.status(400).json({ error: 'Post Upload Controller Error' });
