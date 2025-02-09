@@ -482,7 +482,7 @@ router.get('/specific', myPostSearchController);
 // 카테고리 별 게시물 조회
 /**
  * @swagger
- * /thread/myCategory:
+ * /thread/category:
  *   get:
  *     summary: 카테고리별 게시물 조회
  *     description: 특정 사용자가 작성한 게시물을 카테고리별로 조회합니다.
