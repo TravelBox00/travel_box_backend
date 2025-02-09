@@ -38,7 +38,9 @@ export const wordService = async (word: string): Promise<string[]> => {
   if (words.length === 0) {
     throw new CustomError(errors.NOT_FOUND_WORD, new Error());
   }
-  return words;
+
+  const uniqueWords = Array.from(new Set(words.flat()));
+  return uniqueWords;
 };
 
 export const filterService = async (
