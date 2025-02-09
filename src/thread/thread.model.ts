@@ -306,12 +306,12 @@ export const postInfoModel = async (
 
     const query = `
       SELECT T.clothId, T.postCategory, T.postTitle, T.postContent, 
-             DATE_FORMAT(T.postDate, "%Y-%m-%d") as postDate, 
-             T.postRegionCode, I.imageURL as imageURL, U.userTag
+         DATE_FORMAT(T.postDate, "%Y-%m-%d") as postDate, 
+         T.postRegionCode, I.imageURL as imageURL, U.userTag
       FROM TravelThread T
       JOIN User U ON T.userId = U.userId
       LEFT JOIN Image I ON T.threadId = I.threadId
-      WHERE U.userTag LIKE ? COLLATE UTF8_GENERAL_CI 
+      WHERE U.userTag LIKE ? COLLATE utf8mb4_general_ci 
       AND T.threadId = ?;
     `;
 
