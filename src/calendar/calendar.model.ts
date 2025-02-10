@@ -3,7 +3,7 @@ import { ResultSetHeader } from 'mysql2';
 import { pool } from '../configs/database/mysqlConnect.ts';
 
 export interface Calendar {
-  userId: number;
+  userTag: string;
   travelTitle: string;
   travelContent?: string;
   travelStartDate?: string;
@@ -13,18 +13,17 @@ export interface Calendar {
 // 일정 추가
 export const insertCalendar = async (calendar: Calendar) => {
   const query = `
-    INSERT INTO TravelCalendar (userId, travelTitle, travelContent, travelStartDate, travelEndDate)
-    VALUES (?, ?, ?, ?, ?)
-  `;
+  INSERT INTO TravelCalendar (userId, travelTitle, travelContent, travelStartDate, travelEndDate)
+  SELECT userId, ?, ?, ?, ? FROM User WHERE userTag = ?;
+`;
 
   const values = [
-    calendar.userId,
     calendar.travelTitle,
     calendar.travelContent || null,
     calendar.travelStartDate || null,
     calendar.travelEndDate || null,
+    calendar.userTag,
   ];
-
   const [result] = await pool.query<ResultSetHeader>(query, values);
   return { travelId: result.insertId };
 };

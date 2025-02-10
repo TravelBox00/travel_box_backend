@@ -11,15 +11,13 @@ export const addCalendar = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const {
-      userId,
-      travelTitle,
-      travelContent,
-      travelStartDate,
-      travelEndDate,
-    } = req.body;
+    const { travelTitle, travelContent, travelStartDate, travelEndDate } =
+      req.body;
 
-    if (!userId || !travelTitle) {
+    // eslint-disable-next-line prefer-destructuring
+    const userTag = req.body.userTag;
+
+    if (!userTag || !travelTitle) {
       throw new CustomError(
         errors.NOT_INPUT_VALUE,
         new Error('Validation Error')
@@ -27,7 +25,7 @@ export const addCalendar = async (
     }
 
     const result = await calendarService.addCalendar({
-      userId,
+      userTag,
       travelTitle,
       travelContent,
       travelStartDate,
