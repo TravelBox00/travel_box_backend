@@ -28,21 +28,34 @@ export const insertComment = async (commentData: {
 }) => {
   const { userTag, threadId, commentContent, commentVisible } = commentData;
 
-  const query = `
+  const userQuery = `SELECT userId FROM User WHERE userTag = ?`;
+  const commentQuery = `
     INSERT INTO Comment (userId, threadId, commentContent, commentVisible, commentDate)
     VALUES (?, ?, ?, ?, CURDATE())
   `;
 
   try {
-    const [result] = await pool.execute<OkPacket>(query, [
+    const [userResult] = await pool.execute<RowDataPacket[]>(userQuery, [
       userTag,
+    ]);
+
+    if (userResult.length === 0) {
+      throw new Error(`유저(${userTag})를 찾을 수 없습니다.`);
+    }
+
+    // eslint-disable-next-line prettier/prettier
+    const {userId} = userResult[0]; 
+
+    const [result] = await pool.execute<OkPacket>(commentQuery, [
+      userId,
       threadId,
       commentContent,
       commentVisible,
     ]);
+
     return result.insertId;
   } catch (error) {
-    console.error('Error executing insertComment query:', error);
+    console.error('댓글 추가 중 오류 발생:', error);
     throw error;
   }
 };

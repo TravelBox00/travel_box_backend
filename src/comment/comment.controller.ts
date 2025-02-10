@@ -101,12 +101,16 @@ export const getMyCommentsController: RequestHandler = async (
   next
 ) => {
   try {
-    const { userTag } = req.body;
-
-    // if (!userTag) {
-    //   throw new CustomError(errors.NOT_INPUT_VALUE, new Error());
-    // }
-
+    const userTag = req.query.userTag as string;
+    if (!userTag) {
+      res.status(400).json({
+        isSuccess: false,
+        code: '4000',
+        message: 'userTag를 query parameter로 제공해야 합니다.',
+        result: null,
+      });
+      return;
+    }
     const response = await fetchMyComments(userTag);
     res.status(200).json(response);
   } catch (error) {

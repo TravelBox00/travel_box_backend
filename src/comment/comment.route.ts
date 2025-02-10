@@ -41,6 +41,9 @@ const router = Router();
  *           schema:
  *             type: object
  *             properties:
+ *               userTag:
+ *                 type: string
+ *                 description: 댓글을 조회할 사용자 태그
  *               threadId:
  *                 type: integer
  *                 description: 댓글이 작성될 게시글 ID
@@ -136,6 +139,13 @@ const router = Router();
  *       - Comments
  *     security:
  *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: userTag
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 댓글을 조회할 사용자 태그
  *     responses:
  *       200:
  *         description: 댓글 목록 조회 성공
