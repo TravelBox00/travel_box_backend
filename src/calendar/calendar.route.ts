@@ -17,6 +17,8 @@ const router = Router();
  *     summary: 일정 추가
  *     tags:
  *       - Calendar
+ *     security:
+ *       - BearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -24,9 +26,9 @@ const router = Router();
  *           schema:
  *             type: object
  *             properties:
- *               userId:
- *                 type: integer
- *                 example: 1
+ *               userTag:
+ *                type: string
+ *                example: user123
  *               travelTitle:
  *                 type: string
  *                 example: 가족여행
