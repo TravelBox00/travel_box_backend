@@ -21,12 +21,12 @@ export const checkCommentExists = async (
 // 댓글 추가
 // eslint-disable-next-line import/prefer-default-export
 export const insertComment = async (commentData: {
-  userId: number;
+  userTag: string;
   threadId: number;
   commentContent: string;
   commentVisible: 'public' | 'private';
 }) => {
-  const { userId, threadId, commentContent, commentVisible } = commentData;
+  const { userTag, threadId, commentContent, commentVisible } = commentData;
 
   const query = `
     INSERT INTO Comment (userId, threadId, commentContent, commentVisible, commentDate)
@@ -35,7 +35,7 @@ export const insertComment = async (commentData: {
 
   try {
     const [result] = await pool.execute<OkPacket>(query, [
-      userId,
+      userTag,
       threadId,
       commentContent,
       commentVisible,
@@ -103,7 +103,7 @@ export const deleteComment = async (commentId: number): Promise<boolean> => {
 };
 
 // 내가 작성한 댓글 조회
-export const getMyComments = async (userId: number) => {
+export const getMyComments = async (userTag: string) => {
   const query = `
     SELECT 
       c.commentId,
@@ -125,7 +125,7 @@ export const getMyComments = async (userId: number) => {
   `;
 
   try {
-    const [rows] = await pool.execute<RowDataPacket[]>(query, [userId]);
+    const [rows] = await pool.execute<RowDataPacket[]>(query, [userTag]);
     return rows.map((row) => ({
       commentId: row.commentId,
       commentContent: row.commentContent,
