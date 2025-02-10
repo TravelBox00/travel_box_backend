@@ -51,6 +51,10 @@ router.get('/', (req, res) => {
  *                 type: integer
  *                 description: 게시물 ID
  *                 example: 1
+ *               userTag:
+ *                 type: string
+ *                 description: 사용자 태그
+ *                 example: "user123"
  *     responses:
  *       200:
  *         description: 현재 좋아요 상태 반환
@@ -105,6 +109,10 @@ router.get('/', (req, res) => {
  *                 type: integer
  *                 description: 게시물 ID
  *                 example: 1
+ *               userTag:
+ *                 type: string
+ *                 description: 사용자 태그
+ *                 example: "user123"
  *     responses:
  *       200:
  *         description: 현재 스크랩 상태 반환
@@ -143,11 +151,18 @@ router.get('/', (req, res) => {
  * /thread/scrap/info:
  *   get:
  *     summary: 스크랩한 게시물 목록 조회
- *     description: 스크랩한 게시물의 목록을 조회합니다.
+ *     description: 특정 사용자가 스크랩한 게시물 목록을 조회합니다.
  *     tags:
  *       - Thread
  *     security:
  *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: userTag
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: "조회할 사용자의 태그"
  *     responses:
  *       200:
  *         description: 스크랩한 게시물 목록 반환

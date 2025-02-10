@@ -24,8 +24,7 @@ export const toggleLike = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { threadId } = req.body;
-    const { userTag } = req.body;
+    const { threadId, userTag } = req.body;
 
     if (!threadId || !userTag) {
       throw new CustomError(errors.NOT_PROVIDED_VALUES, new Error());
@@ -66,8 +65,7 @@ export const toggleScrap = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { threadId } = req.body;
-    const { userTag } = req.body;
+    const { threadId, userTag } = req.body;
 
     if (!threadId || !userTag) {
       throw new CustomError(errors.NOT_PROVIDED_VALUES, new Error());
@@ -107,7 +105,7 @@ export const getScrappedThreads = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { userTag } = req.body;
+    const userTag = req.query.userTag as string;
 
     if (!userTag) {
       res.status(400).json({
