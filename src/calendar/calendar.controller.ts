@@ -18,16 +18,17 @@ export const addCalendar = async (
     const userTag = req.body.userTag;
 
     if (!userTag || !travelTitle) {
+      console.error('Missing required fields:', { userTag, travelTitle });
       throw new CustomError(
         errors.NOT_INPUT_VALUE,
-        new Error('Validation Error')
+        new Error('UserTag and TravelTitle are required')
       );
     }
 
     const result = await calendarService.addCalendar({
       userTag,
       travelTitle,
-      travelContent,
+      travelContent: travelContent || null,
       travelStartDate,
       travelEndDate,
     });

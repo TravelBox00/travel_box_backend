@@ -26,6 +26,9 @@ const router = Router();
  *           schema:
  *             type: object
  *             properties:
+ *               userTag:
+ *                type: string
+ *                example: user123
  *               travelTitle:
  *                 type: string
  *                 example: 가족여행

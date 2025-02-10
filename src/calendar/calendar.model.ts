@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // eslint-disable-next-line import/extensions
 import { ResultSetHeader } from 'mysql2';
 import { pool } from '../configs/database/mysqlConnect.ts';
@@ -12,20 +13,49 @@ export interface Calendar {
 
 // 일정 추가
 export const insertCalendar = async (calendar: Calendar) => {
-  const query = `
-  INSERT INTO TravelCalendar (userId, travelTitle, travelContent, travelStartDate, travelEndDate)
-  SELECT userId, ?, ?, ?, ? FROM User WHERE userTag = ?;
-`;
+  const connection = await pool.getConnection();
 
-  const values = [
-    calendar.travelTitle,
-    calendar.travelContent || null,
-    calendar.travelStartDate || null,
-    calendar.travelEndDate || null,
-    calendar.userTag,
-  ];
-  const [result] = await pool.query<ResultSetHeader>(query, values);
-  return { travelId: result.insertId };
+  try {
+    await connection.beginTransaction();
+
+    const userQuery = `SELECT userId FROM User WHERE userTag = ?`;
+    const [userResult]: any = await connection.query(userQuery, [
+      calendar.userTag,
+    ]);
+
+    if (userResult.length === 0) {
+      throw new Error('User not found in the database.');
+    }
+
+    const { userId } = userResult[0];
+
+    const insertQuery = `
+      INSERT INTO TravelCalendar (userId, travelTitle, travelContent, travelStartDate, travelEndDate)
+      VALUES (?, ?, ?, ?, ?);
+    `;
+
+    const values = [
+      userId,
+      calendar.travelTitle,
+      calendar.travelContent || null,
+      calendar.travelStartDate || null,
+      calendar.travelEndDate || null,
+    ];
+
+    const [result] = await connection.query<ResultSetHeader>(
+      insertQuery,
+      values
+    );
+
+    await connection.commit();
+    return { travelId: result.insertId };
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (error) {
+    await connection.rollback();
+    throw new Error('Database Insert Failed');
+  } finally {
+    connection.release();
+  }
 };
 
 // 일정 삭제
