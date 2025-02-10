@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 import Redis from 'ioredis';
 import dotenv from 'dotenv';
 

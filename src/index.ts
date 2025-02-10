@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import express, { Router } from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
@@ -21,7 +22,7 @@ const app = express();
 const port = process.env.PORT;
 
 const router = Router();
-router.get('/', (req, res) => {
+router.get('/', (req: any, res: { send: (arg0: string) => void }) => {
   res.send('Welcome to the TravelBox!');
 });
 
@@ -42,7 +43,7 @@ app.use('/calendar', authenticateToken, calendarRoutes);
 app.use('/thread', authenticateToken, threadRoutes);
 app.use('/search', authenticateToken, searchRoutes);
 app.use('/comment', authenticateToken, commentRouter);
-app.use('/follow', authenticateToken,followRouter);
+app.use('/follow', authenticateToken, followRouter);
 
 // 에러 처리 미들웨어 적용
 app.use(errorHandler);

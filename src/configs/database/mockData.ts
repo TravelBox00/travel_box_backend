@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 import bcrypt from 'bcrypt';
 import { pool } from './mysqlConnect.ts';
 

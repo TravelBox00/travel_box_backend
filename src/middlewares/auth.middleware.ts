@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable no-shadow */
 /* eslint-disable consistent-return */
 import dotenv from 'dotenv';
 import jwt, { JwtPayload } from 'jsonwebtoken';
@@ -54,13 +57,13 @@ export const authenticateToken = async (
 app.get('/users', authenticateToken, (req, res) => {});
 */
 
-export const decodeTokenUserTag = (token: string) =>{
-    try {
-        const decoded = jwt.decode(token);
-        const userTag: string | undefined = (decoded as JwtPayload).userTag;
-        return userTag;
-    } catch (error) {
-        console.error("Failed to decode token:", error);
-        return null;
-    }
+export const decodeTokenUserTag = (token: string) => {
+  try {
+    const decoded = jwt.decode(token);
+    const { userTag } = decoded as JwtPayload;
+    return userTag;
+  } catch (error) {
+    console.error('Failed to decode token:', error);
+    return null;
+  }
 };
