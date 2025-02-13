@@ -120,3 +120,35 @@ export const fixCalendar = async (
     next(error);
   }
 };
+
+// 내 일정 조회
+export const getMySchedule = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { userTag, date } = req.query;
+
+    if (!userTag || !date) {
+      res.status(400).json({
+        isSuccess: false,
+        message: 'userTag와 date는 필수 입력값입니다.',
+      });
+      return;
+    }
+
+    const schedules = await calendarService.getMySchedule(
+      userTag as string,
+      date as string
+    );
+
+    res.status(200).json({
+      isSuccess: true,
+      result: schedules,
+    });
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+};
