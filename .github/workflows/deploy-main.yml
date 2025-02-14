@@ -98,26 +98,26 @@ jobs:
           ELASTIC_SEARCH_API=${{ secrets.ELASTIC_SEARCH_API }}
           EOF'
 
-      # - name: Restart Application
-      #   run: |
-      #     ssh playground-umc-7th '
-      #       cd /home/ubuntu/travel_box_backend
-      #       if pgrep node; then
-      #         pkill node
-      #         sleep 5
-      #       fi
-      #       nohup npm run dev > app.log 2> app.error.log &
-      #     '
+      - name: Restart Application
+        run: |
+          ssh playground-umc-7th '
+            cd /home/ubuntu/travel_box_backend
+            if pgrep node; then
+              pkill node
+              sleep 5
+            fi
+            nohup npm run dev > app.log 2> app.error.log &
+          '
 
-      # - name: Check if Application is Running
-      #   run: |
-      #     ssh playground-umc-7th '
-      #       sleep 10
-      #       if pgrep -x "node" > /dev/null; then
-      #         echo "✅ Application is running."
-      #       else
-      #         echo "❌ Application failed to start."
-      #         cat app.error.log
-      #         exit 1
-      #       fi
-      #     '
+      - name: Check if Application is Running
+        run: |
+          ssh playground-umc-7th '
+            sleep 10
+            if pgrep -x "node" > /dev/null; then
+              echo "✅ Application is running."
+            else
+              echo "❌ Application failed to start."
+              cat app.error.log
+              exit 1
+            fi
+          '
