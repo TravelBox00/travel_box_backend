@@ -11,25 +11,24 @@ export const addCalendar = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const {
-      userId,
-      travelTitle,
-      travelContent,
-      travelStartDate,
-      travelEndDate,
-    } = req.body;
+    const { travelTitle, travelContent, travelStartDate, travelEndDate } =
+      req.body;
 
-    if (!userId || !travelTitle) {
+    // eslint-disable-next-line prefer-destructuring
+    const userTag = req.body.userTag;
+
+    if (!userTag || !travelTitle) {
+      console.error('Missing required fields:', { userTag, travelTitle });
       throw new CustomError(
         errors.NOT_INPUT_VALUE,
-        new Error('Validation Error')
+        new Error('UserTag and TravelTitle are required')
       );
     }
 
     const result = await calendarService.addCalendar({
-      userId,
+      userTag,
       travelTitle,
-      travelContent,
+      travelContent: travelContent || null,
       travelStartDate,
       travelEndDate,
     });

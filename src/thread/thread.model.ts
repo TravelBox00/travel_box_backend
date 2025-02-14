@@ -1,87 +1,87 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable no-await-in-loop */
 import { ResultSetHeader, RowDataPacket } from 'mysql2'; // ResultSetHeader 타입 임포트
+import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { pool } from '../configs/database/mysqlConnect.ts'; // DB 연결 설정
 import { updatePostDTO, userPostDTO } from './dto/thread.dto.ts';
 import { elastic } from '../configs/database/elasticConnect.ts';
 import s3 from '../configs/s3.ts';
-import { DeleteObjectCommand } from '@aws-sdk/client-s3';
-
 
 // 게시물 좋아요 상태
 export const checkLikeStatus = async (
   threadId: number,
-  userId: number
+  userTag: string
 ): Promise<boolean> => {
   const query = `
     SELECT COUNT(*) AS likeCount 
-    FROM \`Like\`
-    WHERE threadId = ? AND userId = ?;
+    FROM \`Like\` l
+    INNER JOIN User u ON l.userId = u.userId
+    WHERE l.threadId = ? AND u.userTag = ?;
   `;
 
-  const [rows] = await pool.query<RowDataPacket[]>(query, [threadId, userId]);
+  const [rows] = await pool.query<RowDataPacket[]>(query, [threadId, userTag]);
   const likeCount = rows[0].likeCount as number;
 
   return likeCount > 0;
 };
 
 // 좋아요 추가
-export const addLike = async (threadId: number, userId: number) => {
+export const addLike = async (threadId: number, userTag: string) => {
   const query = `
-    INSERT INTO \`Like\` (threadId, userId)
-    VALUES (?, ?);
-  `;
-  await pool.query(query, [threadId, userId]);
+  INSERT INTO \`Like\` (threadId, userId)
+  SELECT ?, userId FROM User WHERE userTag = ?;
+`;
+  await pool.query(query, [threadId, userTag]);
 };
 
 // 좋아요 삭제
-export const removeLike = async (threadId: number, userId: number) => {
+export const removeLike = async (threadId: number, userTag: string) => {
   const query = `
-    DELETE FROM \`Like\`
-    WHERE threadId = ? AND userId = ?;
+    DELETE l FROM \`Like\` l
+    INNER JOIN User u ON l.userId = u.userId
+    WHERE l.threadId = ? AND u.userTag = ?;
   `;
-  await pool.query(query, [threadId, userId]);
+  await pool.query(query, [threadId, userTag]);
 };
 
 // 게시물 스크랩 상태
 export const checkScrapStatus = async (
   threadId: number,
-  userId: number
+  userTag: string
 ): Promise<boolean> => {
   const query = `
     SELECT COUNT(*) AS scrapCount 
-    FROM PostScrap
-    WHERE threadId = ? AND userId = ?;
+    FROM PostScrap ps
+    INNER JOIN User u ON ps.userId = u.userId
+    WHERE ps.threadId = ? AND u.userTag = ?;
   `;
-  const [rows] = await pool.query<RowDataPacket[]>(query, [threadId, userId]);
+
+  const [rows] = await pool.query<RowDataPacket[]>(query, [threadId, userTag]);
   return rows[0].scrapCount > 0;
 };
 
 // 스크랩 추가
-export const addScrap = async (
-  threadId: number,
-  userId: number
-): Promise<void> => {
+export const addScrap = async (threadId: number, userTag: string) => {
   const query = `
     INSERT INTO PostScrap (threadId, userId)
-    VALUES (?, ?);
+    SELECT ?, userId FROM User WHERE userTag = ?;
   `;
-  await pool.query(query, [threadId, userId]);
+  await pool.query(query, [threadId, userTag]);
 };
 
 // 스크랩 삭제
-export const removeScrap = async (
-  threadId: number,
-  userId: number
-): Promise<void> => {
+export const removeScrap = async (threadId: number, userTag: string) => {
   const query = `
-    DELETE FROM PostScrap
-    WHERE threadId = ? AND userId = ?;
+    DELETE ps FROM PostScrap ps
+    INNER JOIN User u ON ps.userId = u.userId
+    WHERE ps.threadId = ? AND u.userTag = ?;
   `;
-  await pool.query(query, [threadId, userId]);
+  await pool.query(query, [threadId, userTag]);
 };
 
 // 스크랩한 게시물 목록
 export const getScrappedThreads = async (
-  userId: number
+  userTag: string
 ): Promise<
   Array<{
     threadId: number;
@@ -102,12 +102,12 @@ export const getScrappedThreads = async (
       i.imageInfoId AS photoUrl 
     FROM PostScrap ps
     INNER JOIN TravelThread t ON ps.threadId = t.threadId
-    INNER JOIN User u ON t.userId = u.userId
+    INNER JOIN User u ON ps.userId = u.userId
     LEFT JOIN Image i ON t.threadId = i.threadId
-    WHERE ps.userId = ?;
+    WHERE u.userTag = ?;
   `;
 
-  const [rows] = await pool.query<RowDataPacket[]>(query, [userId]);
+  const [rows] = await pool.query<RowDataPacket[]>(query, [userTag]);
 
   return rows.map((row) => ({
     threadId: row.threadId,
@@ -253,7 +253,7 @@ export const upLoadPostModel = {
       await connection.commit();
 
       return { threadId };
-    } catch (error : any) {
+    } catch (error: any) {
       await connection.rollback();
       console.error('Error creating thread:', error);
       if (error.message === 'Duplicate post detected') {
@@ -293,8 +293,6 @@ export const upLoadPostModel = {
     }
   },
 };
-
-
 
 // 게시물 상세 조회 API
 export const postInfoModel = async (
@@ -480,23 +478,23 @@ export const updatePostModel = async (
       threadId,
     ]);
 
-     //postTitle과 postContent를 합쳐서 ElasticSearch에 저장할 배열 생성
-     const splitContent = (content: string) => content.split(' ');
+    // postTitle과 postContent를 합쳐서 ElasticSearch에 저장할 배열 생성
+    const splitContent = (content: string) => content.split(' ');
 
-     const elasticDoc = {
-       category: postData.postCategory,
-       postTitle: splitContent(postData.postTitle),
-       postContent: splitContent(postData.postContent),
-     };
- 
-     // ElasticSearch에 데이터 업데이트 (PATCH 역할)
-     await elastic.update({
-       index: 'post_stats',
-       id: threadId.toString(),
-       doc: elasticDoc,  // 변경할 데이터
-     });
+    const elasticDoc = {
+      category: postData.postCategory,
+      postTitle: splitContent(postData.postTitle),
+      postContent: splitContent(postData.postContent),
+    };
 
-     console.log(`threadId=${threadId} ElasticSearch 업데이트 완료`);
+    // ElasticSearch에 데이터 업데이트 (PATCH 역할)
+    await elastic.update({
+      index: 'post_stats',
+      id: threadId.toString(),
+      doc: elasticDoc, // 변경할 데이터
+    });
+
+    console.log(`threadId=${threadId} ElasticSearch 업데이트 완료`);
 
     return updateResult;
   } catch (error: any) {
@@ -534,42 +532,42 @@ export const deletePostModel = async (
       throw new Error(`threadId(${threadId})가 존재하지 않음.`);
     }
 
-    
+    // 먼저 문서 존재 여부 확인
+    const checkDocument = await elastic.search({
+      index: 'post_stats',
+      body: {
+        query: {
+          match: {
+            threadId,
+          },
+        },
+      },
+    });
 
-      // 먼저 문서 존재 여부 확인
-      const checkDocument = await elastic.search({
-          index: 'post_stats',
-          body: {
-              query: {
-                  match: {
-                      threadId: threadId
-                  }
-              }
-          }
-      });
-  
-      console.log('검색 결과:', checkDocument.hits.hits);
+    console.log('검색 결과:', checkDocument.hits.hits);
 
-  // ElasticSearch에서 해당 게시물 삭제
+    // ElasticSearch에서 해당 게시물 삭제
     const response = await elastic.deleteByQuery({
-      index: 'post_stats', 
+      index: 'post_stats',
       body: {
         query: {
           bool: {
-            must: [
-              { term: { threadId: threadId } } 
-            ]
-          }
-        }
+            must: [{ term: { threadId } }],
+          },
+        },
       },
-      refresh: true
+      refresh: true,
     });
 
     // 삭제된 문서 수를 확인하고 로그 출력
     if (response && response.deleted !== undefined && response.deleted > 0) {
-      console.log(`ElasticSearch에서 threadId ${threadId} 삭제 완료. 삭제된 문서 수: ${response.deleted}`);
+      console.log(
+        `ElasticSearch에서 threadId ${threadId} 삭제 완료. 삭제된 문서 수: ${response.deleted}`
+      );
     } else {
-      console.log(`ElasticSearch에서 threadId ${threadId} 삭제 실패 또는 해당 문서 없음.`);
+      console.log(
+        `ElasticSearch에서 threadId ${threadId} 삭제 실패 또는 해당 문서 없음.`
+      );
     }
 
     // 댓글 삭제
@@ -598,8 +596,9 @@ export const deletePostModel = async (
 
     if (imageResult.length > 0) {
       // 이미지 삭제 (S3에서)
+      // eslint-disable-next-line no-restricted-syntax
       for (const image of imageResult) {
-        const imageURL = image.imageURL;
+        const { imageURL } = image;
 
         // URL을 디코딩
         const decodedURL = decodeURIComponent(imageURL);
@@ -635,7 +634,6 @@ export const deletePostModel = async (
     throw new Error(error.message || 'Delete Post Model Error');
   }
 };
-
 
 // 인기 게시물 조회 Model
 export const popularPostModel = async (

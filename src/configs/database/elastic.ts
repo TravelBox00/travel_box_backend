@@ -1,3 +1,6 @@
+/* eslint-disable no-await-in-loop */
+/* eslint-disable no-plusplus */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Client } from '@elastic/elasticsearch';
 import dotenv from 'dotenv';
 

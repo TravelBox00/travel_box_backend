@@ -1,3 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable no-restricted-syntax */
+/* eslint-disable no-await-in-loop */
+/* eslint-disable import/no-extraneous-dependencies */
 import { Response, NextFunction } from 'express';
 import { Upload } from '@aws-sdk/lib-storage';
 import s3 from '../configs/s3.ts';
@@ -19,19 +24,19 @@ import * as threadModel from './thread.model.ts';
 // 게시물 좋아요
 export const toggleLike = async (
   threadId: number,
-  userId: number
+  userTag: string
 ): Promise<{ message: string; isLiked: boolean }> => {
   try {
-    const isLiked = await threadModel.checkLikeStatus(threadId, userId);
+    const isLiked = await threadModel.checkLikeStatus(threadId, userTag);
 
     if (isLiked) {
       // 좋아요 취소
-      await threadModel.removeLike(threadId, userId);
+      await threadModel.removeLike(threadId, userTag);
       return { message: '좋아요 취소', isLiked: false };
     }
 
     // 좋아요 추가
-    await threadModel.addLike(threadId, userId);
+    await threadModel.addLike(threadId, userTag);
     return { message: '좋아요 성공', isLiked: true };
   } catch (error) {
     console.error(`Error in toggleLike: ${error}`);
@@ -42,19 +47,19 @@ export const toggleLike = async (
 // 게시물 스크랩
 export const toggleScrap = async (
   threadId: number,
-  userId: number
+  userTag: string
 ): Promise<{ message: string; isScrapped: boolean }> => {
   try {
-    const isScrapped = await threadModel.checkScrapStatus(threadId, userId);
+    const isScrapped = await threadModel.checkScrapStatus(threadId, userTag);
 
     if (isScrapped) {
       // 스크랩 취소
-      await threadModel.removeScrap(threadId, userId);
+      await threadModel.removeScrap(threadId, userTag);
       return { message: '스크랩 취소', isScrapped: false };
     }
 
     // 스크랩 추가
-    await threadModel.addScrap(threadId, userId);
+    await threadModel.addScrap(threadId, userTag);
     return { message: '스크랩 성공', isScrapped: true };
   } catch (error) {
     console.error(`Error in toggleScrap: ${error}`);
@@ -64,7 +69,7 @@ export const toggleScrap = async (
 
 // 스크랩한 게시물 목록
 export const getScrappedThreads = async (
-  userId: number
+  userTag: string
 ): Promise<{
   message: string;
   scrappedThreads: Array<{
@@ -77,7 +82,7 @@ export const getScrappedThreads = async (
   }>;
 }> => {
   try {
-    const scrappedThreads = await threadModel.getScrappedThreads(userId);
+    const scrappedThreads = await threadModel.getScrappedThreads(userTag);
     return {
       message: '스크랩 목록 조회 성공',
       scrappedThreads,
@@ -150,7 +155,10 @@ export const upLoadPostService = async (
 
   try {
     // 1. Thread 생성
-    const threadResponse = await upLoadPostModel.createThread(userTag, postData);
+    const threadResponse = await upLoadPostModel.createThread(
+      userTag,
+      postData
+    );
     const { threadId } = threadResponse;
 
     if (!threadId) {
@@ -160,7 +168,11 @@ export const upLoadPostService = async (
     // 2. 이미지 업로드
     const imageResponse = await uploadImageService(threadId, files);
 
-    if (!imageResponse || !imageResponse.locations || imageResponse.locations.length === 0) {
+    if (
+      !imageResponse ||
+      !imageResponse.locations ||
+      imageResponse.locations.length === 0
+    ) {
       // 이미지 업로드 실패 시 thread 삭제
       await upLoadPostModel.deleteThread(threadId);
       throw new Error('Image Upload Error: No images uploaded');
@@ -170,7 +182,7 @@ export const upLoadPostService = async (
       success: true,
       message: 'Post upload success',
       threadId,
-      imageLocations: imageResponse.locations
+      imageLocations: imageResponse.locations,
     };
   } catch (error) {
     console.error('POST upLoadPostService: Error occurred', error);
