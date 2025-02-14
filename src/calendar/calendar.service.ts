@@ -37,3 +37,8 @@ export const fixCalendar = async (calendar: {
   const result = await calendarModel.updateCalendar(calendar);
   return { affectedRows: (result as ResultSetHeader).affectedRows };
 };
+
+// 내 일정 조회
+export const getMySchedule = async (userTag: string, date: string) => {
+  return await calendarModel.getMySchedule(userTag, date);
+};

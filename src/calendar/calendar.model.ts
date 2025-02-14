@@ -94,3 +94,17 @@ export const updateCalendar = async (calendar: {
   const [result] = await pool.query(query, values);
   return result;
 };
+
+// 내 일정 조회
+export const getMySchedule = async (userTag: string, date: string) => {
+  const query = `
+    SELECT t.travelId, t.travelTitle, t.travelContent, t.travelStartDate, t.travelEndDate
+    FROM TravelCalendar t
+    JOIN User u ON t.userId = u.userId
+    WHERE u.userTag = ? AND ? BETWEEN t.travelStartDate AND t.travelEndDate
+    ORDER BY t.travelStartDate ASC
+  `;
+
+  const [result] = await pool.query(query, [userTag, date]);
+  return result;
+};
