@@ -6,7 +6,6 @@ import { pool } from '../configs/database/mysqlConnect.ts'; // DB 연결 설정
 import { regions, updatePostDTO, userPostDTO } from './dto/thread.dto.ts';
 import { elastic } from '../configs/database/elasticConnect.ts';
 import s3 from '../configs/s3.ts';
-import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getArtist } from '../api/spotify.ts';
 
 
