@@ -6,7 +6,7 @@ import {
   searchValidSuggestions,
   getFastTimeThread,
 } from './search.model.ts';
-import 
+import {
   getCategoryFilterRankedThreads,
   getFilterRankedThreads,
   getRegionTopRankedThreads,
@@ -76,7 +76,6 @@ export const filterService = async (
     postTitle: thread.title,
     postDate: thread.date,
   }));
-
 
   return searchData;
 };
