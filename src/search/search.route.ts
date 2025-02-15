@@ -95,7 +95,7 @@ router.get('/filter', filterController);
  *         in: query
  *         description: "검색할 카테고리 (예: 여행기록, 기념품 등)"
  *         required: false
- *         schema:
+ *         schema:S
  *           type: string
  *       - name: region
  *         in: query
