@@ -89,11 +89,15 @@ export const searchValidSuggestions = async (
   }
 };
 
-export const getFastTimeThread = async (word: string): Promise<number[]> => {
+export const getFastTimeThread = async (
+  word: string,
+  cursor?: string
+): Promise<number[]> => {
+  const size = cursor ? 2 : 8; // 커서가 없으면 처음 8개, 있으면 다음 2개
   try {
     const response = await elastic.search({
       index: 'post_stats',
-      size: 8,
+      size,
       body: {
         query: {
           bool: {
@@ -104,13 +108,17 @@ export const getFastTimeThread = async (word: string): Promise<number[]> => {
               { match: { region_hierarchy: word } },
             ],
             minimum_should_match: 1,
+            filter: cursor
+              ? { range: { threadId: { lt: cursor } } }
+              : undefined,
           },
         },
-        sort: [{ postDate: 'desc' }],
+        sort: [{ threadId: 'desc' }],
       },
     });
     return response.hits.hits.map((hit: any) => hit._source.threadId);
   } catch (error) {
-    throw new Error();
+    console.error('Error fetching threads:', error);
+    throw new Error('Error fetching threads');
   }
 };
