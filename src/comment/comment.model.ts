@@ -122,7 +122,6 @@ export const getMyComments = async (userTag: string) => {
       c.commentId,
       c.commentContent,
       c.commentDate,
-      tt.postTitle,
       tt.postContent,
       u.userNickname AS postOwnerNickname
     FROM 
@@ -143,7 +142,6 @@ export const getMyComments = async (userTag: string) => {
       commentId: row.commentId,
       commentContent: row.commentContent,
       commentDate: new Date(row.commentDate).toISOString().split('T')[0],
-      postTitle: row.postTitle,
       postContent: row.postContent,
       postOwnerNickname: row.postOwnerNickname,
     }));

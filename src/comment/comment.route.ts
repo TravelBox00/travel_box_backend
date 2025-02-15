@@ -172,9 +172,6 @@ const router = Router();
  *                         type: string
  *                         format: date
  *                         description: 댓글 작성 날짜
- *                       postTitle:
- *                         type: string
- *                         description: 댓글이 작성된 게시글 제목
  *                       postContent:
  *                         type: string
  *                         description: 댓글이 작성된 게시글 내용
