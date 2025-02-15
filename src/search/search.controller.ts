@@ -9,8 +9,7 @@ export const searchController = async (
 ): Promise<void> => {
   try {
     const searchReq = req.query.word as string;
-    const cursor = req.query.cursor as string | undefined;
-    const searchRes: searchResDto[] = await searchService(searchReq, cursor);
+    const searchRes: searchResDto[] = await searchService(searchReq);
 
     res.status(200).json({ result: searchRes, isSuccess: true });
   } catch (error) {
@@ -39,14 +38,9 @@ export const filterController = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const category = req.query.category as string | undefined;
-    const region = req.query.region as string | undefined;
-    const cursor = req.query.cursor as string[] | undefined; // 커서 처리 추가
-    const searchRes: searchResDto[] = await filterService(
-      category,
-      region,
-      cursor
-    );
+    const category: string | undefined = req.query.filter as string | undefined;
+    const region: string | undefined = req.query.filter as string | undefined;
+    const searchRes: searchResDto[] = await filterService(category, region);
 
     res.status(200).json({ result: searchRes, isSuccess: true });
   } catch (error) {

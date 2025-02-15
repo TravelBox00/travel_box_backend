@@ -2,7 +2,6 @@ import { CustomError, errors } from '../middlewares/error.middleware.ts';
 import { searchResDto } from './dto/searchDto.ts';
 import {
   getThread,
-  getImage,
   searchValidSuggestions,
   getFastTimeThread,
 } from './search.model.ts';
@@ -13,23 +12,19 @@ import {
   getTopRankedThreads,
 } from './searchPopul.model.ts';
 
-export const searchService = async (
-  word: string,
-  cursor?: string
-): Promise<searchResDto[]> => {
-  const threadIds = await getFastTimeThread(word, cursor);
+export const searchService = async (word: string): Promise<searchResDto[]> => {
+  const threadIds = await getFastTimeThread(word);
+
   if (threadIds.length === 0) {
     throw new CustomError(errors.NOT_FOUND_WORD, new Error());
   }
 
-  // 스레드와 이미지 URL을 병렬로 가져오기
   const threads = await Promise.all(threadIds.map((id) => getThread(id)));
-  const imageUrls = await Promise.all(threadIds.map((id) => getImage(id)));
+  const image = '';
 
-  // 스레드와 해당 이미지 URL 매핑
-  const searchData = threads.map((thread, index) => ({
+  const searchData: searchResDto[] = threads.map((thread: any) => ({
     threadId: thread.threadId,
-    imageURL: imageUrls[index],
+    postImageURL: image,
     postTitle: thread.title,
     postDate: thread.date,
   }));
@@ -39,6 +34,7 @@ export const searchService = async (
 
 export const wordService = async (word: string): Promise<string[]> => {
   const words: string[] = await searchValidSuggestions(word);
+
   if (words.length === 0) {
     throw new CustomError(errors.NOT_FOUND_WORD, new Error());
   }
@@ -49,19 +45,18 @@ export const wordService = async (word: string): Promise<string[]> => {
 
 export const filterService = async (
   category: string | undefined,
-  region: string | undefined,
-  cursor?: string[]
+  region: string | undefined
 ): Promise<searchResDto[]> => {
   let threadIds: number[];
 
   if (category !== undefined && region !== undefined) {
-    threadIds = await getFilterRankedThreads(category, region, cursor);
+    threadIds = await getFilterRankedThreads(category, region);
   } else if (category === undefined && region !== undefined) {
-    threadIds = await getRegionTopRankedThreads(region, cursor);
+    threadIds = await getRegionTopRankedThreads(region);
   } else if (category !== undefined && region === undefined) {
-    threadIds = await getCategoryFilterRankedThreads(category, cursor);
+    threadIds = await getCategoryFilterRankedThreads(category);
   } else {
-    threadIds = await getTopRankedThreads(cursor);
+    threadIds = await getTopRankedThreads();
   }
 
   if (threadIds.length === 0) {
@@ -69,11 +64,10 @@ export const filterService = async (
   }
 
   const threads = await Promise.all(threadIds.map((id) => getThread(id)));
-  const imageUrls = await Promise.all(threadIds.map((id) => getImage(id)));
-
-  const searchData = threads.map((thread, index) => ({
+  const image = '';
+  const searchData: searchResDto[] = threads.map((thread: any) => ({
     threadId: thread.threadId,
-    imageURL: imageUrls[index],
+    postImageURL: image,
     postTitle: thread.title,
     postDate: thread.date,
   }));
