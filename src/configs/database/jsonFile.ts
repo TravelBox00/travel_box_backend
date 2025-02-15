@@ -48,7 +48,7 @@ const uploadRegionsToElastic = async () => {
             type: 'overseas',
             continent,
             country,
-            region_hierarchy: [continent, country], // ✅ 계층 구조로 저장
+            region_hierarchy: [continent, country],
           },
         });
       }
