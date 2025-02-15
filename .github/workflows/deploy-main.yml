@@ -12,11 +12,14 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # 이전 커밋도 가져오기 위해 설정
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'  # LTS 버전 사용
+          node-version: '18'
+          cache: 'npm'   # npm 캐시 활성화
 
       - name: Configure SSH
         run: |
@@ -33,91 +36,51 @@ jobs:
             LogLevel ERROR
           EOF
 
-      - name: Check EBS Volume and Mount Point
-        run: |
-          ssh playground-umc-7th '
-            # EBS 볼륨 존재 확인
-            if [ -e /dev/xvdbf ]; then
-              echo "✅ EBS volume /dev/xvdbf exists"
-            else
-              echo "❌ EBS volume /dev/xvdbf does not exist"
-              exit 1
-            fi
-
-            # 마운트 포인트 확인
-            if mountpoint -q /mnt/ebs; then
-              echo "✅ /mnt/ebs is mounted"
-            else
-              echo "❌ /mnt/ebs is not mounted"
-              exit 1
-            fi
-
-            # 디렉토리 접근 권한 확인
-            if [ -w /mnt/ebs ]; then
-              echo "✅ /mnt/ebs is writable"
-            else
-              echo "❌ /mnt/ebs is not writable"
-              exit 1
-            fi
-
-            # 디스크 공간 확인
-            df -h /mnt/ebs
-          '
-
       - name: Test SSH Connection
         run: |
           ssh -vvv playground-umc-7th "echo '✅ SSH Connection Successful'"
 
-      - name: Check and Clean Disk Space
+      - name: Check for package.json changes
+        id: check-package
         run: |
-          ssh playground-umc-7th '
-            echo "현재 디스크 사용량:"
-            df -h /mnt/ebs
-            
-            echo "큰 파일 및 디렉토리 확인:"
-            du -h /mnt/ebs | sort -rh | head -n 10
-            
-            echo "오래된 로그 파일 제거:"
-            find /mnt/ebs -name "*.log" -type f -mtime +7 -delete
-            
-            echo "node_modules 정리:"
-            find /mnt/ebs -name "node_modules" -type d -exec rm -rf {} +
-            
-            echo "임시 파일 정리:"
-            find /mnt/ebs -name "*.tmp" -type f -delete
-            
-            echo "정리 후 디스크 사용량:"
-            df -h /mnt/ebs
-          '
+          CHANGED=$(git diff HEAD^1 --name-only | grep "package.json" || echo "")
+          echo "::set-output name=changed::${CHANGED}"
 
-      - name: Monitor Disk Space
+      - name: Get package-lock.json hash
+        id: package-lock-hash
         run: |
-          ssh playground-umc-7th '
-            DISK_USAGE=$(df -h /mnt/ebs | awk "NR==2 {print \$5}" | sed "s/%//")
-            if [ "$DISK_USAGE" -gt 90 ]; then
-              echo "⚠️ Warning: Disk usage is above 90% ($DISK_USAGE%)"
-              echo "Attempting emergency cleanup..."
-              find /mnt/ebs -name "*.log" -type f -delete
-              find /mnt/ebs -name "*.tmp" -type f -delete
-              df -h /mnt/ebs
+          if ssh playground-umc-7th "test -f /home/ubuntu/travel_box_backend/package-lock.json"; then
+            REMOTE_HASH=$(ssh playground-umc-7th "md5sum /home/ubuntu/travel_box_backend/package-lock.json | cut -d' ' -f1")
+            LOCAL_HASH=$(md5sum package-lock.json | cut -d' ' -f1)
+            if [ "$REMOTE_HASH" != "$LOCAL_HASH" ]; then
+              echo "::set-output name=changed::true"
+            else
+              echo "::set-output name=changed::false"
             fi
-          '
+          else
+            echo "::set-output name=changed::true"
+          fi
 
-      - name: Copy Workspace to EBS
+      - name: Sync Changed Files
         run: |
-          ssh playground-umc-7th 'mkdir -p /mnt/ebs/travel_box_backend'
-          rsync -avz --delete --exclude={'.git','dist','/.env','node_modules','*.log'} ./ playground-umc-7th:/mnt/ebs/travel_box_backend/
+          ssh playground-umc-7th 'mkdir -p /home/ubuntu/travel_box_backend'
+          git diff --name-only HEAD^1 HEAD | while read file; do
+            if [ -f "$file" ]; then
+              rsync -avz --relative "$file" playground-umc-7th:/home/ubuntu/travel_box_backend/
+            fi
+          done
 
-      - name: Install Dependencies
+      - name: Install Dependencies if needed
+        if: steps.check-package.outputs.changed != '' || steps.package-lock-hash.outputs.changed == 'true'
         run: |
           ssh playground-umc-7th '
-            cd /mnt/ebs/travel_box_backend
-            npm install
+            cd /home/ubuntu/travel_box_backend
+            npm ci --only=production
           '
 
-      - name: Create .env file
+      - name: Create or Update .env file
         run: |
-          ssh playground-umc-7th 'cat > /mnt/ebs/travel_box_backend/.env << EOF
+          ssh playground-umc-7th 'cat > /home/ubuntu/travel_box_backend/.env << EOF
           DB_HOST=${{ secrets.DB_HOST }}
           DB_USER=${{ secrets.DB_USER }}
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
@@ -134,26 +97,26 @@ jobs:
           ELASTIC_SEARCH_API=${{ secrets.ELASTIC_SEARCH_API }}
           EOF'
 
-      - name: Kill Existing Node Processes
-        run: |
-          ssh playground-umc-7th 'pkill node || true'
-
-      - name: Start Application in Background
+      - name: Restart Application
         run: |
           ssh playground-umc-7th '
-            cd /mnt/ebs/travel_box_backend
+            cd /home/ubuntu/travel_box_backend
+            if pgrep node; then
+              pkill node
+              sleep 5
+            fi
             nohup npm run dev > app.log 2> app.error.log &
           '
 
       - name: Check if Application is Running
         run: |
           ssh playground-umc-7th '
-            sleep 10  # Give some time for the application to start
-            if pgrep -x "node" > /dev/null
-            then
+            sleep 10
+            if pgrep -x "node" > /dev/null; then
               echo "✅ Application is running."
             else
               echo "❌ Application failed to start."
+              cat app.error.log
               exit 1
             fi
           '

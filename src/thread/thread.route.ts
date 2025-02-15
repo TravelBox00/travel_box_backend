@@ -12,10 +12,12 @@ import {
   toggleLike,
   toggleScrap,
   getScrappedThreads,
+  getSpotifySongController,
+  getFollowingPostController,
 } from './thread.controller.ts';
 
 const router = Router();
-const upload = multer(); // multer 미들웨어 설정정
+const upload = multer(); // multer 미들웨어 설정
 
 router.get('/', (req, res) => {
   res.send('Thread Main Route');
@@ -187,10 +189,6 @@ router.get('/', (req, res) => {
  *                         type: integer
  *                         description: 게시물 ID
  *                         example: 1
- *                       postTitle:
- *                         type: string
- *                         description: 게시물 제목
- *                         example: "Exploring Paris"
  *                       postContent:
  *                         type: string
  *                         description: 게시물 내용
@@ -241,7 +239,16 @@ router.get('/scrap/info', getScrappedThreads);
  *               body:
  *                 type: string
  *                 description: JSON 형식의 게시물 정보 (문자열로 전달됨)
- *                 example: '{"userTag": "john#123", "postCategory": "여행 기록", "postTitle": "스웨거 테스트 용 제목", "postContent": "스웨거 테스트 용 내용", "clothId": 1}'
+ *                 example: |
+ *                   {
+ *                     "userTag": "john#123",
+ *                     "postCategory": "여행 기록",
+ *                     "postContent": "스웨거 테스트 용 내용",
+ *                     "postRegionCode": "서울 강남",
+ *                     "clothId": 1,
+ *                     "songName": "Inside Out",
+ *                     "chooseNum": 0
+ *                   }
  *               files:
  *                 type: array
  *                 items:
@@ -322,10 +329,6 @@ router.post('/add', upload.array('files', 5), upLoadPostController);
  *                   type: integer
  *                   description: 게시물 ID
  *                   example: 1
- *                 postTitle:
- *                   type: string
- *                   description: 게시물 제목
- *                   example: "여행 후기"
  *                 postContent:
  *                   type: string
  *                   description: 게시물 내용
@@ -403,10 +406,6 @@ router.get('/info', postInfoController);
  *                         type: integer
  *                         description: "게시물 ID"
  *                         example: 1
- *                       postTitle:
- *                         type: string
- *                         description: "게시물 제목"
- *                         example: "여행 후기"
  *                       postDate:
  *                         type: string
  *                         format: date
@@ -429,7 +428,7 @@ router.get('/search', postSearchController);
 
 /**
  * @swagger
- * /thread/my-search:
+ * /thread/specific:
  *   get:
  *     summary: 내가 쓴 글 조회
  *     description: "특정 사용자가 작성한 게시물 목록을 조회합니다. (이미지, 제목만 반환)"
@@ -460,7 +459,7 @@ router.get('/search', postSearchController);
  *                         type: integer
  *                         description: 게시물 ID
  *                         example: 1
- *                       postTitle:
+ *                       postContent:
  *                         type: string
  *                         description: 게시물 제목
  *                         example: "my"
@@ -482,7 +481,7 @@ router.get('/specific', myPostSearchController);
 // 카테고리 별 게시물 조회
 /**
  * @swagger
- * /thread/myCategory:
+ * /thread/category:
  *   get:
  *     summary: 카테고리별 게시물 조회
  *     description: 특정 사용자가 작성한 게시물을 카테고리별로 조회합니다.
@@ -521,10 +520,6 @@ router.get('/specific', myPostSearchController);
  *                         type: integer
  *                         description: 게시물 ID
  *                         example: 1
- *                       postTitle:
- *                         type: string
- *                         description: 게시물 제목
- *                         example: "여행 후기"
  *                       imageUrl:
  *                         type: string
  *                         description: 게시물 대표 이미지 URL
@@ -558,7 +553,6 @@ router.get('/category', myPostCategoryController);
  *               - userTag
  *               - threadId
  *               - postCategory
- *               - postTitle
  *               - postContent
  *             properties:
  *               userTag:
@@ -578,11 +572,6 @@ router.get('/category', myPostCategoryController);
  *                  - "여행 코디"
  *                 description: "게시물 카테고리 (Enum 값: 여행 기록, 기념품, 여행지, 여행 코디)"
  *                 example: "여행 기록"
- *               postTitle:
- *                 type: string
- *                 description: 수정할 게시물 제목 (최소 5자 이상)
- *                 example: "여행의 추억"
- *                 minLength: 5
  *               postContent:
  *                 type: string
  *                 description: 수정할 게시물 내용
@@ -725,10 +714,6 @@ router.delete('/delete', deletePostController);
  *                         type: integer
  *                         description: 게시물 ID
  *                         example: 1
- *                       postTitle:
- *                         type: string
- *                         description: 게시물 제목
- *                         example: "my travel"
  *                       postDate:
  *                         type: string
  *                         format: date
@@ -748,5 +733,122 @@ router.delete('/delete', deletePostController);
  *         description: 서버 오류
  */
 router.get("/popular", popularPostController);
+
+
+/**
+ * @swagger
+ * /thread/spotifySong:
+ *   get:
+ *     summary: "Spotify 노래 검색"
+ *     description: "Spotify에서 특정 노래를 검색하여 노래 정보를 반환합니다."
+ *     tags:
+ *       - "Spotify"
+ *     parameters:
+ *       - in: query
+ *         name: songName
+ *         required: true
+ *         description: "검색할 노래 제목"
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: "성공적으로 노래 정보를 가져옴"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 tracks:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       name:
+ *                         type: string
+ *                         description: "노래 제목"
+ *                       external_urls:
+ *                         type: object
+ *                         properties:
+ *                           spotify:
+ *                             type: string
+ *                             description: "Spotify 노래 URL"
+ *                       artists:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             name:
+ *                               type: string
+ *                               description: "아티스트 이름"
+ *       400:
+ *         description: "요청 오류 - songName 파라미터 누락"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Track ID is required"
+ *       500:
+ *         description: "서버 내부 오류"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Internal Server Error"
+ *                 message:
+ *                   type: string
+ *                   example: "오류 메시지"
+ */
+router.get("/spotifySong", getSpotifySongController);
+
+/**
+ * @swagger
+ * /thread/getFollowPost:
+ *   get:
+ *     summary: 내가 팔로잉하는 사람들의 게시물을 최신순으로 봄
+ *     description: 내가 팔로잉하는 사람들의 게시물을 최신순으로 봄
+ *     tags:
+ *       - Posts
+ *     parameters:
+ *       - in: query
+ *         name: userTag
+ *         required: true
+ *         description: The tag of the user whose followed posts are being fetched
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successfully fetched posts
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   userTag:
+ *                     type: string
+ *                   title:
+ *                     type: string
+ *                   content:
+ *                     type: string
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                 message:
+ *                   type: string
+ */
+router.get("/getFollowPost", getFollowingPostController);
 
 export default router;

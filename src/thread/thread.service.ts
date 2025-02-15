@@ -15,6 +15,7 @@ import {
 import { updatePostDTO, userPostDTO } from './dto/thread.dto.ts';
 
 import * as threadModel from './thread.model.ts';
+import { getArtist } from '../api/spotify.ts';
 
 // 게시물 좋아요
 export const toggleLike = async (
@@ -69,7 +70,6 @@ export const getScrappedThreads = async (
   message: string;
   scrappedThreads: Array<{
     threadId: number;
-    postTitle: string;
     postContent: string;
     userNickname: string;
     isScrapped: boolean;
@@ -141,34 +141,40 @@ export const uploadImageService = async (
 export const upLoadPostService = async (
   userTag: string,
   postData: userPostDTO,
-  imageLocations: string[],
+  files: Express.Multer.File[],
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<any> => {
   console.log('POST upLoadPostService: Service Started');
 
   try {
-    console.log('POST upLoadPostService: Calling model to insert post data');
+    // 1. Thread 생성
+    const threadResponse = await upLoadPostModel.createThread(userTag, postData);
+    const { threadId } = threadResponse;
 
-    // 게시물 데이터 및 이미지 정보 업로드
-    const threadResponse = await upLoadPostModel.createThread(
-      userTag,
-      postData
-    );
-
-    if (!threadResponse) {
-      console.error('POST upLoadPostService: Thread creation failed');
-      return res.status(400).json({
-        success: false,
-        error: 'Post upload failed: Thread creation failed',
-      });
+    if (!threadId) {
+      throw new Error('Thread creation failed');
     }
 
-    console.log('POST upLoadPostService: Post upload success');
-    res.status(201).json({ success: true, message: 'Post upload success' });
+    // 2. 이미지 업로드
+    const imageResponse = await uploadImageService(threadId, files);
+
+    // 3. 음악 업로드 - 선택된 노래 정보를 받는다.
+    const selectedSongInfo = await getArtist(postData.songName, 10, 'track'); // 클라이언트에서 선택된 노래 정보
+
+    if (selectedSongInfo && selectedSongInfo.tracks && selectedSongInfo.tracks.length > 0) {
+      await threadModel.addSongToThread(threadId, selectedSongInfo.tracks);
+    }
+    
+    return {
+      success: true,
+      message: 'Post upload success',
+      threadId,
+      imageLocations: imageResponse.locations
+    };
   } catch (error) {
     console.error('POST upLoadPostService: Error occurred', error);
-    return next(error); // 전역 에러 핸들러로 전달
+    throw error;
   }
 };
 
@@ -311,3 +317,35 @@ export const popularPostService = async (
     throw new Error('Popular Post Service Error');
   }
 };
+
+
+export const getSpotifySongService = async (
+  songName : string,
+  limit : number,
+  search_type : string
+): Promise<any> => {
+    console.log('Get Spotify Song Service');
+
+    const result = await threadModel.getSpotifySongModel(songName, limit, search_type);
+
+    if(!result) {
+      return [];
+    }
+    
+    return result;
+};
+
+
+export const getFollowingPostService = async (
+  userTag : string
+): Promise<any> => {
+    console.log("getFollowService Connected");
+
+    const result = await threadModel.getFollowingPostModel(userTag);
+
+    if(!result) {
+      [];
+    }
+
+    return result;
+}

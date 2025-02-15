@@ -8,54 +8,60 @@ export const userAddFollowModel = async (
     console.log("userAddFollowModel Connected");
 
     try {
-        const [userIdArray]: any = await pool.query(`SELECT userId FROM User WHERE userTag = ?`, [userTag]);
+        // 현재 사용자 ID 조회
+        const [userIdArray]: any = await pool.query(
+            `SELECT userId FROM User WHERE userTag = ?`, 
+            [userTag]
+        );
 
         if (userIdArray.length === 0) {
             throw new Error(`userTag '${userTag}' not found`);
         }
-
         const userId: number = userIdArray[0].userId;
 
-        const [followIdArray]: any = await pool.query(`SELECT userId FROM User WHERE userTag = ?`, [followTag]);
+        // 팔로우할 사용자 ID 조회
+        const [followIdArray]: any = await pool.query(
+            `SELECT userId FROM User WHERE userTag = ?`, 
+            [followTag]
+        );
 
         if (followIdArray.length === 0) {
             throw new Error(`followTag '${followTag}' not found`);
         }
-
         const followId: number = followIdArray[0].userId;
 
-        // 이미 팔로우 중이면 취소 로직
-        const [deleteResult]: any = await pool.query(`SELECT * FROM Follow WHERE followingUserId = ? AND followerUserId = ?`, [userId, followId]);
+        // 이미 팔로우 중인지 확인
+        const [existingFollow]: any = await pool.query(
+            `SELECT followId FROM Follow 
+             WHERE followingUserId = ? AND followerUserId = ?`,
+            [followId, userId]
+        );
 
-        if (deleteResult.length === 1) {
-            await deleteFollowModel(userId, followId);  // 여기서 res를 넘기지 않습니다
-            return { message: 'deleteFollowModel success' };  // 컨트롤러에서 응답을 처리
+        // 이미 팔로우 중이면 삭제
+        if (existingFollow.length > 0) {
+            await pool.query(
+                `DELETE FROM Follow 
+                 WHERE followingUserId = ? AND followerUserId = ?`,
+                [followId, userId]
+            );
+            return { message: 'Follow relationship deleted successfully' };
         }
 
-        // 팔로우 추가 로직
-        await pool.query(`INSERT INTO Follow (followingUserId, followerUserId) VALUES (?, ?)`, [followId, userId]);
+        // 새로운 팔로우 관계 생성
+        await pool.query(
+            `INSERT INTO Follow (followingUserId, followerUserId) 
+             SELECT ?, ? 
+             WHERE NOT EXISTS (
+                 SELECT 1 FROM Follow 
+                 WHERE followingUserId = ? AND followerUserId = ?
+             )`,
+            [followId, userId, followId, userId]
+        );
         return { message: 'Follow added successfully' };
 
     } catch (error: any) {
         console.log(error);
         throw new Error(error.message || 'userAddFollowModel error');
-    }
-};
-
-
-// 팔로우 취소 Model
-export const deleteFollowModel = async (
-    userId : number,
-    followId : number
-): Promise<any> => {
-    console.log('deleteFollowModel Connected');
-
-    try {
-        await pool.query(`DELETE FROM Follow WHERE followingUserId = ? AND followerUserId = ?`, [userId, followId]);
-
-    } catch(error : any) {
-        console.log(error);
-        throw new Error( error.message || 'deleteFollowModel error');
     }
 };
 
