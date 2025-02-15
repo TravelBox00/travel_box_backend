@@ -2,10 +2,11 @@ import { CustomError, errors } from '../middlewares/error.middleware.ts';
 import { searchResDto } from './dto/searchDto.ts';
 import {
   getThread,
+  getImage,
   searchValidSuggestions,
   getFastTimeThread,
 } from './search.model.ts';
-import {
+import 
   getCategoryFilterRankedThreads,
   getFilterRankedThreads,
   getRegionTopRankedThreads,
@@ -19,12 +20,14 @@ export const searchService = async (word: string): Promise<searchResDto[]> => {
     throw new CustomError(errors.NOT_FOUND_WORD, new Error());
   }
 
+  // 스레드와 이미지 URL을 병렬로 가져오기
   const threads = await Promise.all(threadIds.map((id) => getThread(id)));
-  const image = '';
+  const imageUrls = await Promise.all(threadIds.map((id) => getImage(id)));
 
-  const searchData: searchResDto[] = threads.map((thread: any) => ({
+  // 스레드와 해당 이미지 URL 매핑
+  const searchData = threads.map((thread, index) => ({
     threadId: thread.threadId,
-    postImageURL: image,
+    imageURL: imageUrls[index],
     postTitle: thread.title,
     postDate: thread.date,
   }));
@@ -58,19 +61,22 @@ export const filterService = async (
   } else {
     threadIds = await getTopRankedThreads();
   }
-
   if (threadIds.length === 0) {
     throw new CustomError(errors.NOT_FOUND_WORD, new Error());
   }
 
+  // 스레드와 이미지 URL을 병렬로 가져오기
   const threads = await Promise.all(threadIds.map((id) => getThread(id)));
-  const image = '';
-  const searchData: searchResDto[] = threads.map((thread: any) => ({
+  const imageUrls = await Promise.all(threadIds.map((id) => getImage(id)));
+
+  // 스레드와 해당 이미지 URL 매핑
+  const searchData = threads.map((thread, index) => ({
     threadId: thread.threadId,
-    postImageURL: image,
+    imageURL: imageUrls[index],
     postTitle: thread.title,
     postDate: thread.date,
   }));
+
 
   return searchData;
 };

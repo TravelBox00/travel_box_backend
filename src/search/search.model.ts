@@ -4,8 +4,24 @@ import { pool } from '../configs/database/mysqlConnect.ts';
 export const getThread = async (threadId: number) => {
   try {
     const query = `
-        SELECT threadId, postTitle AS title, postDate AS date 
+        SELECT threadId, postContent as title, postDate AS date
         FROM TravelThread 
+        WHERE threadId = ?
+        `;
+
+    const [rows]: any = await pool.execute(query, [threadId]);
+
+    return rows[0];
+  } catch (error) {
+    throw new Error();
+  }
+};
+
+export const getImage = async (threadId: number) => {
+  try {
+    const query = `
+        SELECT imageURL
+        FROM  Image
         WHERE threadId = ?
         `;
 
