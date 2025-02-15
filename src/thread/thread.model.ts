@@ -6,7 +6,6 @@ import { pool } from '../configs/database/mysqlConnect.ts'; // DB 연결 설정
 import { regions, updatePostDTO, userPostDTO } from './dto/thread.dto.ts';
 import { elastic } from '../configs/database/elasticConnect.ts';
 import s3 from '../configs/s3.ts';
-import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getArtist } from '../api/spotify.ts';
 
 
@@ -256,11 +255,13 @@ export const upLoadPostModel = {
           threadId,
           category: postData.postCategory,
           postContent: postData.postContent.split(' '),
-          postRegionCode,  // 배열 형태로 그대로 전달
-          postDate: postData.postDate.toISOString(), // ISO 문자열로 변환
+          postRegionCode: postRegionCode.join(','), 
+          postDate: postData.postDate.toISOString(),
           likes: 0,
           comments: 0,
         };
+        
+        console.log('ElasticSearch Document:', elasticDoc);
 
         await elastic.index({
           index: 'post_stats',
@@ -269,8 +270,6 @@ export const upLoadPostModel = {
         });
       } catch (elasticError) {
         console.error('ElasticSearch indexing error:', elasticError);
-        // ElasticSearch 에러가 발생해도 트랜잭션은 커밋
-        // 이 부분은 요구사항에 따라 롤백으로 변경할 수 있음
       }
 
       await connection.commit();
@@ -497,12 +496,15 @@ export const deletePostModel = async (
   userTag: string,
   threadId: number
 ): Promise<any> => {
+  const connection = await pool.getConnection();
   try {
+    await connection.beginTransaction(); // 트랜잭션 시작
+
     console.log('DELETE deletePostModel Connected');
 
     // userTag와 threadId값을 확인하는 로직
     const userQuery = `SELECT userId FROM User WHERE userTag = ?;`;
-    const [userResult]: any = await pool.query(userQuery, [userTag]);
+    const [userResult]: any = await connection.query(userQuery, [userTag]);
 
     if (userResult.length === 0) {
       throw new Error(`userTag(${userTag})가 존재하지 않음.`);
@@ -512,7 +514,7 @@ export const deletePostModel = async (
 
     // threadId가 존재하는지 확인
     const threadQuery = `SELECT threadId FROM TravelThread WHERE userId = ? AND threadId = ?;`;
-    const [threadResult]: any = await pool.query(threadQuery, [
+    const [threadResult]: any = await connection.query(threadQuery, [
       userId,
       threadId,
     ]);
@@ -541,7 +543,7 @@ export const deletePostModel = async (
       body: {
         query: {
           bool: {
-            must: [{ term: { threadId } }],
+            must: [{ term: { threadId } }], 
           },
         },
       },
@@ -561,31 +563,30 @@ export const deletePostModel = async (
 
     // 댓글 삭제
     const deleteCommentsQuery = `DELETE FROM Comment WHERE threadId = ?;`;
-    await pool.query(deleteCommentsQuery, [threadId]);
+    await connection.query(deleteCommentsQuery, [threadId]);
 
     // 해시태그 삭제
     const deleteHashTagsQuery = `DELETE FROM HashTag WHERE threadId = ?;`;
-    await pool.query(deleteHashTagsQuery, [threadId]);
+    await connection.query(deleteHashTagsQuery, [threadId]);
 
     // 좋아요 삭제
     const deleteLikesQuery = `DELETE FROM \`Like\` WHERE threadId = ?;`;
-    await pool.query(deleteLikesQuery, [threadId]);
+    await connection.query(deleteLikesQuery, [threadId]);
 
     // 스크랩 삭제
     const deleteScrapQuery = `DELETE FROM PostScrap WHERE threadId = ?;`;
-    await pool.query(deleteScrapQuery, [threadId]);
+    await connection.query(deleteScrapQuery, [threadId]);
 
-    // Sing
+    // Sing 삭제
     const deleteSingQuery = `DELETE FROM Sing WHERE threadId = ?;`;
-    await pool.query(deleteSingQuery, [threadId]);
+    await connection.query(deleteSingQuery, [threadId]);
 
     // 이미지 URL 조회 (삭제할 이미지를 가져오기 위해)
     const imageQuery = `SELECT imageURL FROM Image WHERE threadId = ?;`;
-    const [imageResult]: any = await pool.query(imageQuery, [threadId]);
+    const [imageResult]: any = await connection.query(imageQuery, [threadId]);
 
     if (imageResult.length > 0) {
       // 이미지 삭제 (S3에서)
-      // eslint-disable-next-line no-restricted-syntax
       for (const image of imageResult) {
         const { imageURL } = image;
 
@@ -608,21 +609,27 @@ export const deletePostModel = async (
 
     // 게시물 삭제 (이미지 먼저 삭제)
     const deleteImageQuery = `DELETE FROM Image WHERE threadId = ?;`;
-    await pool.query(deleteImageQuery, [threadId]);
+    await connection.query(deleteImageQuery, [threadId]);
 
     // 게시물 삭제
     const deleteQuery = `DELETE FROM TravelThread WHERE userId = ? AND threadId = ?;`;
-    const [deleteResult]: any = await pool.query(deleteQuery, [
+    const [deleteResult]: any = await connection.query(deleteQuery, [
       userId,
       threadId,
     ]);
 
+    // 커밋
+    await connection.commit();
     return deleteResult;
   } catch (error: any) {
+    await connection.rollback(); // 롤백
     console.error('Delete Post Model Error', error.message);
     throw new Error(error.message || 'Delete Post Model Error');
+  } finally {
+    connection.release(); // 연결 해제
   }
 };
+
 
 // 인기 게시물 조회 Model
 export const popularPostModel = async (

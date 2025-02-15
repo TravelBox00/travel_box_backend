@@ -252,7 +252,6 @@ router.get('/scrap/info', getScrappedThreads);
  *                     "postRegionCode": "서울 강남",
  *                     "clothId": 1,
  *                     "songName": "Inside Out",
- *                     "chooseNum": 0
  *                   }
  *               files:
  *                 type: array
@@ -739,7 +738,6 @@ router.delete('/delete', deletePostController);
  */
 router.get('/popular', popularPostController);
 
-
 /**
  * @swagger
  * /thread/spotifySong:
@@ -855,5 +853,8 @@ router.get("/spotifySong", getSpotifySongController);
  *                   type: string
  */
 router.get("/getFollowPost", getFollowingPostController);
+
+
+
 
 export default router;
