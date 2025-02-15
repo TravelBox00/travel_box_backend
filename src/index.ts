@@ -39,8 +39,9 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 // 라우터
 app.use('/', router);
 app.use('/users', userRoutes);
-app.use('/calendar', calendarRoutes);
-app.use('/thread', authenticateToken, threadRoutes);
+
+app.use('/calendar', authenticateToken, calendarRoutes);
+app.use('/thread', authenticateToken,threadRoutes);
 app.use('/search', authenticateToken, searchRoutes);
 app.use('/comment', authenticateToken, commentRouter);
 app.use('/follow', authenticateToken, followRouter);

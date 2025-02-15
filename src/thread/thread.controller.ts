@@ -136,24 +136,6 @@ export const getScrappedThreads = async (
   }
 };
 
-// 이미지 업로드 Controller
-// export const uploadImageController = async (
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ): Promise<any> => {
-//   try {
-//     const threadId = req.body.threadId; // threadId 추출
-//     const files = req.files as Express.Multer.File[]; // Multer 파일 처리
-
-//     // uploadImageService에 threadId와 files를 넘겨줌
-//     return await uploadImageService(threadId, files, res, next);
-//   } catch (error) {
-//     console.error("Image Upload Controller Error", error);
-//     res.status(400).json({ error: "Image Upload Controller Error" });
-//     throw new Error("Image Upload Controller Error");
-//   }
-// };
 
 // 게시물 업로드 Controller
 export const upLoadPostController = async (
@@ -163,43 +145,43 @@ export const upLoadPostController = async (
 ): Promise<any> => {
   console.log('POST upLoadPostController');
 
-  const parsedBody = JSON.parse(req.body.body);
-  const { userTag, postCategory, postTitle, postContent, clothId } = parsedBody;
-
-  if (
-    postCategory !== '여행 기록' &&
-    postCategory !== '기념품' &&
-    postCategory !== '여행지' &&
-    postCategory !== '여행 코디'
-  ) {
-    console.log('Invalid category:', postCategory);
-    return res.status(400).json({
-      error: 'Category must be one of 여행 기록, 기념품, 여행지, 여행 코디',
-    });
-  }
-
-  const postDate = new Date();
-  const postData: userPostDTO = {
-    postCategory,
-    postTitle,
-    postContent,
-    postDate,
-    clothId,
-  };
-
   try {
+    const parsedBody = JSON.parse(req.body.body);
+    const { userTag, postCategory, postContent, postRegionCode, clothId, songName} = parsedBody;
+
+    if (
+      postCategory !== '여행 기록' &&
+      postCategory !== '기념품' &&
+      postCategory !== '여행지' &&
+      postCategory !== '여행 코디'
+    ) {
+      console.log('Invalid category:', postCategory);
+      return res.status(400).json({
+        error: 'Category must be one of 여행 기록, 기념품, 여행지, 여행 코디',
+      });
+    }
+
+    const postDate = new Date();
+    const postData: userPostDTO = {
+      postCategory,
+      postContent,
+      postRegionCode,
+      postDate,
+      clothId,
+      songName,
+    };
     // 게시물 생성 및 이미지 업로드를 서비스로 통합
     const response = await upLoadPostService(
       userTag,
       postData,
       req.files as Express.Multer.File[],
       res,
-      next
+      next,
     );
     return res.status(201).json(response);
   } catch (error: any) {
     console.error('Post Upload Controller Error', error.message);
-    return res.status(400).json({ error: 'Post Upload Controller Error' });
+    return res.status(400).json({ error: error.message || 'Post Upload Controller Error' });
   }
 };
 
@@ -295,8 +277,8 @@ export const myPostCategoryController = async (
 
     // 카테고리 매핑 객체
     const categoryMapping: { [key: string]: string } = {
-      여행기록: '여행 기록',
-      여행코디: '여행 코디',
+      '여행기록': '여행 기록',
+      '여행코디': '여행 코디'
     };
 
     // 디코딩 후 trim() 적용
@@ -334,7 +316,7 @@ export const updatePostController = async (
   console.log('PUT updatePostController Connected');
 
   try {
-    const { userTag, threadId, postCategory, postTitle, postContent } =
+    const { userTag, threadId, postCategory ,postContent } =
       req.body;
 
     // 카테고리 확인인
@@ -352,18 +334,6 @@ export const updatePostController = async (
       });
     }
 
-    // postTitle 제목 존재 여부 확인
-    if (!postTitle || postTitle.length < 5) {
-      if (postTitle.length === 5) {
-        console.log('Invalid postTitle:', postTitle);
-        return res
-          .status(400)
-          .json({ error: 'postTitle lenght must over 5 word' });
-      }
-      console.log('Invalid postTitle:', postTitle);
-      return res.status(400).json({ error: 'postTitle is required' });
-    }
-
     // postContent 내용 존재 여부 확인
     if (!postContent) {
       console.log('Invalid postContent:', postContent);
@@ -372,7 +342,6 @@ export const updatePostController = async (
 
     const postData: updatePostDTO = {
       postCategory,
-      postTitle,
       postContent,
     };
 
@@ -429,4 +398,51 @@ export const popularPostController = async (
     console.error('Popular Post Controller Error', error);
     return res.status(400).json({ error: 'Popular Post Controller Error' });
   }
+};
+
+// Spotyfy 노래 가져오는 API
+export const getSpotifySongController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<any> => {
+  try {
+      console.log("SpotifySong Controller API");
+
+      const songName = req.query.songName as string;
+      const limit = 10; // 고정값
+      const search_type = 'track';
+
+      if (!songName) {
+          return res.status(400).json({ error: 'Track ID is required' });
+      }
+
+      const result = await threadService.getSpotifySongService(songName, limit, search_type);
+      return res.status(200).json(result);
+
+  } catch (error: any) {
+      console.error('getSpotifySongController Error:', error);
+      return res.status(500).json({ error: 'Internal Server Error', message: error.message });
+  }
+};
+
+
+// following post 조회
+export const getFollowingPostController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<any> => {
+    console.log("get Follow Controller Connected");
+
+    try {
+      const userTag = decodeURIComponent(req.query.userTag as string);
+
+      const result = await threadService.getFollowingPostService(userTag);
+
+      return res.status(200).json( result );
+    } catch (error : any) {
+      console.error('get Follow Controller error', error);
+      return res.status(500).json({ error : 'get Follow Controller error', message : error.message });
+    }
 };

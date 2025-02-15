@@ -3,8 +3,8 @@ import qs from 'qs';
 import dev from '../config/dev';
 
 // Spotify API credentials
-const CLIENT_ID = '03bc3d09d75746fa9c26cd9a6c31375a';
-const CLIENT_SECRET = '4e2071f8f3894170b0395e8a62138aa5';
+const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;;
+const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
 
 let accessToken = '';
 let tokenExpiresAt = 0;
@@ -21,7 +21,7 @@ async function getSpotifyToken() {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        auth: { username: CLIENT_ID, password: CLIENT_SECRET },
+        auth: { username: SPOTIFY_CLIENT_ID, password: SPOTIFY_CLIENT_SECRET },
       }
     );
 

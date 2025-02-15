@@ -3,9 +3,12 @@
 import { ResultSetHeader, RowDataPacket } from 'mysql2'; // ResultSetHeader 타입 임포트
 import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { pool } from '../configs/database/mysqlConnect.ts'; // DB 연결 설정
-import { updatePostDTO, userPostDTO } from './dto/thread.dto.ts';
+import { regions, updatePostDTO, userPostDTO } from './dto/thread.dto.ts';
 import { elastic } from '../configs/database/elasticConnect.ts';
 import s3 from '../configs/s3.ts';
+import { DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { getArtist } from '../api/spotify.ts';
+
 
 // 게시물 좋아요 상태
 export const checkLikeStatus = async (
@@ -85,7 +88,6 @@ export const getScrappedThreads = async (
 ): Promise<
   Array<{
     threadId: number;
-    postTitle: string;
     postContent: string;
     userNickname: string;
     isScrapped: boolean;
@@ -95,7 +97,6 @@ export const getScrappedThreads = async (
   const query = `
     SELECT 
       t.threadId,
-      t.postTitle,
       t.postContent,
       u.userNickname,
       CASE WHEN ps.scrapId IS NOT NULL THEN 1 ELSE 0 END AS isScrapped, 
@@ -111,14 +112,12 @@ export const getScrappedThreads = async (
 
   return rows.map((row) => ({
     threadId: row.threadId,
-    postTitle: row.postTitle,
     postContent: row.postContent,
     userNickname: row.userNickname,
     isScrapped: !!row.isScrapped,
     photoUrl: row.photoUrl || '',
   })) as Array<{
     threadId: number;
-    postTitle: string;
     postContent: string;
     userNickname: string;
     isScrapped: boolean;
@@ -172,7 +171,7 @@ export const uploadImageModel = {
 export const upLoadPostModel = {
   createThread: async (
     userTag: string,
-    postData: userPostDTO
+    postData: userPostDTO,
   ): Promise<any> => {
     console.log('Creating new thread');
     console.log('User Tag:', userTag);
@@ -182,47 +181,68 @@ export const upLoadPostModel = {
     try {
       await connection.beginTransaction();
 
-      // 동일한 제목과 내용으로 최근에 생성된 게시물이 있는지 확인
-      const checkDuplicateQuery = `
-        SELECT threadId FROM TravelThread 
-        WHERE postTitle = ? 
-        AND postContent = ? 
-        AND postDate > DATE_SUB(NOW(), INTERVAL 1 MINUTE)
-      `;
-      const [duplicates]: [any[], any] = await connection.query(
-        checkDuplicateQuery,
-        [postData.postTitle, postData.postContent]
-      );
-
-      if (duplicates.length > 0) {
-        throw new Error('Duplicate post detected');
-      }
-
       // userTag를 이용해 userId 조회
-      const userQuery = `SELECT userId FROM User WHERE userTag = ?;`;
-      const [userResult]: [any[], any] = await connection.query(userQuery, [
-        userTag,
-      ]);
+      const userQuery = `SELECT userId FROM User WHERE userTag = ? FOR UPDATE`;
+      const [userResult]: [any[], any] = await connection.query(userQuery, [userTag]);
 
       if (userResult.length === 0) {
         throw new Error('User not found');
       }
-
       const { userId } = userResult[0];
 
-      // TravelThread에 thread 생성
+      // 지역 코드 파싱
+      let postRegionCode = [];
+      const regionInput = postData.postRegionCode; // 입력 예시: "서울 강남"
+
+      console.log('Region Input:', regionInput); // Debug log
+
+      // 공백을 기준으로 나누기 (예: "서울" + "강남")
+      const splitRegion = regionInput.split(/\s+/); // 여러 공백을 하나의 구분자로 처리
+      const city = splitRegion[0]; // 첫 번째 단어는 city로 처리
+      const area = splitRegion.slice(1).join(' '); // 나머지 부분은 area로 처리
+
+      console.log('Parsed City:', city); // Debug log
+      console.log('Parsed Area:', area); // Debug log
+
+      // 해당 도시가 국내 regions에 있는지 확인
+      const domesticRegion = regions.domestic.find(region => region.city === city);
+      
+      // 해외 국가인지 확인
+      const isOverseasCountry = regions.overseas?.some(region => 
+        region.countries.includes(city)
+      ) || false;
+
+      console.log('Domestic Region:', domesticRegion); // Debug log
+      console.log('Is Overseas Country:', isOverseasCountry); // Debug log
+
+      if (domesticRegion) {
+        // 국내 지역인 경우
+        if (area && !domesticRegion.areas.includes(area)) {
+          throw new Error(`Invalid area '${area}' for the city '${city}'`);
+        }
+        
+        postRegionCode = area ? [city, area] : [city, ...domesticRegion.areas];
+      } else if (isOverseasCountry) {
+        // 해외 지역인 경우
+        postRegionCode = [city];
+      } else {
+        throw new Error(`Invalid region input: City '${city}' not found`);
+      }
+
+      // 새로운 게시물 생성
       const threadQuery = `
-        INSERT INTO TravelThread (userId, clothId, postCategory, postTitle, postContent, postDate)
-        VALUES (?, ?, ?, ?, ?, ?);
-      `;
+        INSERT INTO TravelThread 
+        (userId, clothId, postCategory, postContent, postRegionCode, postDate)
+        VALUES (?, ?, ?, ?, ?, ?)`; 
+
       const [threadResult]: [ResultSetHeader, any[]] = await connection.query(
         threadQuery,
         [
           userId,
-          postData.clothId,
+          postData.clothId || null,
           postData.postCategory,
-          postData.postTitle,
           postData.postContent,
+          postRegionCode.join(','), 
           postData.postDate,
         ]
       );
@@ -230,64 +250,35 @@ export const upLoadPostModel = {
       const threadId = threadResult.insertId;
       console.log(`Thread created with threadId: ${threadId}`);
 
-      const splitContent = (content: string) => content.split(' ');
+      try {
+        // ElasticSearch에 데이터 추가
+        const elasticDoc = {
+          threadId,
+          category: postData.postCategory,
+          postContent: postData.postContent.split(' '),
+          postRegionCode,  // 배열 형태로 그대로 전달
+          postDate: postData.postDate.toISOString(), // ISO 문자열로 변환
+          likes: 0,
+          comments: 0,
+        };
 
-      // ElasticSearch에 데이터 추가
-      const elasticDoc = {
-        threadId,
-        category: postData.postCategory,
-        postTitle: splitContent(postData.postTitle),
-        postContent: splitContent(postData.postContent),
-        postDate: postData.postDate,
-        postRegionCode: Math.floor(Math.random() * 100) + 1,
-        likes: 0,
-        comments: 0,
-      };
-
-      await elastic.index({
-        index: 'post_stats',
-        id: threadId.toString(),
-        document: elasticDoc,
-      });
+        await elastic.index({
+          index: 'post_stats',
+          id: threadId.toString(),
+          document: elasticDoc,
+        });
+      } catch (elasticError) {
+        console.error('ElasticSearch indexing error:', elasticError);
+        // ElasticSearch 에러가 발생해도 트랜잭션은 커밋
+        // 이 부분은 요구사항에 따라 롤백으로 변경할 수 있음
+      }
 
       await connection.commit();
-
       return { threadId };
     } catch (error: any) {
       await connection.rollback();
       console.error('Error creating thread:', error);
-      if (error.message === 'Duplicate post detected') {
-        throw new Error('Duplicate post detected');
-      }
-      throw new Error('Failed to create thread');
-    } finally {
-      connection.release();
-    }
-  },
-  // 게시물 생성이 취소될 경우 생성된 threadId 삭제
-  deleteThread: async (threadId: number): Promise<void> => {
-    console.log('Deleting thread with threadId:', threadId);
-
-    const connection = await pool.getConnection();
-    try {
-      await connection.beginTransaction(); // 트랜잭션 시작
-
-      const deleteQuery = `DELETE FROM TravelThread WHERE threadId = ?`;
-      await connection.query(deleteQuery, [threadId]);
-
-      // ElasticSearch에서도 삭제
-      await elastic.delete({
-        index: 'post_stats',
-        id: threadId.toString(),
-      });
-
-      await connection.commit(); // 트랜잭션 커밋
-
-      console.log(`Thread=${threadId} deleted successfully`);
-    } catch (error) {
-      await connection.rollback(); // 오류 발생 시 롤백
-      console.error('Error deleting thread:', error);
-      throw new Error('Failed to delete thread');
+      throw error; // 원래 에러를 그대로 전달
     } finally {
       connection.release();
     }
@@ -303,12 +294,13 @@ export const postInfoModel = async (
     console.log('POST Model Connected');
 
     const query = `
-      SELECT T.clothId, T.postCategory, T.postTitle, T.postContent, 
+      SELECT T.clothId, T.postCategory, T.postContent, 
          DATE_FORMAT(T.postDate, "%Y-%m-%d") as postDate, 
-         T.postRegionCode, I.imageURL as imageURL, U.userTag
+         T.postRegionCode, I.imageURL as imageURL, U.userTag, S.singInfo
       FROM TravelThread T
       JOIN User U ON T.userId = U.userId
       LEFT JOIN Image I ON T.threadId = I.threadId
+      LEFT JOIN Sing S ON T.ThreadId = S.threadId
       WHERE U.userTag LIKE ? COLLATE utf8mb4_general_ci 
       AND T.threadId = ?;
     `;
@@ -334,7 +326,7 @@ export const postSearchModel = async (
   console.log('ElasticSearch + MySQL 기반 postSearch Model Connected');
 
   try {
-    // 🔹 ElasticSearch 검색
+    // ElasticSearch 검색
     const { hits } = await elastic.search({
       index: 'post_stats',
       size: limit,
@@ -342,7 +334,7 @@ export const postSearchModel = async (
       query: {
         multi_match: {
           query: searchKeyword,
-          fields: ['postTitle^3', 'postContent'],
+          fields: ['postContent'],
           fuzziness: 'AUTO',
         },
       },
@@ -350,7 +342,7 @@ export const postSearchModel = async (
 
     const elasticResults = hits.hits.map((hit: any) => ({
       threadId: hit._id,
-      postTitle: hit._source.postTitle,
+      postContent: hit._source.postContent,
       postDate: hit._source.postDate,
       postRegionCode: hit._source.postRegionCode,
       likes: hit._source.likes,
@@ -359,16 +351,15 @@ export const postSearchModel = async (
 
     // MySQL 검색
     const mysqlQuery = `
-      SELECT T.threadId, T.postTitle, DATE_FORMAT(T.postDate, "%Y-%m-%d") as postDate, I.imageURL
+      SELECT T.threadId, T.postContent, DATE_FORMAT(T.postDate, "%Y-%m-%d") as postDate, I.imageURL
       FROM TravelThread T
       LEFT JOIN Image I ON T.threadId = I.threadId
-      WHERE T.postTitle LIKE ? OR T.postContent LIKE ?
+      WHERE T.postContent LIKE ?
       LIMIT ? OFFSET ?;
     `;
 
     // MySQL 검색 실행
     const [mysqlResults]: any[] = await pool.query(mysqlQuery, [
-      `%${searchKeyword}%`,
       `%${searchKeyword}%`,
       limit,
       offset,
@@ -393,9 +384,10 @@ export const myPostSearchModel = async (userTag: string): Promise<any> => {
     console.log('POST myPostSearchModel Connected');
 
     const query = `
-      SELECT T.postTitle, I.imageURL as imageURL
+      SELECT I.imageURL as imageURL, T.postContent, T.postDate, U.userTag
       FROM TravelThread T
       LEFT JOIN Image I ON T.threadId = I.threadId
+      LEFT JOIN User U ON T.userId = U.userId
       WHERE T.userId = (SELECT userId FROM User WHERE userTag = ?) AND T.threadId;
     `;
 
@@ -418,7 +410,7 @@ export const myPostCategoryModel = async (
     console.log('POST myPostCategoryModel Connected');
 
     const query = `
-      SELECT T.postTitle, I.imageURL as imageURL
+      SELECT T.postContent, I.imageURL as imageURL
       FROM TravelThread T
       LEFT JOIN Image I ON T.threadId = I.threadId
       WHERE T.postCategory = ? AND T.userId = (SELECT userId FROM User WHERE userTag = ?);
@@ -466,33 +458,30 @@ export const updatePostModel = async (
     // 게시물 수정
     const updateQuery = `
       UPDATE TravelThread
-      SET postCategory = ?, postTitle = ?, postContent = ?
+      SET postCategory = ?, postContent = ?
       WHERE userId = ? AND threadId = ?;
     `;
 
     const [updateResult]: any = await pool.query(updateQuery, [
       postData.postCategory,
-      postData.postTitle,
       postData.postContent,
       userId,
       threadId,
     ]);
 
-    // postTitle과 postContent를 합쳐서 ElasticSearch에 저장할 배열 생성
-    const splitContent = (content: string) => content.split(' ');
+     const splitContent = (content: string) => content.split(' ');
 
-    const elasticDoc = {
-      category: postData.postCategory,
-      postTitle: splitContent(postData.postTitle),
-      postContent: splitContent(postData.postContent),
-    };
-
-    // ElasticSearch에 데이터 업데이트 (PATCH 역할)
-    await elastic.update({
-      index: 'post_stats',
-      id: threadId.toString(),
-      doc: elasticDoc, // 변경할 데이터
-    });
+     const elasticDoc = {
+       category: postData.postCategory,
+       postContent: splitContent(postData.postContent),
+     };
+ 
+     // ElasticSearch에 데이터 업데이트 (PATCH 역할)
+     await elastic.update({
+       index: 'post_stats',
+       id: threadId.toString(),
+       doc: elasticDoc,  // 변경할 데이터
+     });
 
     console.log(`threadId=${threadId} ElasticSearch 업데이트 완료`);
 
@@ -647,7 +636,7 @@ export const popularPostModel = async (
 
     const query = `
       SELECT T.threadId, 
-       T.postTitle, 
+       T.postContent, 
        DATE_FORMAT(T.postDate, "%Y-%m-%d") as postDate, 
        I.imageURL,
        (COALESCE(L.likeCount, 0) * 1 + COALESCE(C.commentCount, 0) * 1 + COALESCE(S.scrapCount, 0) * 1) AS totalEngagement
@@ -679,3 +668,104 @@ export const popularPostModel = async (
     throw new Error('Popular Post Model Error');
   }
 };
+
+export const getSpotifySongModel = async (
+  songName: string,
+  limit : number,
+  search_type : string
+): Promise<any> => {
+  try {
+      console.log('Get Spotify Song Model - Song Name:', songName);
+
+      // 찾은 Track ID로 상세 정보 조회
+      const spotifyData = await getArtist(songName, limit, search_type);
+
+      const trackInfo = {
+        trackURL : spotifyData.tracks[0].external_urls
+      };
+
+      return trackInfo;
+  } catch (error: any) {
+      console.error('Spotify Model Error:', error.message);
+      throw error;
+  }
+};
+
+
+// threadId와 songInfo를 저장
+export const addSongToThread = async (
+  threadId: string,
+  songInfoArray: any[],
+): Promise<any> => {
+  if (!songInfoArray || songInfoArray.length === 0) {
+    console.error('No song info provided in songInfoArray');
+    throw new Error('No song info provided');
+  }
+
+  const songInfo = songInfoArray[0]; // 선택된 곡만 사용
+  if (!songInfo.external_urls || !songInfo.external_urls.spotify) {
+    console.error('Spotify URL is missing for song:', songInfo);
+    throw new Error('Spotify URL is missing');
+  }
+
+  const trackUrl = songInfo.external_urls.spotify;
+
+  // 1. Sing 테이블에 삽입
+  const [insertSong]: any = await pool.query(
+    'INSERT INTO Sing (threadId, singInfo) VALUES (?, ?)',
+    [threadId, trackUrl] // trackUrl을 삽입
+  );
+
+  const singId = insertSong.insertId;
+
+  // 2. TravelThread 테이블에 singId 업데이트
+  await pool.query(
+    'UPDATE TravelThread SET singId = ? WHERE threadId = ?',
+    [singId, threadId]
+  );
+
+  console.log(`Song inserted with singId: ${singId}`);
+
+  return { message: 'Song added to thread successfully' };
+};
+
+
+export const getFollowingPostModel = async ( 
+  userTag : string
+): Promise<any> => {
+
+  console.log("getFollowingPostModel Connected");
+
+  try {
+    const userQuery = `SELECT userId FROM User WHERE userTag = ?;`;
+    const [userResult] : any = await pool.query(userQuery, [userTag]);
+
+    if (userResult.length === 0) {
+      throw new Error(`userTag(${userTag})가 존재하지 않음.`);
+    }
+    const userId = userResult[0].userId;
+    
+
+    const followQuery = `SELECT followingUserId FROM Follow WHERE followerUserID = ?;`;
+    const [followingUserId] : any = await pool.query(followQuery, [userId]);
+
+
+    const followingUserIdArray = followingUserId.map((item : any) => item.followingUserId);
+
+    const threadsQuery = `
+      SELECT T.postContent, I.imageURL, U.userTag 
+      FROM TravelThread T
+      LEFT JOIN Image I ON T.threadId = I.threadId
+      LEFT JOIN User U ON T.userId = U.userId
+      WHERE U.userId IN (?)
+      ORDER BY T.postDate DESC;
+    `;
+
+      const [results] = await pool.query(threadsQuery, [followingUserIdArray]);
+
+      return results;
+  } catch (error : any) {
+    console.error('getFollowingPostModel Error', error.message);
+    throw error;
+  }
+}
