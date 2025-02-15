@@ -30,6 +30,12 @@ router.get('/filter', filterController);
  *         required: true
  *         schema:
  *           type: string
+ *       - name: cursor
+ *         in: query
+ *         description: "커서"
+ *         required: false
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
  *         description: "검색 결과 반환"
@@ -60,6 +66,7 @@ router.get('/filter', filterController);
  *         required: true
  *         schema:
  *           type: string
+
  *     responses:
  *       200:
  *         description: "자동완성 검색어 반환"
@@ -93,6 +100,12 @@ router.get('/filter', filterController);
  *       - name: region
  *         in: query
  *         description: "검색할 지역 (예: 서울, 부산 등)"
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - name: cursor
+ *         in: query
+ *         description: "커서"
  *         required: false
  *         schema:
  *           type: string
