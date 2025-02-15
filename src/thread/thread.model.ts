@@ -191,41 +191,42 @@ export const upLoadPostModel = {
 
       // 지역 코드 파싱
       let postRegionCode = [];
-      const regionInput = postData.postRegionCode; // 입력 예시: "서울 강남"
-
+      const regionInput = postData.postRegionCode.trim(); // 입력 예시: "서울 강남" or "오세아니아 호주"
       console.log('Region Input:', regionInput); // Debug log
 
-      // 공백을 기준으로 나누기 (예: "서울" + "강남")
+      // 공백을 기준으로 나누기 (예: "서울" + "강남" or "오세아니아" + "호주")
       const splitRegion = regionInput.split(/\s+/); // 여러 공백을 하나의 구분자로 처리
-      const city = splitRegion[0]; // 첫 번째 단어는 city로 처리
-      const area = splitRegion.slice(1).join(' '); // 나머지 부분은 area로 처리
+      const cityOrContinent = splitRegion[0]; // 첫 번째 단어는 city 또는 continent로 처리
+      const areaOrCountry = splitRegion.slice(1).join(' '); // 나머지 부분은 area 또는 country로 처리
 
-      console.log('Parsed City:', city); // Debug log
-      console.log('Parsed Area:', area); // Debug log
+      console.log('Parsed City/Continent:', cityOrContinent); // Debug log
+      console.log('Parsed Area/Country:', areaOrCountry); // Debug log
 
       // 해당 도시가 국내 regions에 있는지 확인
-      const domesticRegion = regions.domestic.find(region => region.city === city);
-      
-      // 해외 국가인지 확인
-      const isOverseasCountry = regions.overseas?.some(region => 
-        region.countries.includes(city)
-      ) || false;
+      const domesticRegion = regions.domestic.find(region => region.city === cityOrContinent);
+
+      // 해외 지역인 경우
+      const overseasRegion = regions.overseas.find(region => region.continent === cityOrContinent);
+      const isOverseasCountry = overseasRegion ? overseasRegion.countries.includes(areaOrCountry) : false;
 
       console.log('Domestic Region:', domesticRegion); // Debug log
+      console.log('Overseas Region:', overseasRegion); // Debug log
       console.log('Is Overseas Country:', isOverseasCountry); // Debug log
 
       if (domesticRegion) {
         // 국내 지역인 경우
+        const area = areaOrCountry;
         if (area && !domesticRegion.areas.includes(area)) {
-          throw new Error(`Invalid area '${area}' for the city '${city}'`);
+          throw new Error(`Invalid area '${area}' for the city '${cityOrContinent}'`);
         }
-        
-        postRegionCode = area ? [city, area] : [city, ...domesticRegion.areas];
+
+        // 지역 코드 처리 (area가 있으면 특정 지역만, 없으면 전체 지역을 처리)
+        postRegionCode = area ? [cityOrContinent, area] : [cityOrContinent, ...domesticRegion.areas];
       } else if (isOverseasCountry) {
-        // 해외 지역인 경우
-        postRegionCode = [city];
+        // 해외 국가인 경우
+        postRegionCode = [cityOrContinent, areaOrCountry];
       } else {
-        throw new Error(`Invalid region input: City '${city}' not found`);
+        throw new Error(`Invalid region input: City or Continent '${cityOrContinent}' not found`);
       }
 
       // 새로운 게시물 생성
@@ -241,7 +242,7 @@ export const upLoadPostModel = {
           postData.clothId || null,
           postData.postCategory,
           postData.postContent,
-          postRegionCode.join(','), 
+          postRegionCode.join(','), // 배열 형태로 DB에 저장
           postData.postDate,
         ]
       );
