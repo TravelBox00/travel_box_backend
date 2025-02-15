@@ -96,6 +96,8 @@ jobs:
           REDIS_HOST=${{ secrets.REDIS_HOST }}
           ELASTIC_SEARCH=${{ secrets.ELASTIC_SEARCH }}
           ELASTIC_SEARCH_API=${{ secrets.ELASTIC_SEARCH_API }}
+          SPOTIFY_CLIENT_ID=${{ secrets.SPOTIFY_CLIENT_ID }}
+          SPOTIFY_CLIENT_SECRET=${{ secrets.SPOTIFY_CLIENT_SECRET }}
           EOF'
 
       - name: Restart Application
