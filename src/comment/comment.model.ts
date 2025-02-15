@@ -21,28 +21,41 @@ export const checkCommentExists = async (
 // 댓글 추가
 // eslint-disable-next-line import/prefer-default-export
 export const insertComment = async (commentData: {
-  userId: number;
+  userTag: string;
   threadId: number;
   commentContent: string;
   commentVisible: 'public' | 'private';
 }) => {
-  const { userId, threadId, commentContent, commentVisible } = commentData;
+  const { userTag, threadId, commentContent, commentVisible } = commentData;
 
-  const query = `
+  const userQuery = `SELECT userId FROM User WHERE userTag = ?`;
+  const commentQuery = `
     INSERT INTO Comment (userId, threadId, commentContent, commentVisible, commentDate)
     VALUES (?, ?, ?, ?, CURDATE())
   `;
 
   try {
-    const [result] = await pool.execute<OkPacket>(query, [
+    const [userResult] = await pool.execute<RowDataPacket[]>(userQuery, [
+      userTag,
+    ]);
+
+    if (userResult.length === 0) {
+      throw new Error(`유저(${userTag})를 찾을 수 없습니다.`);
+    }
+
+    // eslint-disable-next-line prettier/prettier
+    const {userId} = userResult[0]; 
+
+    const [result] = await pool.execute<OkPacket>(commentQuery, [
       userId,
       threadId,
       commentContent,
       commentVisible,
     ]);
+
     return result.insertId;
   } catch (error) {
-    console.error('Error executing insertComment query:', error);
+    console.error('댓글 추가 중 오류 발생:', error);
     throw error;
   }
 };
@@ -103,7 +116,7 @@ export const deleteComment = async (commentId: number): Promise<boolean> => {
 };
 
 // 내가 작성한 댓글 조회
-export const getMyComments = async (userId: number) => {
+export const getMyComments = async (userTag: string) => {
   const query = `
     SELECT 
       c.commentId,
@@ -125,7 +138,7 @@ export const getMyComments = async (userId: number) => {
   `;
 
   try {
-    const [rows] = await pool.execute<RowDataPacket[]>(query, [userId]);
+    const [rows] = await pool.execute<RowDataPacket[]>(query, [userTag]);
     return rows.map((row) => ({
       commentId: row.commentId,
       commentContent: row.commentContent,

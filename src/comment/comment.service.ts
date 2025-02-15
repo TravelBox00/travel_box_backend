@@ -10,15 +10,13 @@ import {
 // 댓글 추가
 // eslint-disable-next-line import/prefer-default-export
 export const addComment = async (commentData: {
-  userId: number;
+  userTag: string;
   threadId: number;
   commentContent: string;
   commentVisible: 'public' | 'private';
 }) => {
   try {
-    const commentId = await insertComment(commentData);
-
-    return commentId;
+    return await insertComment(commentData);
   } catch (error) {
     console.error('Error in addComment service:', error);
     return false;
@@ -62,9 +60,9 @@ export const removeComment = async (commentId: number) => {
 };
 
 // 내가 작성한 댓글 조회
-export const fetchMyComments = async (userId: number) => {
+export const fetchMyComments = async (userTag: string) => {
   try {
-    const comments = await getMyComments(userId);
+    const comments = await getMyComments(userTag);
 
     if (comments.length === 0) {
       return {

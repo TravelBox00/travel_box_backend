@@ -1,3 +1,4 @@
+
 name: deploy-main
 
 on:
@@ -75,7 +76,7 @@ jobs:
         run: |
           ssh playground-umc-7th '
             cd /home/ubuntu/travel_box_backend
-            npm ci --only=production
+            npm install
           '
 
       - name: Create or Update .env file

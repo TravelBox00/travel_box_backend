@@ -1,3 +1,5 @@
+/* eslint-disable import/extensions */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Client } from '@elastic/elasticsearch';
 import mysql from 'mysql2/promise';
 import { pool } from './mysqlConnect';
@@ -6,6 +8,7 @@ import { elastic } from './elasticConnect';
 const INDEX_NAME = 'post_stats';
 
 async function syncPostToElastic(threadId: number) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [rows]: any = await pool.execute(
     'SELECT postTitle, postContent FROM TravelThread WHERE threadId = ?',
     [threadId]

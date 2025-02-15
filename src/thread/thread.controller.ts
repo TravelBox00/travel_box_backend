@@ -1,3 +1,6 @@
+/* eslint-disable radix */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response, NextFunction } from 'express';
 import {
   deletePostService,
@@ -21,13 +24,13 @@ export const toggleLike = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { threadId, userId } = req.body;
+    const { threadId, userTag } = req.body;
 
-    if (!threadId || !userId) {
+    if (!threadId || !userTag) {
       throw new CustomError(errors.NOT_PROVIDED_VALUES, new Error());
     }
 
-    const result = await threadService.toggleLike(threadId, userId);
+    const result = await threadService.toggleLike(threadId, userTag);
 
     res.status(200).json({
       isSuccess: true,
@@ -62,12 +65,12 @@ export const toggleScrap = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { threadId, userId } = req.body;
+    const { threadId, userTag } = req.body;
 
-    if (!threadId || !userId) {
+    if (!threadId || !userTag) {
       throw new CustomError(errors.NOT_PROVIDED_VALUES, new Error());
     }
-    const result = await threadService.toggleScrap(threadId, userId);
+    const result = await threadService.toggleScrap(threadId, userTag);
 
     res.status(200).json({
       isSuccess: true,
@@ -102,19 +105,19 @@ export const getScrappedThreads = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { userId } = req.query;
+    const userTag = req.query.userTag as string;
 
-    if (!userId) {
+    if (!userTag) {
       res.status(400).json({
         isSuccess: false,
         code: '4000',
-        message: 'userId를 제공해야 합니다.',
+        message: 'userTag를 제공해야 합니다.',
         result: null,
       });
       return;
     }
 
-    const result = await threadService.getScrappedThreads(Number(userId));
+    const result = await threadService.getScrappedThreads(userTag);
 
     res.status(200).json({
       isSuccess: true,
@@ -167,7 +170,6 @@ export const upLoadPostController = async (
       clothId,
       songName,
     };
-
     // 게시물 생성 및 이미지 업로드를 서비스로 통합
     const response = await upLoadPostService(
       userTag,
@@ -281,7 +283,7 @@ export const myPostCategoryController = async (
 
     // 디코딩 후 trim() 적용
     myCategory = decodeURIComponent(myCategory).trim();
-    
+
     // 매핑된 카테고리가 있으면 변환
     myCategory = categoryMapping[myCategory] || myCategory;
 

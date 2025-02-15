@@ -40,6 +40,8 @@ router.get('/', (req, res) => {
  *     description: 좋아요 추가 시 isLiked가 true, 취소 시 isLiked가 false로 반환됩니다.
  *     tags:
  *       - Thread
+ *     security:
+ *       - BearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -51,10 +53,10 @@ router.get('/', (req, res) => {
  *                 type: integer
  *                 description: 게시물 ID
  *                 example: 1
- *               userId:
- *                 type: integer
- *                 description: 사용자 ID
- *                 example: 1
+ *               userTag:
+ *                 type: string
+ *                 description: 사용자 태그
+ *                 example: "user123"
  *     responses:
  *       200:
  *         description: 현재 좋아요 상태 반환
@@ -96,6 +98,8 @@ router.get('/', (req, res) => {
  *     description: 스크랩 추가 시 result.isScrapped가 true, 취소 시 result.isScrapped가 false로 반환됩니다.
  *     tags:
  *       - Thread
+ *     security:
+ *       - BearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -107,10 +111,10 @@ router.get('/', (req, res) => {
  *                 type: integer
  *                 description: 게시물 ID
  *                 example: 1
- *               userId:
- *                 type: integer
- *                 description: 사용자 ID
- *                 example: 1
+ *               userTag:
+ *                 type: string
+ *                 description: 사용자 태그
+ *                 example: "user123"
  *     responses:
  *       200:
  *         description: 현재 스크랩 상태 반환
@@ -149,17 +153,18 @@ router.get('/', (req, res) => {
  * /thread/scrap/info:
  *   get:
  *     summary: 스크랩한 게시물 목록 조회
- *     description: 게시물의 제목, 내용, 작성자 닉네임, 스크랩 상태, 사진 경로 반환
+ *     description: 특정 사용자가 스크랩한 게시물 목록을 조회합니다.
  *     tags:
  *       - Thread
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - in: query
- *         name: userId
+ *         name: userTag
  *         required: true
  *         schema:
- *           type: integer
- *           example: 1
- *         description: 사용자 ID
+ *           type: string
+ *         description: "조회할 사용자의 태그"
  *     responses:
  *       200:
  *         description: 스크랩한 게시물 목록 반환
@@ -732,7 +737,7 @@ router.delete('/delete', deletePostController);
  *       500:
  *         description: 서버 오류
  */
-router.get("/popular", popularPostController);
+router.get('/popular', popularPostController);
 
 
 /**

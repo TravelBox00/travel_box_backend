@@ -11,19 +11,14 @@ import { CustomError, errors } from '../middlewares/error.middleware.ts';
 // 댓글 추가
 export const addCommentController: RequestHandler = async (req, res, next) => {
   try {
-    const { userId, threadId, commentContent, commentVisible } = req.body;
+    const { threadId, commentContent, commentVisible, userTag } = req.body;
 
-    if (
-      !userId ||
-      !threadId ||
-      !commentContent ||
-      commentVisible === undefined
-    ) {
+    if (!threadId || !commentContent || commentVisible === undefined) {
       throw new CustomError(errors.NOT_INPUT_VALUE, new Error());
     }
 
     const commentId = await addComment({
-      userId,
+      userTag,
       threadId,
       commentContent,
       commentVisible,
@@ -106,13 +101,17 @@ export const getMyCommentsController: RequestHandler = async (
   next
 ) => {
   try {
-    const { userId } = req.query;
-
-    if (!userId) {
-      throw new CustomError(errors.NOT_INPUT_VALUE, new Error());
+    const userTag = req.query.userTag as string;
+    if (!userTag) {
+      res.status(400).json({
+        isSuccess: false,
+        code: '4000',
+        message: 'userTag를 query parameter로 제공해야 합니다.',
+        result: null,
+      });
+      return;
     }
-
-    const response = await fetchMyComments(Number(userId));
+    const response = await fetchMyComments(userTag);
     res.status(200).json(response);
   } catch (error) {
     next(error);
