@@ -18,7 +18,6 @@ export const searchService = async (
   cursor?: string
 ): Promise<searchResDto[]> => {
   const threadIds = await getFastTimeThread(word, cursor);
-
   if (threadIds.length === 0) {
     throw new CustomError(errors.NOT_FOUND_WORD, new Error());
   }
@@ -40,7 +39,6 @@ export const searchService = async (
 
 export const wordService = async (word: string): Promise<string[]> => {
   const words: string[] = await searchValidSuggestions(word);
-
   if (words.length === 0) {
     throw new CustomError(errors.NOT_FOUND_WORD, new Error());
   }
