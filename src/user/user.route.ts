@@ -214,22 +214,19 @@ router.patch('/modify', authenticateToken, modifyController);
 
 /**
  * @swagger
- * /users/signup/duplicate:
+ * /users/signup/duplicate/{userTag}:
  *   get:
  *     summary: 아이디 중복 확인
  *     description: 새로운 사용자의 아이디(userTag)가 중복되는지 확인합니다.
  *     tags:
  *       - User
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               userTag:
- *                 type: string
- *                 example: johndoe123
+ *     parameters:
+ *       - in: path
+ *         name: userTag
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: person
  *     responses:
  *       200:
  *         description: 아이디 중복 검사 결과
@@ -243,13 +240,13 @@ router.patch('/modify', authenticateToken, modifyController);
  *                   properties:
  *                     isAvailable:
  *                       type: boolean
- *                       description: 아이디 사용 가능 여부
+ *                       description: 아이디 사용 가능 여부 - 중복 여부에 따라 true(사용 불가) 또는 false(사용 가능)
  *                       example: false
  *                 isSuccess:
  *                   type: boolean
  *                   example: true
  *       500:
- *         description: Internal Server Error.
+ *         description: Internal Server Error
  */
 
 /**
