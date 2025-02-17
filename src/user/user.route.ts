@@ -220,16 +220,16 @@ router.patch('/modify', authenticateToken, modifyController);
  *     description: 새로운 사용자의 아이디(userTag)가 중복되는지 확인합니다.
  *     tags:
  *       - User
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
+ *     parameters:
+ *       - in: path
+ *         name: userTag
+ *         required: true
  *           schema:
- *             type: object
+ *             type: string
  *             properties:
  *               userTag:
  *                 type: string
- *                 example: johndoe123
+ *                 example: person
  *     responses:
  *       200:
  *         description: 아이디 중복 검사 결과
@@ -243,8 +243,26 @@ router.patch('/modify', authenticateToken, modifyController);
  *                   properties:
  *                     isAvailable:
  *                       type: boolean
- *                       description: 아이디 사용 가능 여부
+ *                       description: 아이디 사용 가능 여부 - 중복 x
  *                       example: false
+ *                 isSuccess:
+ *                   type: boolean
+ *                   example: true
+ *      responses:
+ *       200:
+ *         description: 아이디 중복 검사 결과
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 result:
+ *                   type: object
+ *                   properties:
+ *                     isAvailable:
+ *                       type: boolean
+ *                       description: 아이디 사용 가능 여부 - 중복 o
+ *                       example: true
  *                 isSuccess:
  *                   type: boolean
  *                   example: true
