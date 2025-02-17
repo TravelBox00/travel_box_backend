@@ -251,7 +251,7 @@ router.get('/scrap/info', getScrappedThreads);
  *                     "postContent": "스웨거 테스트 용 내용",
  *                     "postRegionCode": "서울 강남",
  *                     "clothId": 1,
- *                     "songName": "Inside Out",
+ *                     "songName": "Inside Out"
  *                   }
  *               files:
  *                 type: array
