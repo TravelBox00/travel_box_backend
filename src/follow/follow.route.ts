@@ -79,9 +79,15 @@ router.post('/addFollow', userAddFollowController);
  *                   followerUserId:
  *                     type: integer
  *                     description: "팔로워의 사용자 ID"
- *                   followerUserTag:
+ *                   userTag:
  *                     type: string
  *                     description: "팔로워의 사용자 태그"
+ *                   userProfileImage:
+ *                     type: string
+ *                     description: "팔로워의 프로필 이미지 URL"
+ *                   isFollowing:
+ *                     type: boolean
+ *                     description: "해당 팔로워를 내가 팔로우하고 있는지 여부"
  *       400:
  *         description: "잘못된 요청"
  *       404:
@@ -120,9 +126,15 @@ router.get('/showFollower/:userTag', showFollowerController);
  *                   followingUserId:
  *                     type: integer
  *                     description: "팔로잉된 사용자의 ID"
- *                   followingUserTag:
+ *                   userTag:
  *                     type: string
  *                     description: "팔로잉된 사용자의 태그"
+ *                   userProfileImage:
+ *                     type: string
+ *                     description: "팔로잉된 사용자의 프로필 이미지 URL"
+ *                   isFollowedByThem:
+ *                     type: boolean
+ *                     description: "해당 사용자가 나를 팔로우하고 있는지 여부"
  *       400:
  *         description: "잘못된 요청"
  *       404:

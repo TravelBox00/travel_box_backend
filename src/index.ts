@@ -41,10 +41,10 @@ app.use('/', router);
 app.use('/users', userRoutes);
 
 app.use('/calendar', authenticateToken, calendarRoutes);
-app.use('/thread', authenticateToken,threadRoutes);
+app.use('/thread', authenticateToken, threadRoutes);
 app.use('/search', authenticateToken, searchRoutes);
 app.use('/comment', authenticateToken, commentRouter);
-app.use('/follow', authenticateToken, followRouter);
+app.use('/follow', followRouter);
 
 // 에러 처리 미들웨어 적용
 app.use(errorHandler);
