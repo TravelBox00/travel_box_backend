@@ -84,12 +84,35 @@ export const showFollowerModel = async (
 
         const userId: number = userIdArray[0].userId;
 
+
         /* 
          * 내 팔로워 조회
          *   -> followingId로 내 id 조회 후 followedid 검색
          */
 
-        const [followerIdArray]: any = await pool.query(`SELECT followerUserId FROM Follow WHERE followingUserId = ?`, [userId]);
+
+        /** 내가 그 사람을 팔로잉 하는지 여부도 추가 */
+        
+
+        const follwingquery = `
+            SELECT 
+                F.followerUserId, 
+                U.userTag, 
+                U.userProfileImage,
+                CASE 
+                    WHEN EXISTS (
+                        SELECT 1 
+                        FROM Follow 
+                        WHERE followerUserId = ? AND followingUserId = F.followerUserId
+                    ) THEN TRUE
+                    ELSE FALSE
+                END AS isFollowing
+            FROM Follow F
+            LEFT JOIN User U ON F.followerUserId = U.userId
+            WHERE F.followingUserId = ?;
+        `;
+
+        const [followerIdArray]: any = await pool.query(follwingquery, [userId, userId]);
 
         if(followerIdArray.length === 0) {
             return { followers : [] };
@@ -128,7 +151,28 @@ export const showFollowingModel = async (
          *   -> followerId로 내 id조회 후 followingid 검색
          */
 
-        const [followerIdArray]: any = await pool.query(`SELECT followingUserId FROM Follow WHERE followerUserId = ?`, [userId]);
+
+        /** 그 사람이 나를 팔로우하는지 여부 조회 */
+
+        const followerquery = `
+            SELECT 
+                F.followingUserId, 
+                U.userTag, 
+                U.userProfileImage,
+                CASE 
+                    WHEN EXISTS (
+                        SELECT 1 
+                        FROM Follow 
+                        WHERE followerUserId = F.followingUserId AND followingUserId = ?
+                    ) THEN TRUE
+                    ELSE FALSE
+                END AS isFollowedByThem
+            FROM Follow F
+            LEFT JOIN User U ON F.followingUserId = U.userId 
+            WHERE F.followerUserId = ?;
+        `;
+
+        const [followerIdArray]: any = await pool.query(followerquery, [userId, userId]);
 
         if(followerIdArray.length === 0) {
             return { followers : [] };

@@ -125,20 +125,22 @@ export const getArtist = async (
 
 export const getPopularTracks = async (): Promise<{ tracks: SpotifyTrack[] }> => {
   // 새로운 Global TOP 50 플레이리스트 ID 사용
-  const playlistUrl = `https://api.spotify.com/v1/playlists/37i9dQZF1DXcBWIGoYBM5M`;
+  const playlistId = '37i9dQZEVXbMDoHDwVN2tF';
+  const playlistUrl = `https://api.spotify.com/v1/playlists/${playlistId}`;
 
   // 오늘자 Hit 곡 - 37i9dQZF1DXcBWIGoYBM5M
-  // Global TOP 50 - 37i9dQZEVXbMDoHDwVN2tF
-
+  // Global TOP 50 - 37i9dQZEVXbMDoHDwVN2t
+  
   try {
     await tokenValidation();
-  
+    
     const response = await axios.get(playlistUrl, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
       },
     });
-
+    
     if (!response.data.items) {
       console.log("No tracks found in playlist");
       return { tracks: [] };
@@ -149,7 +151,7 @@ export const getPopularTracks = async (): Promise<{ tracks: SpotifyTrack[] }> =>
       external_urls: item.track.external_urls,
       artists: item.track.artists.map((artist: any) => ({ name: artist.name })),
     }));
-
+    
     return { tracks: transformedTracks };
 
   } catch (error: any) {
