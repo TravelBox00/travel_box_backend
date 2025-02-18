@@ -3,13 +3,20 @@ import { hashedSignupDto } from '../dto/signup.dto.ts';
 
 export const userInfoRegisterByUserTag = async (userInfo: hashedSignupDto) => {
   try {
-    const { userTag, hashedPassword, userNickname } = userInfo;
+    const { userTag, hashedPassword, userNickname, userProfileImage, email } =
+      userInfo;
     const connection = await pool.getConnection();
     const query = `
-            INSERT INTO User (userTag, userPassword, userNickname)
+            INSERT INTO User (userTag, userPassword, userNickname, userProfileImage, email)
             VALUES (?, ?, ?)
             `;
-    await connection.execute(query, [userTag, hashedPassword, userNickname]);
+    await connection.execute(query, [
+      userTag,
+      hashedPassword,
+      userNickname,
+      userProfileImage,
+      email,
+    ]);
     connection.release();
   } catch (error) {
     console.error(error);

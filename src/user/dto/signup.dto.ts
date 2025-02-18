@@ -5,10 +5,22 @@ export class signupReqDto {
 
   userNickname: string;
 
-  constructor(userTag: string, userPassword: string, userNickname: string) {
+  userProfileImage: string;
+
+  email?: string;
+
+  constructor(
+    userTag: string,
+    userPassword: string,
+    userNickname: string,
+    userProfileImage: string,
+    email?: string
+  ) {
     this.userTag = userTag;
     this.userPassword = userPassword;
     this.userNickname = userNickname;
+    this.email = email;
+    this.userProfileImage = userProfileImage;
   }
 }
 
@@ -19,10 +31,22 @@ export class hashedSignupDto {
 
   userNickname: string;
 
-  constructor(userTag: string, hashedPassword: string, userNickname: string) {
+  userProfileImage: string;
+
+  email?: string;
+
+  constructor(
+    userTag: string,
+    hashedPassword: string,
+    userNickname: string,
+    userProfileImage: string,
+    email?: string
+  ) {
     this.userTag = userTag;
     this.hashedPassword = hashedPassword;
     this.userNickname = userNickname;
+    this.email = email;
+    this.userProfileImage = userProfileImage;
   }
 }
 

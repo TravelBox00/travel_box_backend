@@ -10,6 +10,7 @@ import { refreshTokenDto } from '../dto/token.dto.ts';
 import s3 from '../../configs/database/s3Connect.ts';
 
 import loginReqDto from '../dto/login.dto.ts';
+import getUserInfo from '../dto/userInfo.dto.ts';
 
 export const findUserByUserTag = async (
   userTag: string
@@ -145,6 +146,28 @@ export const getRefreshTokenFromRedis = async (
     const refreshToken = await redisClient.get(userTag);
     await redisClient.quit();
     return refreshToken;
+  } catch (error) {
+    console.error(error);
+    throw new Error();
+  }
+};
+
+export const getUserInfoByUserTag = async (
+  userTag: string
+): Promise<getUserInfo> => {
+  try {
+    const connection = await pool.getConnection();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [[rows]]: any = await connection.execute(
+      `
+            SELECT userTag, userNickname, userProfileImage, email
+            FROM User
+            WHERE userTag = ?
+            `,
+      [userTag]
+    );
+    connection.release();
+    return rows;
   } catch (error) {
     console.error(error);
     throw new Error();

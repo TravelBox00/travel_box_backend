@@ -12,20 +12,38 @@ import {
 } from '../models/userSign.model.ts';
 import { CustomError, errors } from '../../middlewares/error.middleware.ts';
 import modifyReqDto from '../dto/modify.dto.ts';
-import { checkNickname, checkPassword } from '../utils/loginValidate.ts';
+import {
+  checkEmail,
+  checkNickname,
+  checkPassword,
+} from '../utils/loginValidate.ts';
 import { deleteRefreshTokenInRedis } from '../models/userLogin.model.ts';
 
 export const signupService = async (userInfo: signupReqDto) => {
-  const { userTag, userPassword, userNickname } = userInfo;
-  await checkNickname(userNickname);
-  await checkPassword(userPassword);
+  const { userTag, userPassword, userNickname, email, userProfileImage } =
+    userInfo;
+
+  const promises = [checkNickname(userNickname), checkPassword(userPassword)];
+
+  if (email !== undefined) {
+    promises.push(checkEmail(email));
+  }
+
+  await Promise.all(promises);
+
   const salt: string = await bcrypt.genSalt(10);
   const firstHash: string = crypto
     .createHash('blake2b512')
     .update(userPassword)
     .digest('hex');
   const hashedPassword: string = await bcrypt.hash(firstHash, salt);
-  await userInfoRegisterByUserTag({ userTag, hashedPassword, userNickname });
+  await userInfoRegisterByUserTag({
+    userTag,
+    hashedPassword,
+    userNickname,
+    userProfileImage,
+    email,
+  });
 };
 
 export const duplicateService = async (userTag: string) => {
