@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { showFollowerModel, showFollowingModel, userAddFollowModel } from './follow.model.ts';
+import { searchFollowerModel, searchFollowingModel, showFollowerModel, showFollowingModel, userAddFollowModel } from './follow.model.ts';
 
 export const userAddFollowService = async (
     userTag : string,
@@ -29,6 +29,28 @@ export const showFollowingService = async (
     console.log('showFollowingService Connected');
 
     const result = showFollowingModel(userTag);
+
+    return result;
+};
+
+export const searchFollowerService = async (
+    myTag : string,
+    follower : string
+): Promise<any> => {
+    console.log('searchFollowService Connected');
+
+    const result = searchFollowerModel(myTag, follower);
+
+    return result;
+};
+
+export const searchFollowingService = async (
+    myTag : string,
+    following : string
+): Promise<any> => {
+    console.log('searchFollowService Connected');
+
+    const result = searchFollowingModel(myTag, following);
 
     return result;
 };

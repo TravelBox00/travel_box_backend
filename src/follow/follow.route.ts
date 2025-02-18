@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { showFollowerController, showFollowingController, userAddFollowController } from './follow.controller.ts';
+import { searchFollowerController, searchFollowingController, showFollowerController, showFollowingController, userAddFollowController } from './follow.controller.ts';
 
 const router = Router();
 
@@ -144,4 +144,119 @@ router.get('/showFollower/:userTag', showFollowerController);
  */
 router.get('/showFollowing/:userTag', showFollowingController);
 
+
+// Follow 찾기
+/**
+ * @swagger
+ * /follow/searchFollower/{myTag}/{follower}:
+ *   get:
+ *     summary: "팔로워 검색"
+ *     description: "특정 유저(myTag)의 팔로워 정보를 검색합니다. follower는 userTag 또는 userNickname이 될 수 있습니다."
+ *     tags: [Follow]
+ *     parameters:
+ *       - name: myTag
+ *         in: path
+ *         description: "검색할 유저의 태그"
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "john#123"
+ *       - name: follower
+ *         in: path
+ *         description: "검색할 팔로워의 userTag 또는 userNickname"
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "jane#456"
+ *     responses:
+ *       200:
+ *         description: "팔로워 정보 검색 성공"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 userId:
+ *                   type: integer
+ *                   description: "팔로워의 ID"
+ *                 userTag:
+ *                   type: string
+ *                   description: "팔로워의 태그"
+ *                 userProfileImage:
+ *                   type: string
+ *                   description: "팔로워의 프로필 이미지 URL"
+ *                 userNickname:
+ *                   type: string
+ *                   description: "팔로워의 닉네임"
+ *       404:
+ *         description: "팔로워 또는 사용자 정보를 찾을 수 없음"
+ *       500:
+ *         description: "서버 오류"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   description: "서버 오류 메시지"
+ */
+router.get('/searchFollower/:myTag/:follower', searchFollowerController);
+
+/**
+ * @swagger
+ * /follow/searchFollowing/{myTag}/{following}:
+ *   get:
+ *     summary: "팔로잉 검색"
+ *     description: "특정 유저(myTag)의 팔로잉 정보를 검색합니다. following은 userTag 또는 userNickname이 될 수 있습니다."
+ *     tags: [Follow]
+ *     parameters:
+ *       - name: myTag
+ *         in: path
+ *         description: "검색할 유저의 태그"
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "john#123"
+ *       - name: following
+ *         in: path
+ *         description: "검색할 팔로잉의 userTag 또는 userNickname"
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "jane#456"
+ *     responses:
+ *       200:
+ *         description: "팔로잉 정보 검색 성공"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 userId:
+ *                   type: integer
+ *                   description: "팔로잉된 사용자의 ID"
+ *                 userTag:
+ *                   type: string
+ *                   description: "팔로잉된 사용자의 태그"
+ *                 userProfileImage:
+ *                   type: string
+ *                   description: "팔로잉된 사용자의 프로필 이미지 URL"
+ *                 userNickname:
+ *                   type: string
+ *                   description: "팔로잉된 사용자의 닉네임"
+ *       404:
+ *         description: "팔로잉 또는 사용자 정보를 찾을 수 없음"
+ *       500:
+ *         description: "서버 오류"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   description: "서버 오류 메시지"
+ */
+router.get('/searchFollowing/:myTag/:following', searchFollowingController);
 export default router;
