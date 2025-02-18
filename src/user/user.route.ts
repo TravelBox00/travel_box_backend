@@ -325,14 +325,14 @@ router.get('/info', authenticateToken, userInfoController);
  */
 /**
  * @swagger
- * /info:
+ * /users/info:
  *   get:
  *     summary: 사용자 정보 조회
  *     description: 제공된 토큰의 사용자 태그를 기반으로 사용자 정보를 반환합니다.
  *     tags:
  *       - User
  *     security:
- *       - Bearer: []
+ *       - BearerAuth: []
  *     produces:
  *       - application/json
  *     parameters:
