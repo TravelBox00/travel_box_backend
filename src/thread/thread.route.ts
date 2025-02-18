@@ -14,6 +14,7 @@ import {
   getScrappedThreads,
   getSpotifySongController,
   getFollowingPostController,
+  getPopularTracksController,
 } from './thread.controller.ts';
 import getUserThreadController from './threadMy.controller.ts';
 
@@ -855,6 +856,49 @@ router.get('/spotifySong', getSpotifySongController);
  */
 router.get('/getFollowPost', getFollowingPostController);
 
+/**
+ * @swagger
+ * /thread/songPopular:
+ *   get:
+ *     summary: Fetch Global Top 50 tracks from Spotify
+ *     description: Fetches the current Global Top 50 playlist from Spotify and saves it as a JSON file.
+ *     tags:
+ *       - Spotify
+ *     responses:
+ *       200:
+ *         description: A list of Global Top 50 tracks
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   name:
+ *                     type: string
+ *                     description: The name of the track.
+ *                   external_urls:
+ *                     type: object
+ *                     description: External URL for the track.
+ *                     properties:
+ *                       spotify:
+ *                         type: string
+ *                         description: Spotify URL for the track.
+ *                   artists:
+ *                     type: array
+ *                     description: List of artists for the track.
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         name:
+ *                           type: string
+ *                           description: The name of the artist.
+ *       500:
+ *         description: Server error or Spotify API error.
+ */
+router.get('/songPopular', getPopularTracksController);
+
+
 router.get('/my', getUserThreadController);
 /**
  * @swagger
@@ -948,5 +992,6 @@ router.get('/my', getUserThreadController);
  *                   type: string
  *                   example: "Internal Server Error"
  */
+
 
 export default router;

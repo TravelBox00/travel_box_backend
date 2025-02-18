@@ -17,6 +17,7 @@ import { updatePostDTO, userPostDTO } from './dto/thread.dto.ts';
 import { upLoadPostModel } from './thread.model.ts';
 import * as threadService from './thread.service.ts';
 import { CustomError, errors } from '../middlewares/error.middleware.ts';
+import { getPopularTracks } from '../api/spotify.ts';
 
 // 게시물 좋아요
 export const toggleLike = async (
@@ -445,4 +446,17 @@ export const getFollowingPostController = async (
       console.error('get Follow Controller error', error);
       return res.status(500).json({ error : 'get Follow Controller error', message : error.message });
     }
+};
+
+export const getPopularTracksController = async (
+  req: Request, 
+  res: Response, 
+  next: NextFunction
+): Promise<any>=> {
+  try {
+    const tracks = await getPopularTracks();
+    return res.status(200).json(tracks);
+  } catch (error) {
+    next(error); // 에러가 발생하면 Express 에러 핸들러로 전달
+  }
 };
