@@ -1,7 +1,9 @@
 import axios from "axios";
 import qs from 'qs';
 import dotenv from 'dotenv';
-import { SpotifyTrack, SpotifyResponse } from './spotifyDTO';
+import { SpotifyTrack, SpotifyResponse, SpotifyArtist } from './spotifyDTO';
+import fs from 'fs';
+import path from 'path';
 
 dotenv.config();
 
@@ -119,4 +121,44 @@ export const getArtist = async (
     console.log("Track info URL:", trackInfo);
 
     return getSpotifyRequest(trackInfo);
+};
+
+export const getPopularTracks = async (): Promise<{ tracks: SpotifyTrack[] }> => {
+  // 새로운 Global TOP 50 플레이리스트 ID 사용
+  const playlistUrl = `https://api.spotify.com/v1/playlists/37i9dQZF1DXcBWIGoYBM5M`;
+
+  // 오늘자 Hit 곡 - 37i9dQZF1DXcBWIGoYBM5M
+  // Global TOP 50 - 37i9dQZEVXbMDoHDwVN2tF
+
+  try {
+    await tokenValidation();
+  
+    const response = await axios.get(playlistUrl, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    if (!response.data.items) {
+      console.log("No tracks found in playlist");
+      return { tracks: [] };
+    }
+
+    const transformedTracks = response.data.items.map((item: any) => ({
+      name: item.track.name,
+      external_urls: item.track.external_urls,
+      artists: item.track.artists.map((artist: any) => ({ name: artist.name })),
+    }));
+
+    return { tracks: transformedTracks };
+
+  } catch (error: any) {
+    console.error("Error fetching Global Top 50:", {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      headers: error.response?.headers
+    });
+    throw error;
+  }
 };
