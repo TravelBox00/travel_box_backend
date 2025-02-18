@@ -15,6 +15,7 @@ import {
   getSpotifySongController,
   getFollowingPostController,
 } from './thread.controller.ts';
+import getUserThreadController from './threadMy.controller.ts';
 
 const router = Router();
 const upload = multer(); // multer 미들웨어 설정
@@ -807,7 +808,7 @@ router.get('/popular', popularPostController);
  *                   type: string
  *                   example: "오류 메시지"
  */
-router.get("/spotifySong", getSpotifySongController);
+router.get('/spotifySong', getSpotifySongController);
 
 /**
  * @swagger
@@ -852,9 +853,8 @@ router.get("/spotifySong", getSpotifySongController);
  *                 message:
  *                   type: string
  */
-router.get("/getFollowPost", getFollowingPostController);
+router.get('/getFollowPost', getFollowingPostController);
 
-
-
+router.get('/my', getUserThreadController);
 
 export default router;
