@@ -15,6 +15,7 @@ import {
   getSpotifySongController,
   getFollowingPostController,
 } from './thread.controller.ts';
+import getUserThreadController from './threadMy.controller.ts';
 
 const router = Router();
 const upload = multer(); // multer 미들웨어 설정
@@ -807,7 +808,7 @@ router.get('/popular', popularPostController);
  *                   type: string
  *                   example: "오류 메시지"
  */
-router.get("/spotifySong", getSpotifySongController);
+router.get('/spotifySong', getSpotifySongController);
 
 /**
  * @swagger
@@ -852,9 +853,100 @@ router.get("/spotifySong", getSpotifySongController);
  *                 message:
  *                   type: string
  */
-router.get("/getFollowPost", getFollowingPostController);
+router.get('/getFollowPost', getFollowingPostController);
 
-
-
+router.get('/my', getUserThreadController);
+/**
+ * @swagger
+ * /thread/my:
+ *   get:
+ *     summary: "사용자의 여행 스레드 조회 (커서 기반 페이지네이션 포함)"
+ *     description: "사용자가 작성한 스레드를 조회합니다. 무한 스크롤을 위한 커서 기반 페이지네이션이 포함되어 있습니다."
+ *     tags:
+ *       - Thread
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - name: Authorization
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: "JWT 토큰 (Bearer {token}) 형식"
+ *       - name: cursor
+ *         in: query
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: "페이지네이션을 위한 커서 값 (optional)"
+ *     responses:
+ *       200:
+ *         description: "성공적으로 스레드를 가져옴"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 isSuccess:
+ *                   type: boolean
+ *                   description: "요청 성공 여부"
+ *                   example: true
+ *                 code:
+ *                   type: string
+ *                   description: "응답 코드"
+ *                   example: "2000"
+ *                 message:
+ *                   type: string
+ *                   description: "처리 결과 메시지"
+ *                   example: "사용자 스레드 조회 성공"
+ *                 result:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       postContent:
+ *                         type: string
+ *                         description: "게시물 내용"
+ *                         example: "스웨거 테스트 용 내용"
+ *                       postDate:
+ *                         type: string
+ *                         format: date-time
+ *                         description: "게시물 작성 날짜"
+ *                         example: "2025-02-14T15:00:00.000Z"
+ *                       threadId:
+ *                         type: integer
+ *                         description: "게시물 ID"
+ *                         example: 90
+ *                       imageURL:
+ *                         type: string
+ *                         nullable: true
+ *                         description: "게시물 이미지 URL (없으면 null)"
+ *                         example: "https://travelbox-bucket.s3.ap-northeast-2.amazonaws.com/image/example.jpg"
+ *                 cursor:
+ *                   type: string
+ *                   nullable: true
+ *                   description: "다음 페이지 요청을 위한 커서 값"
+ *                   example: "2025-02-14|90"
+ *       401:
+ *         description: "인증 실패 (토큰 없음 또는 유효하지 않음)"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Unauthorized"
+ *       500:
+ *         description: "서버 내부 오류"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Internal Server Error"
+ */
 
 export default router;

@@ -158,4 +158,9 @@ export const errors = {
     code: 4,
     description: '스크랩 토글 중 오류가 발생했습니다.',
   },
+  THREAD_NOT_FOUND: {
+    statusCode: 404,
+    code: 5,
+    description: 'thread does not exist.',
+  },
 };
