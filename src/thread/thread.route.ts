@@ -818,7 +818,7 @@ router.get('/spotifySong', getSpotifySongController);
  *     summary: 내가 팔로잉하는 사람들의 게시물을 최신순으로 봄
  *     description: 내가 팔로잉하는 사람들의 게시물을 최신순으로 봄
  *     tags:
- *       - Posts
+ *       - Thread
  *     parameters:
  *       - in: query
  *         name: userTag

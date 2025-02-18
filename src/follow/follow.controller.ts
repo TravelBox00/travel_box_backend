@@ -1,5 +1,5 @@
 import { Response, Request, NextFunction } from "express";
-import { showFollowerService, showFollowingService, userAddFollowService } from "./follow.service.ts";
+import { searchFollowerService, searchFollowingService, showFollowerService, showFollowingService, userAddFollowService } from "./follow.service.ts";
 
 
 export const userAddFollowController = async(
@@ -64,3 +64,42 @@ export const showFollowingController = async(
         return res.status(500).json({ message: 'Look UP Following List Controller error' });
     }
 };
+
+export const searchFollowerController = async(
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<any>=> {
+    try {
+        const myTag = decodeURIComponent(req.params.myTag) as string;
+        const follower = decodeURIComponent(req.params.follower) as string;
+
+        const result = await searchFollowerService(myTag, follower);
+
+        return res.status(200).json(result);
+
+    } catch (error : any ) {
+        console.log(error);
+        return res.status(500).json({ message : 'searchFollow Controller error' });
+    }
+}; 
+
+
+export const searchFollowingController = async(
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<any>=> {
+    try {
+        const myTag = decodeURIComponent(req.params.myTag) as string;
+        const following = decodeURIComponent(req.params.following) as string;
+
+        const result = await searchFollowingService(myTag, following);
+
+        return res.status(200).json(result);
+
+    } catch (error : any ) {
+        console.log(error);
+        return res.status(500).json({ message : 'searchFollowing Controller error' });
+    }
+}; 

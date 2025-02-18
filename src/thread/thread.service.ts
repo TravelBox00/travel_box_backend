@@ -21,6 +21,7 @@ import { updatePostDTO, userPostDTO } from './dto/thread.dto.ts';
 
 import * as threadModel from './thread.model.ts';
 import { getArtist } from '../api/spotify.ts';
+import { v4 as uuidv4 } from 'uuid';
 
 // 게시물 좋아요
 export const toggleLike = async (
@@ -112,9 +113,12 @@ export const uploadImageService = async (
   try {
     // 1. 파일 업로드
     const uploadPromises = files.map((file) => {
+      // 고유한 파일 이름 생성 (예: originalname-UUID)
+      const uniqueFileName = `${file.originalname}-${uuidv4()}`;
+
       const params = {
         Bucket: bucketName,
-        Key: `image/${file.originalname}`,
+        Key: `image/${uniqueFileName}`,
         Body: file.buffer,
         ContentType: file.mimetype,
       };
@@ -142,7 +146,6 @@ export const uploadImageService = async (
   }
 };
 
-// 게시물 업로드 서비스
 // 게시물 업로드 서비스
 export const upLoadPostService = async (
   userTag: string,

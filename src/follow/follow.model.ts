@@ -185,3 +185,82 @@ export const showFollowingModel = async (
         return { message: 'showFollowingModel error' };
     }
 };
+
+
+export const searchFollowerModel = async (
+    userTag: string,
+    follower: string
+  ): Promise<any> => {
+    try {
+      const userQuery = `SELECT userId FROM User WHERE userTag = ?;`;
+      const [userArray]: any = await pool.query(userQuery, [userTag]);
+  
+      if (userArray.length === 0) {
+        return { message: `userTag '${userTag}' not found` };
+      }
+      const myId = userArray[0].userId;
+  
+      const followQuery = `
+        SELECT U.userId, U.userTag, U.userProfileImage, U.userNickname
+        FROM User U
+        LEFT JOIN Follow F ON U.userId = F.followerUserId
+        WHERE F.followingUserId = ? AND (U.userTag = ? OR U.userNickname = ?);
+      `;
+      const [followArray]: any = await pool.query(followQuery, [myId, follower, follower]);
+  
+      if (followArray.length === 0) {
+        return { message: `follower '${follower}' not found` };
+      }
+  
+      const followerInfo = followArray[0];
+      return {
+        userId: followerInfo.userId,
+        userTag: followerInfo.userTag,
+        userProfileImage: followerInfo.userProfileImage,
+        userNickname: followerInfo.userNickname,
+      };
+    } catch (error: any) {
+      console.error('searchFollowerModel error:', error);
+      return { message: 'searchFollowerModel error' };
+    }
+  };
+  
+
+  export const searchFollowingModel = async (
+    userTag: string,
+    following: string
+  ): Promise<any> => {
+    try {
+      const userQuery = `SELECT userId FROM User WHERE userTag = ?;`;
+      const [userArray]: any = await pool.query(userQuery, [userTag]);
+  
+      if (userArray.length === 0) {
+        return { message: `userTag '${userTag}' not found` };
+      }
+      const myId = userArray[0].userId;
+  
+      const followQuery = `
+        SELECT U.userId, U.userTag, U.userProfileImage, U.userNickname
+        FROM User U
+        LEFT JOIN Follow F ON U.userId = F.followingUserId
+        WHERE F.followerUserId = ? AND (U.userTag = ? OR U.userNickname = ?);
+      `;
+      const [followArray]: any = await pool.query(followQuery, [myId, following, following]);
+  
+      if (followArray.length === 0) {
+        return { message: `follower '${following}' not found` };
+      }
+  
+      const followering = followArray[0];
+      return {
+        userId: followering.userId,
+        userTag: followering.userTag,
+        userProfileImage: followering.userProfileImage,
+        userNickname: followering.userNickname,
+      };
+    } catch (error: any) {
+      console.error('searchFollowerModel error:', error);
+      return { message: 'searchFollowerModel error' };
+    }
+  };
+  
