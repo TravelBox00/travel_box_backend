@@ -10,9 +10,11 @@ import {
   findUserByUserTag,
   getRefreshTokenFromRedis,
   storeRefreshTokenInRedis,
+  getUserInfoByUserTag,
 } from '../models/userLogin.model.ts';
 import loginReqDto from '../dto/login.dto.ts';
 import { refreshTokenDto, tokensDto } from '../dto/token.dto.ts';
+import getUserInfo from '../dto/userInfo.dto.ts';
 
 export const loginService = async (
   userLoginInfo: loginReqDto
@@ -97,4 +99,13 @@ export const logoutService = async (userTag: string) => {
   if (success === 0) {
     throw new CustomError(errors.NOT_FOUND_USER_TAG, new Error());
   }
+};
+
+export const userInfoService = async (
+  userTag: string
+): Promise<getUserInfo> => {
+  const userAllInfo: getUserInfo = await getUserInfoByUserTag(userTag);
+  if (!userAllInfo)
+    throw new CustomError(errors.NOT_FOUND_USER_TAG, new Error());
+  return userAllInfo;
 };

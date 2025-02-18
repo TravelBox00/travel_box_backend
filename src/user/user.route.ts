@@ -3,6 +3,7 @@ import {
   loginController,
   refreshTokenController,
   logoutController,
+  userInfoController,
 } from './controllers/userLogin.controller.ts';
 
 import {
@@ -27,7 +28,7 @@ router.post('/signup', signupController);
 router.get('/signup/duplicate/:userTag', duplicateController);
 router.delete('/signout', authenticateToken, signoutController);
 router.patch('/modify', authenticateToken, modifyController);
-
+router.get('/info', authenticateToken, userInfoController);
 /**
  * @swagger
  * tags:
@@ -322,5 +323,56 @@ router.patch('/modify', authenticateToken, modifyController);
  *       500:
  *         description: Internal Server Error.
  */
-
+/**
+ * @swagger
+ * /info:
+ *   get:
+ *     summary: 사용자 정보 조회
+ *     description: 제공된 토큰의 사용자 태그를 기반으로 사용자 정보를 반환합니다.
+ *     tags:
+ *       - User
+ *     security:
+ *       - Bearer: []
+ *     produces:
+ *       - application/json
+ *     parameters:
+ *       - in: header
+ *         name: authorization
+ *         required: true
+ *         type: string
+ *         description: 'Bearer [token]'
+ *     responses:
+ *       200:
+ *         description: 사용자 정보 검색 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 result:
+ *                   $ref: '#/definitions/UserInfo'
+ *                 isSuccess:
+ *                   type: boolean
+ *                   example: true
+ *       401:
+ *         description: 인증 실패
+ *       404:
+ *         description: 사용자 태그를 찾을 수 없음
+ *       500:
+ *         description: 서버 내부 오류
+ *
+ * definitions:
+ *   UserInfo:
+ *     type: object
+ *     properties:
+ *       userId:
+ *         type: string
+ *         example: 'user123'
+ *       email:
+ *         type: string
+ *         example: 'user@example.com'
+ *       name:
+ *         type: string
+ *         example: 'John Doe'
+ */
 export default router;
