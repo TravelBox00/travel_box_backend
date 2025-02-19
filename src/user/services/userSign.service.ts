@@ -5,9 +5,9 @@ import bcrypt from 'bcrypt';
 
 import { signupReqDto } from '../dto/signup.dto.ts';
 import {
+  changeIsDeletedByUserTag,
   findUserTagByUserTag,
   userInfoChangeByUserTag,
-  userInfoDeleteByUserTag,
   userInfoRegisterByUserTag,
 } from '../models/userSign.model.ts';
 import { CustomError, errors } from '../../middlewares/error.middleware.ts';
@@ -17,7 +17,10 @@ import {
   checkNickname,
   checkPassword,
 } from '../utils/loginValidate.ts';
-import { deleteRefreshTokenInRedis } from '../models/userLogin.model.ts';
+import {
+  deleteRefreshTokenInRedis,
+  findUserBackByUserTag,
+} from '../models/userLogin.model.ts';
 
 export const signupService = async (userInfo: signupReqDto) => {
   const { userTag, userPassword, userNickname, email, userProfileImage } =
@@ -58,7 +61,7 @@ export const duplicateService = async (userTag: string) => {
 };
 
 export const signoutService = async (userTag: string) => {
-  const deleteCount: number = await userInfoDeleteByUserTag(userTag);
+  const deleteCount: number = await changeIsDeletedByUserTag(userTag);
   const success = await deleteRefreshTokenInRedis(userTag);
   if (deleteCount == 0 || success == 0) {
     throw new CustomError(errors.NOT_FOUND_USER_TAG, new Error());
@@ -93,4 +96,29 @@ export const modifyService = async (userInfo: modifyReqDto) => {
     hashedPassword || undefined,
     userNickname || undefined
   );
+};
+
+export const backService = async (
+  userTag: string,
+  userPassword: string
+): Promise<void> => {
+  // user 정보 맞는지 확인
+  const userInfo = await findUserBackByUserTag(userTag);
+  if (!userInfo) throw new CustomError(errors.NOT_FOUND_USER_TAG, new Error()); // custom error 적용시키기
+
+  const firstHash = crypto
+    .createHash('blake2b512')
+    .update(userPassword)
+    .digest('hex');
+  const isPasswordValid = await bcrypt.compare(
+    firstHash,
+    userInfo.userPassword
+  );
+  if (!isPasswordValid)
+    throw new CustomError(errors.INVALID_PASSWORD, new Error()); // custom error 적용시키기
+
+  const check = await changeIsDeletedByUserTag(userTag);
+  if (!check) {
+    throw new CustomError(errors.NOT_FOUND_USER_TAG, new Error());
+  }
 };

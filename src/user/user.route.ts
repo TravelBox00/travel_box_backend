@@ -11,6 +11,7 @@ import {
   duplicateController,
   signoutController,
   modifyController,
+  backController,
 } from './controllers/userSign.controller.ts';
 
 import { authenticateToken } from '../middlewares/auth.middleware.ts';
@@ -26,7 +27,8 @@ router.post('/login/refresh', refreshTokenController);
 router.delete('/logout', authenticateToken, logoutController);
 router.post('/signup', signupController);
 router.get('/signup/duplicate/:userTag', duplicateController);
-router.delete('/signout', authenticateToken, signoutController);
+router.patch('/signout', authenticateToken, signoutController);
+router.patch('/back', backController);
 router.patch('/modify', authenticateToken, modifyController);
 router.get('/info', authenticateToken, userInfoController);
 /**

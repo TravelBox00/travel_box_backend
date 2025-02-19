@@ -1,3 +1,4 @@
+import { ResultSetHeader } from 'mysql2/promise';
 import { pool } from '../../configs/database/mysqlConnect.ts';
 import { hashedSignupDto } from '../dto/signup.dto.ts';
 
@@ -46,57 +47,34 @@ export const findUserTagByUserTag = async (
   }
 };
 
-export const userInfoDeleteByUserTag = async (
+export const changeIsDeletedByUserTag = async (
   userTag: string
 ): Promise<number> => {
   const connection = await pool.getConnection();
-  await connection.beginTransaction();
+  await connection.beginTransaction(); // 트랜잭션 시작
+
   try {
-    await connection.beginTransaction();
+    // Promise.all을 사용하여 동시에 실행
+    const [userResult, threadResult] = await Promise.all([
+      connection.query<ResultSetHeader>(
+        `UPDATE User SET isDelete = 1 - isDelete WHERE userTag = ?`,
+        [userTag]
+      ),
+      connection.query<ResultSetHeader>(
+        `UPDATE TravelThread 
+         SET isDelete = 1 - isDelete 
+         WHERE userId = (SELECT userId FROM User WHERE userTag = ?)`,
+        [userTag]
+      ),
+    ]);
 
-    // 게시물 및 관련 데이터 삭제 (이미지, 해시태그)
-    await connection.query(
-      `
-            DELETE Image, HashTag, TravelThread 
-            FROM TravelThread
-            LEFT JOIN Image ON Image.threadId = TravelThread.threadId
-            LEFT JOIN HashTag ON HashTag.threadId = TravelThread.threadId
-            WHERE TravelThread.userId = (SELECT userId FROM User WHERE userTag = ?)
-        `,
-      [userTag]
-    );
+    await connection.commit(); // 트랜잭션 커밋
 
-    // 팔로우 관계 삭제 (내가 팔로우한 것, 나를 팔로우한 것)
-    await connection.query(
-      `
-            DELETE FROM Follow 
-            WHERE userId = (SELECT userId FROM User WHERE userTag = ?)
-            OR followingUserId = (SELECT userId FROM User WHERE userTag = ?)
-            OR followerUserId = (SELECT userId FROM User WHERE userTag = ?)
-        `,
-      [userTag, userTag, userTag]
-    );
-
-    // 댓글 및 좋아요 익명화 (NULL로 변경)
-    await connection.query(
-      `UPDATE Comment SET userId = NULL WHERE userId = (SELECT userId FROM User WHERE userTag = ?)`,
-      [userTag]
-    );
-    await connection.query(
-      `UPDATE \`Like\` SET userId = NULL WHERE userId = (SELECT userId FROM User WHERE userTag = ?)`,
-      [userTag]
-    );
-
-    // 사용자 삭제 (마지막에 수행)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [deleteUser]: any = await connection.query(
-      `DELETE FROM User WHERE userTag = ?`,
-      [userTag]
-    );
-
-    await connection.commit();
-
-    return deleteUser.affectedRows; // 삭제된 사용자 수 반환 (0 또는 1)
+    // affectedRows 값을 합산하여 반환 (배열의 첫 번째 요소에서 가져와야 함)
+    const affectedRows =
+      userResult[0].affectedRows + threadResult[0].affectedRows;
+    console.log(affectedRows);
+    return affectedRows;
   } catch (error) {
     await connection.rollback();
     console.error(error);
