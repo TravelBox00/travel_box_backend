@@ -7,6 +7,7 @@ import {
   getFastTimeThread,
 } from './search.model.ts';
 import {
+  findUserTagByThreadId,
   getCategoryFilterRankedThreads,
   getFilterRankedThreads,
   getRegionTopRankedThreads,
@@ -25,11 +26,14 @@ export const searchService = async (
   // 스레드와 이미지 URL을 병렬로 가져오기
   const threads = await Promise.all(threadIds.map((id) => getThread(id)));
   const imageUrls = await Promise.all(threadIds.map((id) => getImage(id)));
-
+  const userTag = await Promise.all(
+    threadIds.map((id) => findUserTagByThreadId(id))
+  );
   // 스레드와 해당 이미지 URL 매핑
   const searchData = threads.map((thread, index) => ({
+    userTag: userTag[index].userTag,
     threadId: thread.threadId,
-    imageURL: imageUrls[index],
+    imageURL: imageUrls[index].imageUrls,
     postTitle: thread.title,
     postDate: thread.date,
   }));
@@ -70,8 +74,11 @@ export const filterService = async (
 
   const threads = await Promise.all(threadIds.map((id) => getThread(id)));
   const imageUrls = await Promise.all(threadIds.map((id) => getImage(id)));
-
+  const userTag = await Promise.all(
+    threadIds.map((id) => findUserTagByThreadId(id))
+  );
   const searchData = threads.map((thread, index) => ({
+    userTag: userTag[index].userTag,
     threadId: thread.threadId,
     imageURL: imageUrls[index].imageURL,
     postTitle: thread.title,

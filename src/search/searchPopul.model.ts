@@ -1,4 +1,5 @@
 import { elastic } from '../configs/database/elasticConnect.ts';
+import { pool } from '../configs/database/mysqlConnect.ts';
 // Elasticsearch에서 인기있는 검색 결과를 가져오기 위한 함수
 const popularElasticsearch = async (
   category?: string,
@@ -54,3 +55,23 @@ export const getFilterRankedThreads = async (
   region: string,
   lastThreadId?: number
 ): Promise<number[]> => popularElasticsearch(category, region, lastThreadId);
+
+export const findUserTagByThreadId = async (threadId: number) => {
+  try {
+    const connection = await pool.getConnection();
+    const query = `
+              SELECT userTag
+              FROM TravelThread as TT
+              JOIN User as U
+              ON TT.userId = TT.userId 
+              where TT.threadId = ?
+              `;
+    const [[row]]: any = await connection.execute(query, [threadId]);
+    console.log('row', row);
+    connection.release();
+    return row;
+  } catch (error) {
+    console.error(error);
+    throw new Error();
+  }
+};
