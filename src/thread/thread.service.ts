@@ -253,7 +253,7 @@ export const myPostSearchService = async (userTag: string): Promise<any> => {
 // Category 별로 조회 서비스 함수
 export const myPostCategoryService = async (
   myCategory: string,
-  userTag: string
+  userTag: string,
 ): Promise<any> => {
   try {
     console.log('POST myPostCategoryService Connected');

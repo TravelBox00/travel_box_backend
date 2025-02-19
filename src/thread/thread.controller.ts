@@ -152,7 +152,7 @@ export const upLoadPostController = async (
     const userTag: string = decodeTokenUserTag(token) as string;
 
     const parsedBody = JSON.parse(req.body.body);
-    const { postCategory, postContent, postRegionCode, clothId, songName} = parsedBody;
+    const { postCategory, postContent, postRegionCode, clothInfo, songName} = parsedBody;
 
     if (
       postCategory !== '여행 기록' &&
@@ -172,7 +172,7 @@ export const upLoadPostController = async (
       postContent,
       postRegionCode,
       postDate,
-      clothId,
+      clothInfo,
       songName,
     };
     // 게시물 생성 및 이미지 업로드를 서비스로 통합
@@ -274,7 +274,8 @@ export const myPostCategoryController = async (
     console.log('POST myPostCategoryController Connected');
 
     let myCategory = req.query.myCategory as string;
-    const userTag = req.query.userTag as string;
+    const token = req.headers.authorization?.split(' ')[1] as string;
+    const userTag: string = decodeTokenUserTag(token) as string;
 
     // 카테고리 매핑 객체
     const categoryMapping: { [key: string]: string } = {
@@ -288,8 +289,6 @@ export const myPostCategoryController = async (
     // 매핑된 카테고리가 있으면 변환
     myCategory = categoryMapping[myCategory] || myCategory;
 
-    console.log('Decoded My Category:', myCategory);
-    console.log('User Tag:', userTag);
 
     const validCategories = ['여행 기록', '기념품', '여행지', '여행 코디'];
     if (!validCategories.includes(myCategory)) {

@@ -3,7 +3,7 @@ export interface userPostDTO {
   postContent: string;
   postRegionCode: string;
   postDate: Date;
-  clothId: number;
+  clothInfo: string;
   songName: string;
 }
 

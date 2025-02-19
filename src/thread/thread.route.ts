@@ -248,11 +248,10 @@ router.get('/scrap/info', getScrappedThreads);
  *                 description: JSON 형식의 게시물 정보 (문자열로 전달됨)
  *                 example: |
  *                   {
- *                     "userTag": "john#123",
  *                     "postCategory": "여행 기록",
  *                     "postContent": "스웨거 테스트 용 내용",
  *                     "postRegionCode": "서울 강남",
- *                     "clothId": 1,
+ *                     "clothInfo": "Adidas - 바지, 모자, 신발",
  *                     "songName": "Inside Out"
  *                   }
  *               files:
@@ -490,25 +489,20 @@ router.get('/specific', myPostSearchController);
  * /thread/category:
  *   get:
  *     summary: 카테고리별 게시물 조회
- *     description: 특정 사용자가 작성한 게시물을 카테고리별로 조회합니다.
+ *     description: 특정 사용자가 작성한 게시물을 카테고리별로 조회하며, 카테고리명에 대한 일부 변환 처리가 있습니다.
  *     tags:
  *       - Thread
  *     parameters:
- *       - in: query
- *         name: userTag
- *         required: true
- *         schema:
- *           type: string
- *         description: 사용자 태그 (ID와 유사한 값)
- *         example: "john#123"
  *       - in: query
  *         name: myCategory
  *         required: true
  *         schema:
  *           type: string
- *           enum: ["여행 기록", "기념품", "여행지", "여행 코디"]
- *         description: "조회할 카테고리 (Enum 값: 여행 기록, 기념품, 여행지, 여행 코디)"
+ *           enum: ["여행기록", "여행코디"]
+ *         description: "조회할 카테고리 (Enum 값: 여행기록, 여행코디. 서버에서는 이를 '여행 기록', '여행 코디'로 변환하여 처리합니다.)"
  *         example: "여행기록"
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: 카테고리별로 필터링된 게시물 목록 반환
