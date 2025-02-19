@@ -73,10 +73,12 @@ export const deleteCommentController: RequestHandler = async (
   next
 ) => {
   try {
-    const { commentId } = req.body;
-
+    const commentId = Number(req.query.commentId);
     if (!commentId) {
-      throw new CustomError(errors.NOT_INPUT_VALUE, new Error());
+      throw new CustomError(
+        errors.NOT_INPUT_VALUE,
+        new Error('commentId가 없습니다.')
+      );
     }
 
     const result = await removeComment(commentId);
