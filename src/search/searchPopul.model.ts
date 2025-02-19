@@ -5,11 +5,11 @@ const popularElasticsearch = async (
   region?: string,
   lastThreadId?: number
 ): Promise<number[]> => {
+  console.log('lastThreadId', lastThreadId);
   const mustQueries = category ? [{ match: { category } }] : [];
   const filterQueries = region ? [{ term: { postRegionCode: region } }] : [];
   let size = 8;
   if (!lastThreadId) size = 2;
-
   try {
     const response = await elastic.search({
       index: 'post_stats',
@@ -22,13 +22,11 @@ const popularElasticsearch = async (
           },
         },
         sort: [
-          { postDate: { order: 'desc' } },
           { threadId: { order: 'desc' } }, // 정렬 기준 추가
         ],
-        // search_after: lastThreadId, // 이전 결과 다음의 데이터를 조회
+        search_after: lastThreadId ? [lastThreadId] : undefined, // 이전 결과 다음의 데이터를 조회
       },
     });
-
     return response.hits.hits.map((hit: any) => hit._source.threadId);
   } catch (error) {
     console.error('Error fetching threads from Elasticsearch:', error);
