@@ -1,5 +1,6 @@
 import { Response, Request, NextFunction } from "express";
 import { searchFollowerService, searchFollowingService, showFollowerService, showFollowingService, userAddFollowService } from "./follow.service.ts";
+import { decodeTokenUserTag } from "../middlewares/auth.middleware.ts";
 
 
 export const userAddFollowController = async(
@@ -10,16 +11,17 @@ export const userAddFollowController = async(
     console.log('userAddFollow Controller Connected');  
 
     try {
-        const userTag = req.body.userTag as string;
+        const token = req.headers.authorization?.split(' ')[1] as string;
+        const userTag: string = decodeTokenUserTag(token) as string;
         const followTag = req.body.followTag as string;
 
         const result = await userAddFollowService(userTag, followTag);
 
-        return res.status(200).json(result);  // 응답은 여기서만 처리
+        return res.status(200).json(result); 
 
     } catch (error : any) {
         console.log(error);
-        return res.status(500).json({ message: 'userAddFollow Controller error' });  // 오류 응답
+        return res.status(500).json({ message: 'userAddFollow Controller error' });  
     }
 };
 
