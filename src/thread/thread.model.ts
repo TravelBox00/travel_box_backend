@@ -634,9 +634,11 @@ export const popularPostModel = async (
        T.postContent, 
        DATE_FORMAT(T.postDate, "%Y-%m-%d") as postDate, 
        I.imageURL,
+       U.userTag,
        (COALESCE(L.likeCount, 0) * 1 + COALESCE(C.commentCount, 0) * 1 + COALESCE(S.scrapCount, 0) * 1) AS totalEngagement
     FROM TravelThread T
     LEFT JOIN Image I ON T.threadId = I.threadId
+    LEFT JOIN User U ON T.userId = U.userId 
     LEFT JOIN (
       SELECT threadId, COUNT(*) AS likeCount
       FROM \`Like\`
