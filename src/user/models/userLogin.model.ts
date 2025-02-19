@@ -22,7 +22,7 @@ export const findUserByUserTag = async (
       `
             SELECT userTag, userPassword
             FROM User
-            WHERE userTag = ?
+            WHERE userTag = ? AND isDelete = 1
             `,
       [userTag]
     );
@@ -163,6 +163,28 @@ export const getUserInfoByUserTag = async (
             SELECT userTag, userNickname, userProfileImage, email
             FROM User
             WHERE userTag = ?
+            `,
+      [userTag]
+    );
+    connection.release();
+    return rows;
+  } catch (error) {
+    console.error(error);
+    throw new Error();
+  }
+};
+
+export const findUserBackByUserTag = async (
+  userTag: string
+): Promise<loginReqDto | null> => {
+  try {
+    const connection = await pool.getConnection();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [[rows]]: any = await connection.execute(
+      `
+            SELECT userTag, userPassword
+            FROM User
+            WHERE userTag = ? AND isDelete = 0
             `,
       [userTag]
     );

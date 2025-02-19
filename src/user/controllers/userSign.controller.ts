@@ -5,6 +5,7 @@ import {
   signoutService,
   signupService,
   modifyService,
+  backService,
 } from '../services/userSign.service.ts';
 import modifyReqDto from '../dto/modify.dto.ts';
 import { decodeTokenUserTag } from '../../middlewares/auth.middleware.ts';
@@ -63,6 +64,20 @@ export const modifyController = async (
     const { userPassword, userNickname } = req.body;
     const userInfo: modifyReqDto = { userTag, userPassword, userNickname };
     await modifyService(userInfo);
+    res.status(200).json({ isSuccess: true });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const backController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { userTag, userPassword } = req.body;
+    await backService(userTag, userPassword);
     res.status(200).json({ isSuccess: true });
   } catch (error) {
     next(error);
