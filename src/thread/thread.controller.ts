@@ -138,7 +138,6 @@ export const getScrappedThreads = async (
   }
 };
 
-
 // 게시물 업로드 Controller
 export const upLoadPostController = async (
   req: Request,
@@ -152,7 +151,8 @@ export const upLoadPostController = async (
     const userTag: string = decodeTokenUserTag(token) as string;
 
     const parsedBody = JSON.parse(req.body.body);
-    const { postCategory, postContent, postRegionCode, clothInfo, songName} = parsedBody;
+    const { postCategory, postContent, postRegionCode, clothInfo, songName } =
+      parsedBody;
 
     if (
       postCategory !== '여행 기록' &&
@@ -181,12 +181,14 @@ export const upLoadPostController = async (
       postData,
       req.files as Express.Multer.File[],
       res,
-      next,
+      next
     );
     return res.status(201).json(response);
   } catch (error: any) {
     console.error('Post Upload Controller Error', error.message);
-    return res.status(400).json({ error: error.message || 'Post Upload Controller Error' });
+    return res
+      .status(400)
+      .json({ error: error.message || 'Post Upload Controller Error' });
   }
 };
 
@@ -279,8 +281,8 @@ export const myPostCategoryController = async (
 
     // 카테고리 매핑 객체
     const categoryMapping: { [key: string]: string } = {
-      '여행기록': '여행 기록',
-      '여행코디': '여행 코디'
+      여행기록: '여행 기록',
+      여행코디: '여행 코디',
     };
 
     // 디코딩 후 trim() 적용
@@ -288,7 +290,6 @@ export const myPostCategoryController = async (
 
     // 매핑된 카테고리가 있으면 변환
     myCategory = categoryMapping[myCategory] || myCategory;
-
 
     const validCategories = ['여행 기록', '기념품', '여행지', '여행 코디'];
     if (!validCategories.includes(myCategory)) {
@@ -318,8 +319,7 @@ export const updatePostController = async (
   try {
     const token = req.headers.authorization?.split(' ')[1] as string;
     const userTag: string = decodeTokenUserTag(token) as string;
-    const { threadId, postCategory ,postContent } =
-      req.body;
+    const { threadId, postCategory, postContent } = req.body;
 
     // 카테고리 확인인
     if (
@@ -410,25 +410,29 @@ export const getSpotifySongController = async (
   next: NextFunction
 ): Promise<any> => {
   try {
-      console.log("SpotifySong Controller API");
+    console.log('SpotifySong Controller API');
 
-      const songName = req.query.songName as string;
-      const limit = 10; // 고정값
-      const search_type = 'track';
+    const songName = req.query.songName as string;
+    const limit = 10; // 고정값
+    const search_type = 'track';
 
-      if (!songName) {
-          return res.status(400).json({ error: 'Track ID is required' });
-      }
+    if (!songName) {
+      return res.status(400).json({ error: 'Track ID is required' });
+    }
 
-      const result = await threadService.getSpotifySongService(songName, limit, search_type);
-      return res.status(200).json(result);
-
+    const result = await threadService.getSpotifySongService(
+      songName,
+      limit,
+      search_type
+    );
+    return res.status(200).json(result);
   } catch (error: any) {
-      console.error('getSpotifySongController Error:', error);
-      return res.status(500).json({ error: 'Internal Server Error', message: error.message });
+    console.error('getSpotifySongController Error:', error);
+    return res
+      .status(500)
+      .json({ error: 'Internal Server Error', message: error.message });
   }
 };
-
 
 // following post 조회
 export const getFollowingPostController = async (
@@ -436,25 +440,27 @@ export const getFollowingPostController = async (
   res: Response,
   next: NextFunction
 ): Promise<any> => {
-    console.log("get Follow Controller Connected");
+  console.log('get Follow Controller Connected');
 
-    try {
-      const userTag = decodeURIComponent(req.query.userTag as string);
+  try {
+    const userTag = decodeURIComponent(req.query.userTag as string);
 
-      const result = await threadService.getFollowingPostService(userTag);
+    const result = await threadService.getFollowingPostService(userTag);
 
-      return res.status(200).json( result );
-    } catch (error : any) {
-      console.error('get Follow Controller error', error);
-      return res.status(500).json({ error : 'get Follow Controller error', message : error.message });
-    }
+    return res.status(200).json(result);
+  } catch (error: any) {
+    console.error('get Follow Controller error', error);
+    return res
+      .status(500)
+      .json({ error: 'get Follow Controller error', message: error.message });
+  }
 };
 
 export const getPopularTracksController = async (
-  req: Request, 
-  res: Response, 
+  req: Request,
+  res: Response,
   next: NextFunction
-): Promise<any>=> {
+): Promise<any> => {
   try {
     const tracks = await getPopularTracks();
     return res.status(200).json(tracks);
