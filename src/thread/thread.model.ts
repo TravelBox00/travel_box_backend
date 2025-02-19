@@ -190,7 +190,7 @@ export const upLoadPostModel = {
       const { userId } = userResult[0];
 
       // 지역 코드 파싱
-      let postRegionCode = [];
+      let postRegionCode = [] as string[];
       const regionInput = postData.postRegionCode.trim(); // 입력 예시: "서울 강남" or "오세아니아 호주"
       console.log('Region Input:', regionInput); // Debug log
 
@@ -209,28 +209,26 @@ export const upLoadPostModel = {
       if (domesticRegion) {
         // 국내 지역인 경우
         const area = areaOrCountry;
-        if (area && !domesticRegion.areas.includes(area)) {
-          throw new Error(`Invalid area '${area}' for the city '${cityOrContinent}'`);
-        }
 
         postRegionCode = area ? [cityOrContinent, area] : [cityOrContinent, ...domesticRegion.areas];
       } else if (isOverseasCountry) {
         postRegionCode = [cityOrContinent, areaOrCountry];
       } else {
-        throw new Error(`Invalid region input: City or Continent '${cityOrContinent}' not found`);
+        // regions에 해당하는 지역이 없을 경우, 그대로 입력된 값을 저장
+        postRegionCode = [regionInput];
       }
 
       // 새로운 게시물 생성
       const threadQuery = `
         INSERT INTO TravelThread 
-        (userId, clothId, postCategory, postContent, postRegionCode, postDate)
+        (userId, clothInfo, postCategory, postContent, postRegionCode, postDate)
         VALUES (?, ?, ?, ?, ?, ?)`; 
 
       const [threadResult]: [ResultSetHeader, any[]] = await connection.query(
         threadQuery,
         [
           userId,
-          postData.clothId || null,
+          postData.clothInfo || null,
           postData.postCategory,
           postData.postContent,
           postRegionCode.join(','), // 배열 형태로 DB에 저장
@@ -285,7 +283,7 @@ export const postInfoModel = async (
     console.log('POST Model Connected');
 
     const query = `
-      SELECT T.clothId, T.postCategory, T.postContent, 
+      SELECT T.clothInfo, T.postCategory, T.postContent, 
          DATE_FORMAT(T.postDate, "%Y-%m-%d") as postDate, 
          T.postRegionCode, I.imageURL as imageURL, U.userTag, S.singInfo
       FROM TravelThread T
@@ -373,7 +371,7 @@ export const myPostSearchModel = async (userTag: string): Promise<any> => {
     console.log('POST myPostSearchModel Connected');
 
     const query = `
-      SELECT I.imageURL as imageURL, T.postContent, T.postDate, U.userTag
+      SELECT I.imageURL as imageURL, T.postContent, T.postDate, U.userTag, T.threadId
       FROM TravelThread T
       LEFT JOIN Image I ON T.threadId = I.threadId
       LEFT JOIN User U ON T.userId = U.userId
@@ -399,7 +397,7 @@ export const myPostCategoryModel = async (
     console.log('POST myPostCategoryModel Connected');
 
     const query = `
-      SELECT T.postContent, I.imageURL as imageURL
+      SELECT T.postContent, I.imageURL as imageURL, T.threadId
       FROM TravelThread T
       LEFT JOIN Image I ON T.threadId = I.threadId
       WHERE T.postCategory = ? AND T.userId = (SELECT userId FROM User WHERE userTag = ?) AND T.isDelete = 1;
@@ -751,7 +749,7 @@ export const getFollowingPostModel = async (
     const followingUserIdArray = followingUserId.map((item : any) => item.followingUserId);
 
     const threadsQuery = `
-      SELECT T.postContent, I.imageURL, U.userTag 
+      SELECT T.postContent, I.imageURL, U.userTag, T.threadId
       FROM TravelThread T
       LEFT JOIN Image I ON T.threadId = I.threadId
       LEFT JOIN User U ON T.userId = U.userId

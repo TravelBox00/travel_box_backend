@@ -41,7 +41,7 @@ app.use('/', router);
 app.use('/users', userRoutes);
 
 app.use('/calendar', authenticateToken, calendarRoutes);
-app.use('/thread', authenticateToken, threadRoutes);
+app.use('/thread', threadRoutes);
 app.use('/search', authenticateToken, searchRoutes);
 app.use('/comment', authenticateToken, commentRouter);
 app.use('/follow', authenticateToken, followRouter);
