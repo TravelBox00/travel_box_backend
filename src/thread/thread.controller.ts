@@ -18,6 +18,7 @@ import { upLoadPostModel } from './thread.model.ts';
 import * as threadService from './thread.service.ts';
 import { CustomError, errors } from '../middlewares/error.middleware.ts';
 import { getPopularTracks } from '../api/spotify.ts';
+import { decodeTokenUserTag } from '../middlewares/auth.middleware.ts';
 
 // 게시물 좋아요
 export const toggleLike = async (
@@ -147,8 +148,11 @@ export const upLoadPostController = async (
   console.log('POST upLoadPostController');
 
   try {
+    const token = req.headers.authorization?.split(' ')[1] as string;
+    const userTag: string = decodeTokenUserTag(token) as string;
+
     const parsedBody = JSON.parse(req.body.body);
-    const { userTag, postCategory, postContent, postRegionCode, clothId, songName} = parsedBody;
+    const { postCategory, postContent, postRegionCode, clothId, songName} = parsedBody;
 
     if (
       postCategory !== '여행 기록' &&
@@ -195,10 +199,6 @@ export const postInfoController = async (
   try {
     const userTag = req.query.userTag as string;
     const threadId = Number(req.query.threadId);
-
-    console.log('POST info controller conneted');
-    console.log('User Tag : ', userTag);
-    console.log('Thread Id : ', threadId);
 
     const result = await postInfoService(userTag, threadId, res, next);
     return res.status(200).json(result);
@@ -317,7 +317,9 @@ export const updatePostController = async (
   console.log('PUT updatePostController Connected');
 
   try {
-    const { userTag, threadId, postCategory ,postContent } =
+    const token = req.headers.authorization?.split(' ')[1] as string;
+    const userTag: string = decodeTokenUserTag(token) as string;
+    const { threadId, postCategory ,postContent } =
       req.body;
 
     // 카테고리 확인인
@@ -366,7 +368,8 @@ export const deletePostController = async (
 
   try {
     // URL 쿼리 파라미터에서 값 가져온 후 디코딩
-    const userTag = decodeURIComponent(req.query.userTag as string);
+    const token = req.headers.authorization?.split(' ')[1] as string;
+    const userTag: string = decodeTokenUserTag(token) as string;
     const threadId = Number(req.query.threadId);
 
     // 포스트 삭제 서비스 호출

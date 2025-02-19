@@ -28,7 +28,14 @@ export const userAddFollowModel = async (
         if (followIdArray.length === 0) {
             throw new Error(`followTag '${followTag}' not found`);
         }
+
         const followId: number = followIdArray[0].userId;
+
+        const delete_check = await deleteUserFollowModel(followId);
+
+        if(delete_check === 0) {
+            return {message : `followid '${followId}' is deleted User`};
+        }
 
         // 이미 팔로우 중인지 확인
         const [existingFollow]: any = await pool.query(
@@ -109,7 +116,7 @@ export const showFollowerModel = async (
                 END AS isFollowing
             FROM Follow F
             LEFT JOIN User U ON F.followerUserId = U.userId
-            WHERE F.followingUserId = ?;
+            WHERE F.followingUserId = ? AND U.isDelete = 1;
         `;
 
         const [followerIdArray]: any = await pool.query(follwingquery, [userId, userId]);
@@ -168,8 +175,8 @@ export const showFollowingModel = async (
                     ELSE FALSE
                 END AS isFollowedByThem
             FROM Follow F
-            LEFT JOIN User U ON F.followingUserId = U.userId 
-            WHERE F.followerUserId = ?;
+            LEFT JOIN User U ON F.followingUserId = U.userId
+            WHERE F.followerUserId = ? AND U.isDelete = 1;
         `;
 
         const [followerIdArray]: any = await pool.query(followerquery, [userId, userId]);
@@ -204,7 +211,7 @@ export const searchFollowerModel = async (
         SELECT U.userId, U.userTag, U.userProfileImage, U.userNickname
         FROM User U
         LEFT JOIN Follow F ON U.userId = F.followerUserId
-        WHERE F.followingUserId = ? AND (U.userTag = ? OR U.userNickname = ?);
+        WHERE F.followingUserId = ? AND (U.userTag = ? OR U.userNickname = ?) AND U.isDelete = 1;
       `;
       const [followArray]: any = await pool.query(followQuery, [myId, follower, follower]);
   
@@ -213,6 +220,9 @@ export const searchFollowerModel = async (
       }
   
       const followerInfo = followArray[0];
+
+      deleteUserFollowModel(followerInfo.userId);
+
       return {
         userId: followerInfo.userId,
         userTag: followerInfo.userTag,
@@ -243,7 +253,7 @@ export const searchFollowerModel = async (
         SELECT U.userId, U.userTag, U.userProfileImage, U.userNickname
         FROM User U
         LEFT JOIN Follow F ON U.userId = F.followingUserId
-        WHERE F.followerUserId = ? AND (U.userTag = ? OR U.userNickname = ?);
+        WHERE F.followerUserId = ? AND (U.userTag = ? OR U.userNickname = ?) AND U.isDelete = 1;
       `;
       const [followArray]: any = await pool.query(followQuery, [myId, following, following]);
   
@@ -252,6 +262,9 @@ export const searchFollowerModel = async (
       }
   
       const followering = followArray[0];
+
+      deleteUserFollowModel(followering.userId);
+
       return {
         userId: followering.userId,
         userTag: followering.userTag,
@@ -264,3 +277,32 @@ export const searchFollowerModel = async (
     }
   };
   
+
+// 만약 사용자가 delete 되었다면 팔로우 관계도 삭제
+export const deleteUserFollowModel = async (followId: number): Promise<any> => {
+    try {
+      const queryCheckIsExist = `SELECT isDelete FROM User WHERE userId = ?;`;
+      const [isDeleteArray]: any = await pool.query(queryCheckIsExist, [followId]);
+  
+      if (isDeleteArray.length === 0) {
+        return { status: "error", message: "User not found" };
+      }
+  
+      const checkIsDelete = isDeleteArray[0].isDelete;
+  
+      if (checkIsDelete === 0) {
+        const deleteFollowQuery = `
+          DELETE FROM Follow 
+          WHERE followerUserId = ? OR followingUserId = ?;
+        `;
+        await pool.query(deleteFollowQuery, [followId, followId]);
+  
+        return { status: "success", message: "User and related follow relationships deleted" };
+      } else {
+        return { status: "info", message: "User is not marked as deleted" };
+      }
+    } catch (error: any) {
+      console.error("deleteUserFollowModel error:", error);
+      return { status: "error", message: "deleteUserFollowModel error", errorDetails: error.message };
+    }
+  };

@@ -196,11 +196,8 @@ export const upLoadPostModel = {
 
       // 공백을 기준으로 나누기 (예: "서울" + "강남" or "오세아니아" + "호주")
       const splitRegion = regionInput.split(/\s+/); // 여러 공백을 하나의 구분자로 처리
-      const cityOrContinent = splitRegion[0]; // 첫 번째 단어는 city 또는 continent로 처리
-      const areaOrCountry = splitRegion.slice(1).join(' '); // 나머지 부분은 area 또는 country로 처리
-
-      console.log('Parsed City/Continent:', cityOrContinent); // Debug log
-      console.log('Parsed Area/Country:', areaOrCountry); // Debug log
+      const cityOrContinent = splitRegion[0]; 
+      const areaOrCountry = splitRegion.slice(1).join(' '); 
 
       // 해당 도시가 국내 regions에 있는지 확인
       const domesticRegion = regions.domestic.find(region => region.city === cityOrContinent);
@@ -209,10 +206,6 @@ export const upLoadPostModel = {
       const overseasRegion = regions.overseas.find(region => region.continent === cityOrContinent);
       const isOverseasCountry = overseasRegion ? overseasRegion.countries.includes(areaOrCountry) : false;
 
-      console.log('Domestic Region:', domesticRegion); // Debug log
-      console.log('Overseas Region:', overseasRegion); // Debug log
-      console.log('Is Overseas Country:', isOverseasCountry); // Debug log
-
       if (domesticRegion) {
         // 국내 지역인 경우
         const area = areaOrCountry;
@@ -220,10 +213,8 @@ export const upLoadPostModel = {
           throw new Error(`Invalid area '${area}' for the city '${cityOrContinent}'`);
         }
 
-        // 지역 코드 처리 (area가 있으면 특정 지역만, 없으면 전체 지역을 처리)
         postRegionCode = area ? [cityOrContinent, area] : [cityOrContinent, ...domesticRegion.areas];
       } else if (isOverseasCountry) {
-        // 해외 국가인 경우
         postRegionCode = [cityOrContinent, areaOrCountry];
       } else {
         throw new Error(`Invalid region input: City or Continent '${cityOrContinent}' not found`);
@@ -302,7 +293,7 @@ export const postInfoModel = async (
       LEFT JOIN Image I ON T.threadId = I.threadId
       LEFT JOIN Sing S ON T.ThreadId = S.threadId
       WHERE U.userTag LIKE ? COLLATE utf8mb4_general_ci 
-      AND T.threadId = ?;
+      AND T.threadId = ? AND T.isDelete = 1;
     `;
 
     // 부분 일치를 위해 userTag를 '%'로 감싸서 전달
@@ -323,8 +314,6 @@ export const postSearchModel = async (
   limit: number,
   offset: number
 ): Promise<any> => {
-  console.log('ElasticSearch + MySQL 기반 postSearch Model Connected');
-
   try {
     // ElasticSearch 검색
     const { hits } = await elastic.search({
@@ -388,7 +377,7 @@ export const myPostSearchModel = async (userTag: string): Promise<any> => {
       FROM TravelThread T
       LEFT JOIN Image I ON T.threadId = I.threadId
       LEFT JOIN User U ON T.userId = U.userId
-      WHERE T.userId = (SELECT userId FROM User WHERE userTag = ?) AND T.threadId;
+      WHERE T.userId = (SELECT userId FROM User WHERE userTag = ?) AND (T.isDelete = 1);
     `;
 
     // 배열 디스트럭처링 -> 각 객체의 속성값을 접근할 수 있음
@@ -413,7 +402,7 @@ export const myPostCategoryModel = async (
       SELECT T.postContent, I.imageURL as imageURL
       FROM TravelThread T
       LEFT JOIN Image I ON T.threadId = I.threadId
-      WHERE T.postCategory = ? AND T.userId = (SELECT userId FROM User WHERE userTag = ?);
+      WHERE T.postCategory = ? AND T.userId = (SELECT userId FROM User WHERE userTag = ?) AND T.isDelete = 1;
     `;
 
     const [results] = await pool.query(query, [myCategory, userTag]);
@@ -665,6 +654,7 @@ export const popularPostModel = async (
       FROM PostScrap
       GROUP BY threadId
     ) S ON T.threadId = S.threadId
+    WHERE T.isDelete = 1
     ORDER BY totalEngagement DESC
     LiMIT ? OFFSET ?;`;
 
@@ -765,7 +755,7 @@ export const getFollowingPostModel = async (
       FROM TravelThread T
       LEFT JOIN Image I ON T.threadId = I.threadId
       LEFT JOIN User U ON T.userId = U.userId
-      WHERE U.userId IN (?)
+      WHERE U.userId IN (?) AND T.isDelete = 1
       ORDER BY T.postDate DESC;
     `;
 
@@ -776,4 +766,4 @@ export const getFollowingPostModel = async (
     console.error('getFollowingPostModel Error', error.message);
     throw error;
   }
-}
+};
