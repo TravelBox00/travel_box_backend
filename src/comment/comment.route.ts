@@ -109,25 +109,64 @@ const router = Router();
  *     tags: [Comments]
  *     security:
  *       - BearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               commentId:
- *                 type: integer
- *                 description: 삭제할 댓글 ID
+ *     parameters:
+ *       - in: query
+ *         name: commentId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: 삭제할 댓글 ID
  *     responses:
  *       200:
  *         description: 댓글 삭제 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 isSuccess:
+ *                   type: boolean
+ *                   example: true
  *       400:
  *         description: 잘못된 요청
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "commentId가 없습니다"
  *       401:
  *         description: 인증 실패
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Unauthorized"
+ *       404:
+ *         description: 댓글을 찾을 수 없음
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "댓글이 존재하지 않습니다."
  *       500:
  *         description: 서버 에러
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Internal Server Error"
  */
 
 /**
