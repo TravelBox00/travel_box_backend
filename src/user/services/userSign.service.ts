@@ -23,15 +23,15 @@ import {
 } from '../models/userLogin.model.ts';
 
 export const signupService = async (userInfo: signupReqDto) => {
-  const { userTag, userPassword, userNickname, email, userProfileImage } =
-    userInfo;
+  const { userTag, userPassword, userNickname } = userInfo;
 
   const promises = [checkNickname(userNickname), checkPassword(userPassword)];
 
+  /*
   if (email !== undefined) {
     promises.push(checkEmail(email));
   }
-
+  */
   await Promise.all(promises);
 
   const salt: string = await bcrypt.genSalt(10);
@@ -44,8 +44,6 @@ export const signupService = async (userInfo: signupReqDto) => {
     userTag,
     hashedPassword,
     userNickname,
-    userProfileImage,
-    email,
   });
 };
 

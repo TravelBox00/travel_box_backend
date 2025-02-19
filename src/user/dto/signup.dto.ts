@@ -5,7 +5,7 @@ export class signupReqDto {
 
   userNickname: string;
 
-  userProfileImage: string;
+  userProfileImage?: string;
 
   email?: string;
 
@@ -13,7 +13,7 @@ export class signupReqDto {
     userTag: string,
     userPassword: string,
     userNickname: string,
-    userProfileImage: string,
+    userProfileImage?: string,
     email?: string
   ) {
     this.userTag = userTag;
@@ -31,7 +31,7 @@ export class hashedSignupDto {
 
   userNickname: string;
 
-  userProfileImage: string;
+  userProfileImage?: string;
 
   email?: string;
 
@@ -39,7 +39,7 @@ export class hashedSignupDto {
     userTag: string,
     hashedPassword: string,
     userNickname: string,
-    userProfileImage: string,
+    userProfileImage?: string,
     email?: string
   ) {
     this.userTag = userTag;
