@@ -50,18 +50,18 @@ export const wordService = async (word: string): Promise<string[]> => {
 export const filterService = async (
   category: string | undefined,
   region: string | undefined,
-  cursor?: string[]
+  lastThreadId?: number
 ): Promise<searchResDto[]> => {
   let threadIds: number[];
 
   if (category !== undefined && region !== undefined) {
-    threadIds = await getFilterRankedThreads(category, region, cursor);
+    threadIds = await getFilterRankedThreads(category, region, lastThreadId);
   } else if (category === undefined && region !== undefined) {
-    threadIds = await getRegionTopRankedThreads(region, cursor);
+    threadIds = await getRegionTopRankedThreads(region, lastThreadId);
   } else if (category !== undefined && region === undefined) {
-    threadIds = await getCategoryFilterRankedThreads(category, cursor);
+    threadIds = await getCategoryFilterRankedThreads(category, lastThreadId);
   } else {
-    threadIds = await getTopRankedThreads(cursor);
+    threadIds = await getTopRankedThreads(lastThreadId);
   }
 
   if (threadIds.length === 0) {
@@ -73,7 +73,7 @@ export const filterService = async (
 
   const searchData = threads.map((thread, index) => ({
     threadId: thread.threadId,
-    imageURL: imageUrls[index],
+    imageURL: imageUrls[index].imageURL,
     postTitle: thread.title,
     postDate: thread.date,
   }));

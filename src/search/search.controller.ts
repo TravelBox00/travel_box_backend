@@ -41,11 +41,11 @@ export const filterController = async (
   try {
     const category = req.query.category as string | undefined;
     const region = req.query.region as string | undefined;
-    const cursor = req.query.cursor as string[] | undefined; // 커서 처리 추가
+    const lastThread = req.query.lastThread as number | undefined; // 커서 처리 추가
     const searchRes: searchResDto[] = await filterService(
       category,
       region,
-      cursor
+      lastThread
     );
 
     res.status(200).json({ result: searchRes, isSuccess: true });

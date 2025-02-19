@@ -3,11 +3,12 @@ import { elastic } from '../configs/database/elasticConnect.ts';
 const popularElasticsearch = async (
   category?: string,
   region?: string,
-  cursor?: string[]
+  lastThreadId?: number
 ): Promise<number[]> => {
   const mustQueries = category ? [{ match: { category } }] : [];
   const filterQueries = region ? [{ term: { postRegionCode: region } }] : [];
-  const size = cursor ? 2 : 8; // 초기 요청 시 8개, 커서가 있을 때는 2개
+  let size = 8;
+  if (!lastThreadId) size = 2;
 
   try {
     const response = await elastic.search({
@@ -24,7 +25,7 @@ const popularElasticsearch = async (
           { postDate: { order: 'desc' } },
           { threadId: { order: 'desc' } }, // 정렬 기준 추가
         ],
-        search_after: cursor, // 이전 결과 다음의 데이터를 조회
+        // search_after: lastThreadId, // 이전 결과 다음의 데이터를 조회
       },
     });
 
@@ -36,21 +37,22 @@ const popularElasticsearch = async (
 };
 
 export const getTopRankedThreads = async (
-  cursor?: string[]
-): Promise<number[]> => popularElasticsearch(undefined, undefined, cursor);
+  lastThreadId?: number
+): Promise<number[]> =>
+  popularElasticsearch(undefined, undefined, lastThreadId);
 
 export const getRegionTopRankedThreads = async (
   region: string,
-  cursor?: string[]
-): Promise<number[]> => popularElasticsearch(undefined, region, cursor);
+  lastThreadId?: number
+): Promise<number[]> => popularElasticsearch(undefined, region, lastThreadId);
 
 export const getCategoryFilterRankedThreads = async (
   category: string,
-  cursor?: string[]
-): Promise<number[]> => popularElasticsearch(category, undefined, cursor);
+  lastThreadId?: number
+): Promise<number[]> => popularElasticsearch(category, undefined, lastThreadId);
 
 export const getFilterRankedThreads = async (
   category: string,
   region: string,
-  cursor?: string[]
-): Promise<number[]> => popularElasticsearch(category, region, cursor);
+  lastThreadId?: number
+): Promise<number[]> => popularElasticsearch(category, region, lastThreadId);
