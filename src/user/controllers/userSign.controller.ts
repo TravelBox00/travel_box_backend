@@ -62,6 +62,8 @@ export const modifyController = async (
     const token = req.headers.authorization?.split(' ')[1] as string;
     const userTag: string = decodeTokenUserTag(token) as string;
     const { userPassword, userNickname } = req.body;
+    const imageFile = req.file;
+    console.log(imageFile);
     const userInfo: modifyReqDto = { userTag, userPassword, userNickname };
     await modifyService(userInfo);
     res.status(200).json({ isSuccess: true });

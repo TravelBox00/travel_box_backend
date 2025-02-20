@@ -63,7 +63,7 @@ export const findUserTagByThreadId = async (threadId: number) => {
               SELECT userTag
               FROM TravelThread as TT
               JOIN User as U
-              ON TT.userId = TT.userId 
+              ON TT.userId = U.userId 
               where TT.threadId = ?
               `;
     const [[row]]: any = await connection.execute(query, [threadId]);

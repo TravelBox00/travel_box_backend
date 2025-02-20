@@ -1,4 +1,6 @@
 import express from 'express';
+import multer from 'multer';
+
 import {
   loginController,
   refreshTokenController,
@@ -17,6 +19,7 @@ import {
 import { authenticateToken } from '../middlewares/auth.middleware.ts';
 
 const router = express.Router();
+const upload = multer();
 
 router.get('/', (req, res) => {
   res.send('User main route');
@@ -29,7 +32,12 @@ router.post('/signup', signupController);
 router.get('/signup/duplicate/:userTag', duplicateController);
 router.patch('/signout', authenticateToken, signoutController);
 router.patch('/back', backController);
-router.patch('/modify', authenticateToken, modifyController);
+router.patch(
+  '/modify',
+  authenticateToken,
+  upload.single('image'),
+  modifyController
+);
 router.get('/info', authenticateToken, userInfoController);
 /**
  * @swagger
