@@ -65,7 +65,7 @@ export const searchValidSuggestions = async (
               should: [
                 { term: { 'postContent.keyword': word } },
                 { match_phrase_prefix: { category: word } },
-                { match_phrase_prefix: { region_hierarchy: word } },
+                { match_phrase_prefix: { postRegionCode: word } },
               ],
               minimum_should_match: 1,
             },
@@ -78,10 +78,17 @@ export const searchValidSuggestions = async (
       (hit: any) => hit._source.region_hierarchy
     );
 
-    const suggestedPosts = postResponse.hits.hits.map(
-      (hit: any) => hit._source.category
+    const suggestedPosts = postResponse.hits.hits.flatMap((hit: any) => [
+      ...hit._source.category.split(','),
+      ...hit._source.postRegionCode.split(','),
+    ]);
+    console.log(
+      'suggestedRegions',
+      suggestedRegions,
+      'suggestedPosts',
+      suggestedPosts
     );
-    return Array.from(new Set([...suggestedRegions, ...suggestedPosts]));
+    return Array.from(new Set([...suggestedPosts]));
   } catch (error) {
     throw new Error('');
   }
