@@ -22,7 +22,7 @@ export const searchService = async (
   if (threadIds.length === 0) {
     throw new CustomError(errors.NOT_FOUND_WORD, new Error());
   }
-  
+
   // 스레드와 이미지 URL을 병렬로 가져오기
   const threads = await Promise.all(threadIds.map((id) => getThread(id)));
   const imageUrls = await Promise.all(threadIds.map((id) => getImage(id)));
@@ -46,8 +46,9 @@ export const wordService = async (word: string): Promise<string[]> => {
   if (words.length === 0) {
     throw new CustomError(errors.NOT_FOUND_WORD, new Error());
   }
-
+  words.push(word);
   const uniqueWords = Array.from(new Set(words.flat()));
+
   return uniqueWords;
 };
 

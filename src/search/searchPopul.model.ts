@@ -6,7 +6,6 @@ const popularElasticsearch = async (
   region?: string,
   lastThreadId?: number
 ): Promise<number[]> => {
-  console.log('lastThreadId', lastThreadId);
   const mustQueries = category ? [{ match: { category } }] : [];
   const filterQueries = region ? [{ term: { postRegionCode: region } }] : [];
   let size = 8;
