@@ -336,10 +336,11 @@ export const postSearchModel = async (
 
     // MySQL 검색
     const mysqlQuery = `
-      SELECT T.threadId, T.postContent, DATE_FORMAT(T.postDate, "%Y-%m-%d") as postDate, I.imageURL, T.clothInfo, S.singInfo
+      SELECT T.threadId, T.postContent, DATE_FORMAT(T.postDate, "%Y-%m-%d") as postDate, U.userTag, I.imageURL, T.clothInfo, S.singInfo
       FROM TravelThread T
       LEFT JOIN Image I ON T.threadId = I.threadId
       LEFT JOIN Sing S ON T.threadId = S.threadId
+      LEFT JOIN User U ON T.userId = U.userId
       WHERE T.postContent LIKE ?
     `;
 
