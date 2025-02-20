@@ -353,7 +353,7 @@ export const postSearchModel = async (
     const mysqlResultsArray = Array.isArray(mysqlResults) ? mysqlResults : [];
 
     // 두 결과를 병합 (ElasticSearch 결과를 우선)
-    const combinedResults = [...elasticResults, ...mysqlResultsArray];
+    const combinedResults = mysqlResultsArray;
 
     return combinedResults;
   } catch (error) {
