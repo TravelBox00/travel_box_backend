@@ -221,8 +221,6 @@ export const postSearchController = async (
     console.log('POST search controller connected');
 
     const searchKeyword = req.query.searchKeyword as string;
-    const limit = 10; // 정해진 값
-    let offset = 0;
 
     console.log('searchKeyword:', searchKeyword);
 
@@ -230,11 +228,7 @@ export const postSearchController = async (
       return res.status(400).json({ error: 'searchKeyword is required' });
     }
 
-    if (req.query.offset) {
-      offset = Number(req.query.offset);
-    }
-
-    const result = await postSearchService(searchKeyword, limit, offset);
+    const result = await postSearchService(searchKeyword);
     return res.status(200).json(result);
   } catch (error) {
     console.error('Post Search Controller Error', error);

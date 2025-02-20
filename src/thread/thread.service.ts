@@ -213,13 +213,11 @@ export const postInfoService = async (
 // 검색어에 따른 포스트 조회 서비스 함수
 export const postSearchService = async (
   searchKeyword: string,
-  limit: number,
-  offset: number
 ): Promise<any> => {
   try {
     console.log('postSearch Service Connected');
 
-    const threads = await postSearchModel(searchKeyword, limit, offset);
+    const threads = await postSearchModel(searchKeyword);
 
     if (!threads) {
       return [];
