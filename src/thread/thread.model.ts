@@ -309,15 +309,11 @@ export const postInfoModel = async (
 // 게시물 검색 Model
 export const postSearchModel = async (
   searchKeyword: string,
-  limit: number,
-  offset: number
 ): Promise<any> => {
   try {
     // ElasticSearch 검색
     const { hits } = await elastic.search({
       index: 'post_stats',
-      size: limit,
-      from: offset,
       query: {
         multi_match: {
           query: searchKeyword,
@@ -329,7 +325,9 @@ export const postSearchModel = async (
 
     const elasticResults = hits.hits.map((hit: any) => ({
       threadId: hit._id,
-      postContent: hit._source.postContent,
+      postContent: Array.isArray(hit._source.postContent)
+        ? hit._source.postContent.join(' ') // 배열인 경우 문자열로 합침
+        : hit._source.postContent, // 문자열일 경우 그대로 사용
       postDate: hit._source.postDate,
       postRegionCode: hit._source.postRegionCode,
       likes: hit._source.likes,
@@ -338,18 +336,16 @@ export const postSearchModel = async (
 
     // MySQL 검색
     const mysqlQuery = `
-      SELECT T.threadId, T.postContent, DATE_FORMAT(T.postDate, "%Y-%m-%d") as postDate, I.imageURL
+      SELECT T.threadId, T.postContent, DATE_FORMAT(T.postDate, "%Y-%m-%d") as postDate, I.imageURL, T.clothInfo, S.singInfo
       FROM TravelThread T
       LEFT JOIN Image I ON T.threadId = I.threadId
+      LEFT JOIN Sing S ON T.threadId = S.threadId
       WHERE T.postContent LIKE ?
-      LIMIT ? OFFSET ?;
     `;
 
     // MySQL 검색 실행
     const [mysqlResults]: any[] = await pool.query(mysqlQuery, [
       `%${searchKeyword}%`,
-      limit,
-      offset,
     ]);
 
     // MySQL 결과가 배열인지 확인 후 변환
@@ -364,6 +360,7 @@ export const postSearchModel = async (
     throw new Error('검색 실패');
   }
 };
+
 
 // 내가 쓴 글 조회 (이미지, 제목만)
 export const myPostSearchModel = async (userTag: string): Promise<any> => {
@@ -630,20 +627,23 @@ export const popularPostModel = async (
     const offset = (page - 1) * limit;
 
     const query = `
-      SELECT T.threadId, 
-       T.postContent, 
-       DATE_FORMAT(T.postDate, "%Y-%m-%d") as postDate, 
-       I.imageURL,
-       U.userTag,
-       (COALESCE(L.likeCount, 0) * 1 + COALESCE(C.commentCount, 0) * 1 + COALESCE(S.scrapCount, 0) * 1) AS totalEngagement
+    SELECT T.threadId, 
+           T.postContent, 
+           T.clothInfo,
+           S.singInfo,
+           DATE_FORMAT(T.postDate, "%Y-%m-%d") as postDate, 
+           I.imageURL,
+           U.userTag,
+           (COALESCE(L.likeCount, 0) * 1 + COALESCE(C.commentCount, 0) * 1 + COALESCE(PS.scrapCount, 0) * 1) AS totalEngagement
     FROM TravelThread T
     LEFT JOIN Image I ON T.threadId = I.threadId
     LEFT JOIN User U ON T.userId = U.userId 
+    LEFT JOIN Sing S ON T.threadId = S.threadId
     LEFT JOIN (
       SELECT threadId, COUNT(*) AS likeCount
       FROM \`Like\`
       GROUP BY threadId
-      ) L ON T.threadId = L.threadId
+    ) L ON T.threadId = L.threadId
     LEFT JOIN (
       SELECT threadId, COUNT(*) AS commentCount
       FROM Comment
@@ -653,10 +653,11 @@ export const popularPostModel = async (
       SELECT threadId, COUNT(*) AS scrapCount
       FROM PostScrap
       GROUP BY threadId
-    ) S ON T.threadId = S.threadId
+    ) PS ON T.threadId = PS.threadId
     WHERE T.isDelete = 1
     ORDER BY totalEngagement DESC
-    LiMIT ? OFFSET ?;`;
+    LIMIT ? OFFSET ?;
+  `;
 
     const [results] = await pool.query(query, [limit, offset]);
 
