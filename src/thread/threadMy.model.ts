@@ -16,12 +16,12 @@ const getThreads = async (
     FROM TravelThread AS TT
     JOIN User AS U ON U.userId = TT.userId
     LEFT JOIN Image AS I ON I.threadId = TT.threadId
-    WHERE U.userTag = ? AND (TT.postDate < ? OR (TT.postDate = ? AND TT.threadId < ?))
+    WHERE U.userTag = ? 
     ORDER BY TT.postDate DESC, TT.threadId DESC
     LIMIT ?
   `;
-  const params = [userTag, cursorDate, cursorDate, cursorId, limit];
-
+  const params = [userTag, limit];
+  // AND (TT.postDate < ? OR (TT.postDate = ? AND TT.threadId < ?))
   try {
     const [rows] = await pool.query(query, params);
     return rows as MyThread[];
